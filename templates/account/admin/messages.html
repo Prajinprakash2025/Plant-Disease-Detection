@@ -1,0 +1,69 @@
+{% extends "account/admin/base.html" %}
+
+{% block title %}Message Center | Plant Disease System{% endblock %}
+{% block page_title %}Messages{% endblock %}
+
+{% block content %}
+<section class="admin-panel">
+    <div class="admin-panel-head">
+        <div>
+            <span class="admin-kicker">Contact Management</span>
+            <h3>Review public contact submissions and mark progress.</h3>
+        </div>
+        <span class="admin-results">{{ total_results }} message{{ total_results|pluralize }}</span>
+    </div>
+
+    <form method="get" class="admin-filter-bar">
+        <input type="text" name="q" value="{{ query }}" placeholder="Search subject, sender, email, or text" class="form-input">
+        <select name="status" class="form-input">
+            <option value="all" {% if status == 'all' %}selected{% endif %}>All messages</option>
+            <option value="open" {% if status == 'open' %}selected{% endif %}>Open only</option>
+            <option value="resolved" {% if status == 'resolved' %}selected{% endif %}>Resolved only</option>
+        </select>
+        <button type="submit" class="admin-btn admin-btn-primary">Apply</button>
+    </form>
+
+    <div class="admin-message-grid">
+        {% for item in page_obj %}
+            <article class="admin-message-card">
+                <div class="admin-message-top">
+                    <div>
+                        <span class="admin-kicker">From {{ item.name }}</span>
+                        <h4>{{ item.subject }}</h4>
+                    </div>
+                    <span class="admin-badge {% if item.is_resolved %}admin-badge-success{% else %}admin-badge-warning{% endif %}">
+                        {% if item.is_resolved %}Resolved{% else %}Open{% endif %}
+                    </span>
+                </div>
+                <div class="admin-message-meta">
+                    <span>{{ item.email }}</span>
+                    <span>{{ item.created_at|date:"M d, Y h:i A" }}</span>
+                </div>
+                <p>{{ item.message }}</p>
+
+                <form method="post" action="{% url 'account:toggle_message_resolved' item.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button type="submit" class="admin-btn admin-btn-small {% if item.is_resolved %}admin-btn-secondary{% else %}admin-btn-success{% endif %}">
+                        {% if item.is_resolved %}Reopen{% else %}Mark resolved{% endif %}
+                    </button>
+                </form>
+            </article>
+        {% empty %}
+            <p class="admin-empty">No messages matched your filters.</p>
+        {% endfor %}
+    </div>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+        <div class="admin-pagination">
+            {% if page_obj.has_previous %}
+                <a href="?q={{ query }}&status={{ status }}&page={{ page_obj.previous_page_number }}">Previous</a>
+            {% endif %}
+            <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+                <a href="?q={{ query }}&status={{ status }}&page={{ page_obj.next_page_number }}">Next</a>
+            {% endif %}
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

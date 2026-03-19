@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up | Plant Disease System{% endblock %}
+
+{% block content %}
+<section class="auth-layout">
+    <div class="auth-copy">
+        <span class="eyebrow">Create Your Access</span>
+        <h1>Register a user account for your plant disease monitoring workflow.</h1>
+        <p>
+            Start with a clean signup flow, then move directly into the dashboard to extend the system with image uploads and diagnosis results.
+        </p>
+    </div>
+
+    <div class="auth-card auth-card-wide">
+        <h2>Sign up</h2>
+        <p class="card-intro">Fill in your details to create a new account.</p>
+
+        {% if form.non_field_errors %}
+            <div class="form-alert">
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next_url }}">
+
+            <div class="form-grid">
+                <div class="field-group">
+                    <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+                    {{ form.first_name }}
+                    {% for error in form.first_name.errors %}
+                        <p class="error-text">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+                <div class="field-group">
+                    <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
+                    {{ form.last_name }}
+                    {% for error in form.last_name.errors %}
+                        <p class="error-text">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="field-group">
+                <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+                {{ form.username }}
+                <p class="help-text">{{ form.username.help_text }}</p>
+                {% for error in form.username.errors %}
+                    <p class="error-text">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <div class="field-group">
+                <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                {{ form.email }}
+                {% for error in form.email.errors %}
+                    <p class="error-text">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <div class="form-grid">
+                <div class="field-group">
+                    <label for="{{ form.password1.id_for_label }}">{{ form.password1.label }}</label>
+                    {{ form.password1 }}
+                    <p class="help-text">{{ form.password1.help_text }}</p>
+                    {% for error in form.password1.errors %}
+                        <p class="error-text">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+                <div class="field-group">
+                    <label for="{{ form.password2.id_for_label }}">{{ form.password2.label }}</label>
+                    {{ form.password2 }}
+                    <p class="help-text">{{ form.password2.help_text }}</p>
+                    {% for error in form.password2.errors %}
+                        <p class="error-text">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">Create account</button>
+        </form>
+
+        <p class="auth-footer">Already registered? <a href="{% url 'account:login' %}">Login here</a></p>
+    </div>
+</section>
+{% endblock %}

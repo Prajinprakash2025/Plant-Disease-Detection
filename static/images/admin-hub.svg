@@ -1,0 +1,25 @@
+<svg width="640" height="440" viewBox="0 0 640 440" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="640" height="440" rx="36" fill="#10211C"/>
+  <rect x="44" y="54" width="172" height="332" rx="28" fill="#183126"/>
+  <rect x="72" y="92" width="116" height="14" rx="7" fill="#F5E7CA" fill-opacity="0.15"/>
+  <rect x="72" y="126" width="88" height="12" rx="6" fill="#F5E7CA" fill-opacity="0.12"/>
+  <rect x="72" y="154" width="120" height="12" rx="6" fill="#F5E7CA" fill-opacity="0.12"/>
+  <rect x="72" y="206" width="116" height="54" rx="18" fill="#2D6A4F"/>
+  <rect x="72" y="278" width="116" height="54" rx="18" fill="#C78532"/>
+  <rect x="246" y="54" width="350" height="154" rx="30" fill="#F7F2E8"/>
+  <rect x="274" y="84" width="132" height="12" rx="6" fill="#173127" fill-opacity="0.16"/>
+  <rect x="274" y="110" width="204" height="10" rx="5" fill="#173127" fill-opacity="0.1"/>
+  <rect x="274" y="132" width="164" height="10" rx="5" fill="#173127" fill-opacity="0.1"/>
+  <rect x="274" y="156" width="94" height="10" rx="5" fill="#173127" fill-opacity="0.1"/>
+  <rect x="482" y="82" width="82" height="82" rx="22" fill="#E8EEDC"/>
+  <path d="M509 150C527.253 139.742 541.149 123.592 545.923 101.165C521.536 100.026 502.197 108.369 491.089 126.647C486.483 134.225 483.81 142.627 482.698 151.856C492.058 154.611 500.87 154.427 509 150Z" fill="#5AA36C"/>
+  <path d="M488 152C501.293 141.097 512.308 128.268 521.228 113.62C528.641 101.445 534.643 88.5455 539.202 74.7687" stroke="#214B39" stroke-width="4.5" stroke-linecap="round"/>
+  <rect x="246" y="228" width="168" height="158" rx="28" fill="#F4E6C6"/>
+  <rect x="432" y="228" width="164" height="158" rx="28" fill="#F7F2E8"/>
+  <rect x="274" y="260" width="112" height="12" rx="6" fill="#173127" fill-opacity="0.14"/>
+  <rect x="274" y="286" width="88" height="42" rx="16" fill="#173127"/>
+  <rect x="364" y="286" width="22" height="42" rx="11" fill="#2D6A4F"/>
+  <circle cx="514" cy="278" r="38" fill="#183126"/>
+  <path d="M496 279L507 290L532 265" stroke="#F5E7CA" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="464" y="338" width="100" height="12" rx="6" fill="#173127" fill-opacity="0.16"/>
+</svg>

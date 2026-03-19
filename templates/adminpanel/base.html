@@ -1,0 +1,69 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Console | Plant Disease System{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+</head>
+<body class="admin-body">
+    <div class="admin-shell">
+        <aside class="admin-sidebar">
+            <a href="{% url 'adminpanel:dashboard' %}" class="admin-brand">
+                <span class="admin-brand-mark">AD</span>
+                <span class="admin-brand-copy">
+                    <strong>Admin Console</strong>
+                    <small>Plant Disease System</small>
+                </span>
+            </a>
+
+            <nav class="admin-nav">
+                <a href="{% url 'adminpanel:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}is-active{% endif %}">Overview</a>
+                <a href="{% url 'adminpanel:users' %}" class="{% if request.resolver_match.url_name == 'users' %}is-active{% endif %}">Users</a>
+                <a href="{% url 'adminpanel:messages' %}" class="{% if request.resolver_match.url_name == 'messages' %}is-active{% endif %}">Messages</a>
+                <a href="{% url 'account:home' %}">Public Site</a>
+                <a href="{% url 'dashboard:home' %}">User Dashboard</a>
+            </nav>
+
+            <div class="admin-sidebar-card">
+                <span class="admin-mini-label">Signed in as</span>
+                <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
+                <span>{{ request.user.email|default:"No email added" }}</span>
+                <form action="{% url 'adminpanel:logout' %}" method="post" class="admin-inline-form">
+                    {% csrf_token %}
+                    <button type="submit" class="admin-btn admin-btn-secondary admin-btn-block">Logout</button>
+                </form>
+            </div>
+        </aside>
+
+        <div class="admin-main">
+            <header class="admin-topbar">
+                <div>
+                    <span class="admin-kicker">Operations</span>
+                    <h1>{% block page_title %}Admin Dashboard{% endblock %}</h1>
+                </div>
+                <div class="admin-topbar-meta">
+                    <span>Staff access only</span>
+                    <span>{{ request.user.username }}</span>
+                </div>
+            </header>
+
+            {% if messages %}
+                <section class="admin-messages" aria-label="Admin notifications">
+                    {% for message in messages %}
+                        <div class="admin-message admin-message-{{ message.tags|default:'info' }}">{{ message }}</div>
+                    {% endfor %}
+                </section>
+            {% endif %}
+
+            <main class="admin-content">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+</body>
+</html>

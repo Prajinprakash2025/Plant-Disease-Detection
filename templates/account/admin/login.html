@@ -1,0 +1,62 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login | Plant Disease System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+</head>
+<body class="admin-login-body">
+    <section class="admin-login-shell">
+        <div class="admin-login-art">
+            <span class="admin-kicker">Staff Portal</span>
+            <h1>Control users, monitor requests, and manage the platform from one place.</h1>
+            <p>
+                This admin login now lives inside the account app and routes staff directly into the operations console.
+            </p>
+            <img src="{% static 'images/admin-hub.svg' %}" alt="Illustration of an admin operations dashboard" class="admin-login-image">
+        </div>
+
+        <div class="admin-login-card">
+            <a href="{% url 'account:home' %}" class="admin-back-link">Back to public site</a>
+            <h2>Admin login</h2>
+            <p class="admin-card-copy">Use a staff account to continue.</p>
+
+            {% if form.non_field_errors %}
+                <div class="admin-form-alert">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <form method="post" class="admin-form">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ next_url }}">
+
+                <div class="admin-field">
+                    <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+                    {{ form.username }}
+                    {% for error in form.username.errors %}
+                        <p class="admin-error-text">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+                <div class="admin-field">
+                    <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+                    {{ form.password }}
+                    {% for error in form.password.errors %}
+                        <p class="admin-error-text">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+                <button type="submit" class="admin-btn admin-btn-primary admin-btn-block">Open admin console</button>
+            </form>
+        </div>
+    </section>
+</body>
+</html>

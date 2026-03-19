@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Contact | Plant Disease System{% endblock %}
+
+{% block content %}
+<section class="contact-layout">
+    <div class="contact-panel">
+        <span class="eyebrow">Contact Us</span>
+        <h1>Talk to the team behind your plant disease system.</h1>
+        <p class="lead">
+            Use this page for project questions, support requests, or collaboration around crop diagnosis features and dashboard improvements.
+        </p>
+
+        <div class="contact-card-stack">
+            <article class="contact-info-card">
+                <strong>Email support</strong>
+                <span>support@plantdisease.local</span>
+            </article>
+            <article class="contact-info-card">
+                <strong>Office hours</strong>
+                <span>Mon to Sat, 9:00 AM to 6:00 PM</span>
+            </article>
+            <article class="contact-info-card">
+                <strong>Project scope</strong>
+                <span>Leaf disease detection, farmer accounts, and diagnosis workflows</span>
+            </article>
+        </div>
+
+        <div class="content-illustration-card content-illustration-card-soft">
+            <img
+                src="{% static 'images/contact-grower.svg' %}"
+                alt="Illustration of a grower contacting a support team"
+                class="content-illustration"
+            >
+        </div>
+    </div>
+
+    <div class="auth-card contact-form-card">
+        <h2>Send a message</h2>
+        <p class="card-intro">Share your requirement and we will follow up.</p>
+
+        {% if form.non_field_errors %}
+            <div class="form-alert">
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+
+            <div class="field-group">
+                <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+                {{ form.name }}
+                {% for error in form.name.errors %}
+                    <p class="error-text">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <div class="field-group">
+                <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                {{ form.email }}
+                {% for error in form.email.errors %}
+                    <p class="error-text">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <div class="field-group">
+                <label for="{{ form.subject.id_for_label }}">{{ form.subject.label }}</label>
+                {{ form.subject }}
+                {% for error in form.subject.errors %}
+                    <p class="error-text">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <div class="field-group">
+                <label for="{{ form.message.id_for_label }}">{{ form.message.label }}</label>
+                {{ form.message }}
+                {% for error in form.message.errors %}
+                    <p class="error-text">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <button type="submit" class="btn btn-primary">Send message</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

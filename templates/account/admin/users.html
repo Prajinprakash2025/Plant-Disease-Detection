@@ -1,0 +1,98 @@
+{% extends "account/admin/base.html" %}
+
+{% block title %}User Management | Plant Disease System{% endblock %}
+{% block page_title %}Users{% endblock %}
+
+{% block content %}
+<section class="admin-panel">
+    <div class="admin-panel-head">
+        <div>
+            <span class="admin-kicker">User Management</span>
+            <h3>Search accounts, block users, and control staff access.</h3>
+        </div>
+        <span class="admin-results">{{ total_results }} result{{ total_results|pluralize }}</span>
+    </div>
+
+    <form method="get" class="admin-filter-bar">
+        <input type="text" name="q" value="{{ query }}" placeholder="Search username, name, or email" class="form-input">
+        <select name="status" class="form-input">
+            <option value="all" {% if status == 'all' %}selected{% endif %}>All users</option>
+            <option value="active" {% if status == 'active' %}selected{% endif %}>Active only</option>
+            <option value="blocked" {% if status == 'blocked' %}selected{% endif %}>Blocked only</option>
+            <option value="staff" {% if status == 'staff' %}selected{% endif %}>Staff only</option>
+        </select>
+        <button type="submit" class="admin-btn admin-btn-primary">Apply</button>
+    </form>
+
+    <div class="admin-table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Status</th>
+                    <th>Role</th>
+                    <th>Joined</th>
+                    <th>Last login</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in page_obj %}
+                    <tr>
+                        <td>
+                            <strong>{{ user.get_full_name|default:user.username }}</strong>
+                            <span>{{ user.username }}{% if user.email %} · {{ user.email }}{% endif %}</span>
+                        </td>
+                        <td>
+                            <span class="admin-badge {% if user.is_active %}admin-badge-success{% else %}admin-badge-danger{% endif %}">
+                                {% if user.is_active %}Active{% else %}Blocked{% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="admin-badge {% if user.is_staff %}admin-badge-accent{% else %}admin-badge-neutral{% endif %}">
+                                {% if user.is_staff %}Staff{% else %}User{% endif %}
+                            </span>
+                        </td>
+                        <td>{{ user.date_joined|date:"M d, Y" }}</td>
+                        <td>{% if user.last_login %}{{ user.last_login|date:"M d, Y h:i A" }}{% else %}Never{% endif %}</td>
+                        <td>
+                            <div class="admin-action-stack">
+                                <form method="post" action="{% url 'account:toggle_user_active' user.id %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                    <button type="submit" class="admin-btn admin-btn-small {% if user.is_active %}admin-btn-danger{% else %}admin-btn-success{% endif %}">
+                                        {% if user.is_active %}Block{% else %}Unblock{% endif %}
+                                    </button>
+                                </form>
+                                <form method="post" action="{% url 'account:toggle_user_staff' user.id %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                    <button type="submit" class="admin-btn admin-btn-small admin-btn-secondary">
+                                        {% if user.is_staff %}Remove admin{% else %}Make admin{% endif %}
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="admin-empty-cell">No users matched your filters.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+        <div class="admin-pagination">
+            {% if page_obj.has_previous %}
+                <a href="?q={{ query }}&status={{ status }}&page={{ page_obj.previous_page_number }}">Previous</a>
+            {% endif %}
+            <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+                <a href="?q={{ query }}&status={{ status }}&page={{ page_obj.next_page_number }}">Next</a>
+            {% endif %}
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

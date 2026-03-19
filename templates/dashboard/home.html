@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | Plant Disease System{% endblock %}
+
+{% block content %}
+<section class="dashboard-hero">
+    <div>
+        <span class="eyebrow">Dashboard</span>
+        <h1>Welcome, {{ request.user.first_name|default:request.user.username }}.</h1>
+        <p class="lead">
+            This space is prepared for the next layer of your plant disease system: image uploads, prediction summaries, treatment guidance, and field reporting.
+        </p>
+    </div>
+    <div class="dashboard-actions">
+        <a href="{% url 'detection:leaf_diagnosis' %}" class="btn btn-primary">Test Leaf</a>
+        <a href="{% url 'account:membership' %}" class="btn btn-secondary">Membership</a>
+        <a href="{% url 'account:profile' %}" class="btn btn-secondary">Update profile</a>
+        <a href="{% url 'account:home' %}" class="btn btn-ghost">Home</a>
+    </div>
+</section>
+
+<section class="dashboard-grid">
+    <article class="section-card">
+        <span class="section-number">Q</span>
+        <h3>Leaf test quota</h3>
+        {% if leaf_quota.is_premium %}
+            <p>Premium demo is active. You can keep testing leaf images without the 20-scan free limit.</p>
+        {% else %}
+            <p>{{ leaf_quota.used }} of {{ leaf_quota.limit }} free leaf checks are already used. {{ leaf_quota.remaining }} scans are left for this account.</p>
+        {% endif %}
+    </article>
+    <article class="section-card">
+        <span class="section-number">A</span>
+        <h3>Diagnosis intake</h3>
+        <p>Upload a leaf image, run the local CNN model, and trigger Gemini validation when confidence is low.</p>
+    </article>
+    <article class="section-card">
+        <span class="section-number">B</span>
+        <h3>Treatment plan</h3>
+        <p>Reserve this area for disease-specific recommendations, fertilizer notes, or pesticide guidance.</p>
+    </article>
+    <article class="section-card">
+        <span class="section-number">C</span>
+        <h3>Farmer records</h3>
+        <p>Track who submitted samples, when they were reviewed, and which follow-up actions were taken.</p>
+    </article>
+</section>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Membership | Plant Disease System{% endblock %}
+
+{% block content %}
+<section class="content-hero membership-hero">
+    <div class="content-copy">
+        <span class="eyebrow">Membership</span>
+        <h1>Track free leaf checks and unlock the premium demo plan.</h1>
+        <p class="lead">
+            Each free account can run up to {{ leaf_quota.limit|default:"20" }} leaf analyses. When the free limit is finished, the user can switch to the premium demo plan to continue testing without blocking the workflow.
+        </p>
+        <div class="membership-stats">
+            <article class="membership-stat">
+                <span>Current plan</span>
+                <strong>{{ leaf_quota.plan_name }}</strong>
+            </article>
+            <article class="membership-stat">
+                <span>Scans used</span>
+                <strong>{{ leaf_quota.used }}</strong>
+            </article>
+            <article class="membership-stat">
+                <span>Remaining</span>
+                <strong>{{ leaf_quota.remaining_label }}</strong>
+            </article>
+        </div>
+    </div>
+
+    <aside class="content-illustration-card membership-sidecard">
+        <span class="eyebrow">Usage Meter</span>
+        <h2>{{ leaf_quota.usage_label }}</h2>
+        <div class="progress-shell" aria-label="Membership usage progress">
+            <div class="progress-bar" style="width: {{ leaf_quota.usage_percent }}%;"></div>
+        </div>
+        <p class="card-intro">
+            {% if leaf_quota.is_premium %}
+                Premium demo is active for this account.
+            {% else %}
+                Upgrade to the premium demo plan to remove the free-tier scan cap.
+            {% endif %}
+        </p>
+    </aside>
+</section>
+
+<section class="membership-grid">
+    <article class="membership-card {% if not leaf_quota.is_premium %}membership-card-featured{% endif %}">
+        <span class="eyebrow">Free</span>
+        <h2>Starter access</h2>
+        <p class="card-intro">Good for demo accounts, first-time testing, and quick validation of the diagnosis flow.</p>
+        <strong class="membership-price">{{ leaf_quota.limit|default:"20" }} scans</strong>
+        <ul class="membership-list">
+            <li>Track up to {{ leaf_quota.limit|default:"20" }} leaf diagnoses per user</li>
+            <li>Local CNN plus Gemini fallback on low confidence</li>
+            <li>Recent diagnosis history and treatment guidance</li>
+        </ul>
+
+        {% if leaf_quota.is_premium %}
+            <form method="post" class="auth-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="switch_free">
+                <button type="submit" class="btn btn-ghost">Switch to free plan</button>
+            </form>
+        {% else %}
+            <p class="membership-note">This is your current plan.</p>
+        {% endif %}
+    </article>
+
+    <article class="membership-card membership-card-premium">
+        <span class="eyebrow">Premium Demo</span>
+        <h2>Unlimited testing</h2>
+        <p class="card-intro">A demo upgrade flow for users who need more diagnoses after the free plan is finished.</p>
+        <strong class="membership-price">Unlimited</strong>
+        <ul class="membership-list">
+            <li>Unlimited leaf analysis requests for this user</li>
+            <li>Priority upgrade messaging in the UI</li>
+            <li>Ready for future payment integration</li>
+        </ul>
+
+        {% if leaf_quota.is_premium %}
+            <p class="membership-note">Premium demo is already active.</p>
+        {% else %}
+            <form method="post" class="auth-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="activate_premium">
+                <button type="submit" class="btn btn-primary">Activate premium demo</button>
+            </form>
+        {% endif %}
+    </article>
+</section>
+{% endblock %}

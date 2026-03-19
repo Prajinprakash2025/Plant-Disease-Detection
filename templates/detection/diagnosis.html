@@ -1,0 +1,448 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Leaf Diagnosis | Plant Disease System{% endblock %}
+
+{% block content %}
+<section class="diagnosis-shell">
+    <div class="diagnosis-loading" id="diagnosisLoading" hidden aria-live="assertive" aria-busy="true">
+        <div class="diagnosis-loading-card">
+            <div class="diagnosis-loading-spinner" aria-hidden="true"></div>
+            <span class="eyebrow">Analyzing</span>
+            <h2>Checking your leaf image</h2>
+            <p>The local CNN is running first. Gemini will automatically verify low-confidence cases before the final answer is shown.</p>
+            <div class="diagnosis-loading-steps">
+                <span>Uploading image</span>
+                <span>Reading leaf pattern</span>
+                <span>Preparing treatment plan</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="diagnosis-hero diagnosis-hero-split">
+        <div class="diagnosis-hero-copy">
+            <span class="eyebrow">Leaf Test</span>
+            <h1>Upload a leaf, watch the analysis run, and get a result you can actually use.</h1>
+            <p class="lead">
+                This page is designed for one quick workflow: upload, preview, analyze, and review the diagnosis with a treatment plan. The result now shows both the plant or crop name and the disease label, and each user can see the remaining free scan quota before uploading.
+            </p>
+            <div class="diagnosis-pill-row">
+                <span class="diagnosis-pill">Visible file name</span>
+                <span class="diagnosis-pill">Plant and disease shown separately</span>
+                <span class="diagnosis-pill">Live upload preview</span>
+                <span class="diagnosis-pill">Loading animation during analysis</span>
+            </div>
+            <div class="diagnosis-usage-banner">
+                <article class="diagnosis-usage-stat">
+                    <span>Plan</span>
+                    <strong>{{ leaf_quota.plan_name }}</strong>
+                </article>
+                <article class="diagnosis-usage-stat">
+                    <span>Used</span>
+                    <strong>
+                        {% if leaf_quota.limit %}
+                            {{ leaf_quota.used }} / {{ leaf_quota.limit }}
+                        {% else %}
+                            {{ leaf_quota.used }} total
+                        {% endif %}
+                    </strong>
+                </article>
+                <article class="diagnosis-usage-stat">
+                    <span>Remaining</span>
+                    <strong>{{ leaf_quota.remaining_label }}</strong>
+                </article>
+            </div>
+            <div class="diagnosis-hero-actions">
+                <a href="{% url 'dashboard:home' %}" class="btn btn-secondary">Back to Dashboard</a>
+                <a href="{% url 'account:membership' %}" class="btn btn-primary">Membership</a>
+                <a href="{% url 'account:profile' %}" class="btn btn-ghost">Profile</a>
+            </div>
+        </div>
+        <aside class="diagnosis-hero-panel">
+            <div class="diagnosis-hero-visual">
+                <img src="{% static 'images/lab-analysis.svg' %}" alt="Plant disease analysis illustration">
+            </div>
+            <div class="diagnosis-step-list">
+                <div class="diagnosis-step">
+                    <span>01</span>
+                    <div>
+                        <strong>Select a leaf image</strong>
+                        <p>The uploaded filename stays visible so the user knows which sample is being checked.</p>
+                    </div>
+                </div>
+                <div class="diagnosis-step">
+                    <span>02</span>
+                    <div>
+                        <strong>Wait through the loading state</strong>
+                        <p>The page now shows an analysis overlay instead of looking stuck or broken.</p>
+                    </div>
+                </div>
+                <div class="diagnosis-step">
+                    <span>03</span>
+                    <div>
+                        <strong>Review diagnosis and treatment</strong>
+                        <p>The result card now highlights the filename, plant name, disease, confidence, source, and free-plan usage more clearly.</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    {% if leaf_quota.limit_reached %}
+        <div class="diagnosis-limit-banner">
+            <strong>Free plan finished</strong>
+            <p>You have already used all {{ leaf_quota.limit }} free leaf checks for this account. Open the membership page to activate the premium demo plan.</p>
+            <a href="{% url 'account:membership' %}" class="btn btn-primary">Open membership</a>
+        </div>
+    {% endif %}
+
+    <div class="diagnosis-grid">
+        <article class="diagnosis-card diagnosis-upload-card">
+            <div class="diagnosis-card-head">
+                <span class="eyebrow">Section A</span>
+                <span class="diagnosis-status diagnosis-status-soft">Upload</span>
+            </div>
+            <h2>Upload Leaf</h2>
+            <p class="card-intro">Choose a clear JPG or PNG image. The file name, preview, and analysis state will stay visible through the full workflow.</p>
+
+            <div class="diagnosis-quota-card">
+                <div>
+                    <span class="diagnosis-quota-label">Free-tier usage</span>
+                    <strong>{{ leaf_quota.usage_label }}</strong>
+                </div>
+                <div class="progress-shell" aria-label="Leaf diagnosis quota">
+                    <div class="progress-bar" style="width: {{ leaf_quota.usage_percent }}%;"></div>
+                </div>
+            </div>
+
+            {% if leaf_quota.limit_reached %}
+                <div class="diagnosis-note diagnosis-note-alert">
+                    <strong>Upload locked</strong>
+                    <p>The free plan is finished for this user. Upgrade to premium demo before starting another diagnosis.</p>
+                </div>
+            {% endif %}
+
+            <form method="post" enctype="multipart/form-data" class="auth-form" id="diagnosisForm">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="form-alert">
+                        {% for error in form.non_field_errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="field-group">
+                    <label for="{{ form.image.id_for_label }}">{{ form.image.label }}</label>
+                    <div class="diagnosis-file-shell">
+                        {{ form.image }}
+                        <div class="diagnosis-file-meta-row">
+                            <p class="diagnosis-file-meta" id="leafFileName">
+                                {% if diagnosis_log and diagnosis_log.original_filename %}
+                                    {{ diagnosis_log.original_filename }}
+                                {% else %}
+                                    No file selected yet.
+                                {% endif %}
+                            </p>
+                            <span class="diagnosis-file-badge" id="leafFileState">
+                                {% if diagnosis_log and diagnosis_log.original_filename %}
+                                    Last upload
+                                {% else %}
+                                    Awaiting file
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    {% for error in form.image.errors %}
+                        <p class="error-text">{{ error }}</p>
+                    {% endfor %}
+                    <p class="help-text">Accepted file types: JPG, JPEG, PNG. Use a focused leaf image for the best result.</p>
+                </div>
+
+                <div class="diagnosis-tips">
+                    <strong>Before you upload</strong>
+                    <ul>
+                        <li>Keep the leaf centered and well lit.</li>
+                        <li>Avoid blurry, dark, or heavily zoomed-out photos.</li>
+                        <li>Show the infected area clearly if spots or patches are visible.</li>
+                    </ul>
+                </div>
+
+                {% if leaf_quota.can_submit %}
+                    <button type="submit" class="btn btn-primary diagnosis-submit-button" id="diagnosisSubmit">
+                        Analyze Leaf
+                    </button>
+                {% else %}
+                    <a href="{% url 'account:membership' %}" class="btn btn-primary diagnosis-submit-button">
+                        Upgrade to Premium
+                    </a>
+                {% endif %}
+            </form>
+
+            <div class="diagnosis-preview">
+                <div class="diagnosis-preview-head">
+                    <strong>Preview</strong>
+                    <span id="leafPreviewCaption">
+                        {% if diagnosis_log and diagnosis_log.original_filename %}
+                            {{ diagnosis_log.original_filename }}
+                        {% else %}
+                            Selected image before analysis
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="diagnosis-preview-frame diagnosis-preview-frame-portrait">
+                    <img
+                        id="leafPreview"
+                        src="{% if diagnosis_log %}{{ diagnosis_log.image.url }}{% else %}data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 420 280'%3E%3Crect width='420' height='280' rx='24' fill='%23f3ead8'/%3E%3Cpath d='M210 210c47-27 83-70 95-129-56-2-100 17-126 56-11 16-18 35-20 57 21 7 39 10 51 9z' fill='%235aa36c'/%3E%3Cpath d='M137 215c27-22 50-48 68-80 15-26 27-54 37-84' stroke='%231f4b39' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E{% endif %}"
+                        alt="Leaf preview"
+                    >
+                </div>
+            </div>
+        </article>
+
+        <article class="diagnosis-card diagnosis-result-card">
+            <div class="diagnosis-card-head">
+                <span class="eyebrow">Section B</span>
+                {% if diagnosis_result %}
+                    <span class="diagnosis-status diagnosis-status-live">Ready</span>
+                {% else %}
+                    <span class="diagnosis-status diagnosis-status-soft">Waiting</span>
+                {% endif %}
+            </div>
+            <h2>Prediction Result</h2>
+            <p class="card-intro">The result card now keeps the uploaded filename, plant name, disease, confidence, and model source in one place.</p>
+            {% if diagnosis_result %}
+                <div class="diagnosis-summary">
+                    <span class="diagnosis-summary-label">Detected result</span>
+                    <strong>{{ diagnosis_result.disease }}</strong>
+                    <div class="diagnosis-chip-row">
+                        {% if diagnosis_log and diagnosis_log.original_filename %}
+                            <span class="diagnosis-chip">Leaf file: {{ diagnosis_log.original_filename }}</span>
+                        {% endif %}
+                        {% if diagnosis_result.plant_name %}
+                            <span class="diagnosis-chip">Plant: {{ diagnosis_result.plant_name }}</span>
+                        {% endif %}
+                        <span class="diagnosis-chip {% if diagnosis_result.source == 'gemini_api' %}diagnosis-chip-verified{% endif %}">
+                            {% if diagnosis_result.source == "gemini_api" %}
+                                Gemini verified
+                            {% else %}
+                                Local CNN result
+                            {% endif %}
+                        </span>
+                    </div>
+                    <p>
+                        {% if diagnosis_log %}
+                            Analysis saved on {{ diagnosis_log.created_at|date:"M d, Y h:i A" }}.
+                        {% else %}
+                            Review the diagnosis details below.
+                        {% endif %}
+                    </p>
+                </div>
+
+                {% if diagnosis_result.warning %}
+                    <div class="diagnosis-note">
+                        <strong>Verification note</strong>
+                        <p>{{ diagnosis_result.warning }}</p>
+                    </div>
+                {% endif %}
+
+                {% if diagnosis_result.confidence or diagnosis_result.confidence == 0 %}
+                    <div class="diagnosis-confidence">
+                        <div class="diagnosis-confidence-head">
+                            <span>Confidence meter</span>
+                            <strong>{{ diagnosis_result.confidence }}%</strong>
+                        </div>
+                        <div class="diagnosis-confidence-track" aria-hidden="true">
+                            <span class="diagnosis-confidence-bar" style="width: {{ diagnosis_result.confidence }}%;"></span>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div class="diagnosis-stat-grid">
+                    <div class="diagnosis-result-item">
+                        <span>Plant / crop</span>
+                        <strong>{{ diagnosis_result.plant_name|default:"Unknown" }}</strong>
+                    </div>
+                    <div class="diagnosis-result-item">
+                        <span>Leaf name</span>
+                        <strong>
+                            {% if diagnosis_log and diagnosis_log.original_filename %}
+                                {{ diagnosis_log.original_filename }}
+                            {% else %}
+                                Latest upload
+                            {% endif %}
+                        </strong>
+                    </div>
+                    <div class="diagnosis-result-item">
+                        <span>Disease</span>
+                        <strong>{{ diagnosis_result.disease }}</strong>
+                    </div>
+                    <div class="diagnosis-result-item">
+                        <span>Confidence</span>
+                        <strong>
+                            {% if diagnosis_result.confidence or diagnosis_result.confidence == 0 %}
+                                {{ diagnosis_result.confidence }}%
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </strong>
+                    </div>
+                    <div class="diagnosis-result-item">
+                        <span>Source</span>
+                        <strong>
+                            {% if diagnosis_result.source == "gemini_api" %}
+                                Gemini validation
+                            {% else %}
+                                Local CNN model
+                            {% endif %}
+                        </strong>
+                    </div>
+                </div>
+            {% else %}
+                <div class="diagnosis-empty-state">
+                    <strong>No result yet</strong>
+                    <p>Upload a leaf image to see the file name, predicted disease, confidence score, and model source here.</p>
+                </div>
+            {% endif %}
+        </article>
+
+        <article class="diagnosis-card diagnosis-card-wide">
+            <div class="diagnosis-card-head">
+                <span class="eyebrow">Section C</span>
+                <span class="diagnosis-status diagnosis-status-soft">Treatment Plan</span>
+            </div>
+            <h2>Treatment Plan</h2>
+            <p class="card-intro">Once a diagnosis is ready, this section gives the user clear next steps instead of dumping raw output text.</p>
+            {% if diagnosis_result and diagnosis_result.treatment_guidance %}
+                <div class="treatment-plan">
+                    {% for line in diagnosis_result.treatment_lines %}
+                        {% if line == "Plant:" or line == "Disease:" or line == "Severity:" or line == "Symptoms:" or line == "Possible Causes:" or line == "Treatment:" or line == "Prevention:" or line == "Suggested Action:" %}
+                            <p class="treatment-label">{{ line }}</p>
+                        {% elif line|slice:":2" == "- " %}
+                            <p class="treatment-point">{{ line|slice:"2:" }}</p>
+                        {% else %}
+                            <p class="treatment-copy">{{ line }}</p>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="diagnosis-empty-state">
+                    <strong>Treatment guidance will appear here</strong>
+                    <p>The system will show suggested next steps once a diagnosis has been completed.</p>
+                </div>
+            {% endif %}
+        </article>
+    </div>
+
+    <section class="diagnosis-history">
+        <div class="diagnosis-history-head">
+            <span class="eyebrow">Recent Activity</span>
+            <h2>Your latest leaf tests</h2>
+            <p class="card-intro">Recent uploads stay here so the user can compare files, diagnosis results, and confidence scores.</p>
+        </div>
+
+        <div class="diagnosis-history-grid">
+            {% for item in recent_diagnoses %}
+                <article class="diagnosis-history-card">
+                    <div class="diagnosis-history-meta">
+                        <span>{{ item.created_at|date:"M d, Y h:i A" }}</span>
+                        <span>
+                            {% if item.source == "gemini_api" %}
+                                Gemini validation
+                            {% else %}
+                                Local CNN model
+                            {% endif %}
+                        </span>
+                    </div>
+                    {% if item.original_filename %}
+                        <p class="diagnosis-history-file">{{ item.original_filename }}</p>
+                    {% endif %}
+                    {% if item.plant_name %}
+                        <p class="diagnosis-history-file">Plant: {{ item.plant_name }}</p>
+                    {% endif %}
+                    <strong>{{ item.predicted_disease|default:"Pending diagnosis" }}</strong>
+                    <p>
+                        {% if item.confidence or item.confidence == 0 %}
+                            Confidence: {{ item.confidence }}%
+                        {% else %}
+                            Confidence unavailable
+                        {% endif %}
+                    </p>
+                </article>
+            {% empty %}
+                <article class="diagnosis-history-card">
+                    <strong>No diagnosis history yet</strong>
+                    <p>Your uploaded leaf analyses will appear here after you run the first test.</p>
+                </article>
+            {% endfor %}
+        </div>
+    </section>
+</section>
+
+<script>
+    const diagnosisForm = document.getElementById("diagnosisForm");
+    const diagnosisLoading = document.getElementById("diagnosisLoading");
+    const diagnosisSubmit = document.getElementById("diagnosisSubmit");
+    const leafInput = document.getElementById("{{ form.image.id_for_label }}");
+    const leafPreview = document.getElementById("leafPreview");
+    const leafFileName = document.getElementById("leafFileName");
+    const leafPreviewCaption = document.getElementById("leafPreviewCaption");
+    const leafFileState = document.getElementById("leafFileState");
+
+    if (leafInput && leafPreview) {
+        leafInput.addEventListener("change", (event) => {
+            const [file] = event.target.files;
+            if (!file) {
+                if (leafFileName) {
+                    leafFileName.textContent = "No file selected yet.";
+                }
+                if (leafPreviewCaption) {
+                    leafPreviewCaption.textContent = "Selected image before analysis";
+                }
+                if (leafFileState) {
+                    leafFileState.textContent = "Awaiting file";
+                }
+                return;
+            }
+
+            if (leafFileName) {
+                const fileSizeMb = (file.size / (1024 * 1024)).toFixed(2);
+                leafFileName.textContent = `${file.name} | ${fileSizeMb} MB`;
+            }
+
+            if (leafPreviewCaption) {
+                leafPreviewCaption.textContent = file.name;
+            }
+
+            if (leafFileState) {
+                leafFileState.textContent = "Ready to analyze";
+            }
+
+            const reader = new FileReader();
+            reader.onload = (loadEvent) => {
+                leafPreview.src = loadEvent.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    if (diagnosisForm) {
+        diagnosisForm.addEventListener("submit", () => {
+            if (leafInput && leafInput.files.length > 0) {
+                if (diagnosisLoading) {
+                    diagnosisLoading.hidden = false;
+                    diagnosisLoading.classList.add("is-visible");
+                }
+
+                if (diagnosisSubmit) {
+                    diagnosisSubmit.disabled = true;
+                    diagnosisSubmit.textContent = "Analyzing...";
+                }
+
+                document.body.classList.add("page-busy");
+            }
+        });
+    }
+</script>
+{% endblock %}

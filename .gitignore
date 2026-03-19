@@ -1,0 +1,60 @@
+# =========================
+# ENV / SECRETS
+# =========================
+.env
+*.env
+.gemini_api_key
+
+# =========================
+# PYTHON
+# =========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# =========================
+# VIRTUAL ENV
+# =========================
+venv/
+ml_venv/
+env/
+
+# =========================
+# DJANGO
+# =========================
+*.log
+staticfiles/
+media/
+
+# =========================
+# DATABASE (optional)
+# =========================
+# Uncomment if you DON'T want DB in repo
+# db.sqlite3
+
+# =========================
+# IDE / OS
+# =========================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# =========================
+# ML / TRAINING (optional)
+# =========================
+# Uncomment if models are large
+# ml_testing/trained_models/
+# ml_testing/data/
+
+# python cache
+__pycache__/
+
+# ML heavy stuff
+ml_testing/data/
+ml_testing/artifacts/
+ml_testing/trained_models/
+
+# optional: large media uploads
+media/uploads/

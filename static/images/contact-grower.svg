@@ -1,0 +1,15 @@
+<svg width="520" height="420" viewBox="0 0 520 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="520" height="420" rx="32" fill="#FFF9F1"/>
+  <rect x="44" y="70" width="188" height="250" rx="28" fill="#214B39"/>
+  <circle cx="138" cy="142" r="42" fill="#F5E7CA"/>
+  <rect x="96" y="196" width="84" height="84" rx="22" fill="#F5E7CA"/>
+  <path d="M132.5 196C167.57 196 196 224.43 196 259.5V280H69V259.5C69 224.43 97.4304 196 132.5 196Z" fill="#C78532"/>
+  <rect x="268" y="88" width="208" height="156" rx="28" fill="#F1E7D3"/>
+  <path d="M303 126H441" stroke="#214B39" stroke-width="10" stroke-linecap="round"/>
+  <path d="M303 154H413" stroke="#214B39" stroke-width="8" stroke-linecap="round" opacity="0.18"/>
+  <path d="M303 178H388" stroke="#214B39" stroke-width="8" stroke-linecap="round" opacity="0.18"/>
+  <path d="M304 113L372 171L440 113" stroke="#2D6A4F" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="268" y="268" width="208" height="92" rx="26" fill="#E7EEDC"/>
+  <path d="M331 340C356.434 325.703 375.813 303.19 382.467 271.901C348.474 270.313 321.504 281.953 306.009 307.441C299.584 318.006 295.857 329.716 294.308 342.569C307.355 346.409 319.638 346.15 331 340Z" fill="#5AA36C"/>
+  <path d="M302 343C320.039 328.219 334.989 310.829 347.09 290.962C357.154 274.435 365.301 256.909 371.492 238.2" stroke="#214B39" stroke-width="5" stroke-linecap="round"/>
+</svg>

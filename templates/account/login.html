@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Login | Plant Disease System{% endblock %}
+
+{% block content %}
+<section class="auth-layout">
+    <div class="auth-copy">
+        <span class="eyebrow">Welcome Back</span>
+        <h1>Log in to continue reviewing crop health activity.</h1>
+        <p>
+            Access the dashboard, manage your account, and keep the disease detection workflow moving with a focused sign-in experience.
+        </p>
+    </div>
+
+    <div class="auth-card">
+        <h2>Login</h2>
+        <p class="card-intro">Enter your username and password to continue.</p>
+
+        {% if form.non_field_errors %}
+            <div class="form-alert">
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next_url }}">
+
+            <div class="field-group">
+                <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+                {{ form.username }}
+                {% for error in form.username.errors %}
+                    <p class="error-text">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <div class="field-group">
+                <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+                {{ form.password }}
+                {% for error in form.password.errors %}
+                    <p class="error-text">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">Login</button>
+        </form>
+
+        <p class="auth-footer">Need an account? <a href="{% url 'account:signup' %}">Create one</a></p>
+    </div>
+</section>
+{% endblock %}

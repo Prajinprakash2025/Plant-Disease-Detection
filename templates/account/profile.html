@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Profile | Plant Disease System{% endblock %}
+
+{% block content %}
+<section class="profile-layout">
+    <aside class="profile-card">
+        <div class="profile-avatar">
+            {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+        </div>
+        <span class="eyebrow">Account Overview</span>
+        <h1>{{ request.user.get_full_name|default:request.user.username }}</h1>
+        <p class="profile-subtitle">@{{ request.user.username }}</p>
+
+        <dl class="profile-meta">
+            <div>
+                <dt>Email</dt>
+                <dd>{{ request.user.email|default:"Not added yet" }}</dd>
+            </div>
+            <div>
+                <dt>Joined</dt>
+                <dd>{{ joined_date|date:"M d, Y" }}</dd>
+            </div>
+            <div>
+                <dt>Last login</dt>
+                <dd>{% if last_login %}{{ last_login|date:"M d, Y h:i A" }}{% else %}First session{% endif %}</dd>
+            </div>
+            <div>
+                <dt>Completion</dt>
+                <dd>{{ profile_completion }}% ready</dd>
+            </div>
+            <div>
+                <dt>Plan</dt>
+                <dd>{{ leaf_quota.plan_name }}</dd>
+            </div>
+            <div>
+                <dt>Leaf scans</dt>
+                <dd>{{ leaf_quota.remaining_label }}</dd>
+            </div>
+        </dl>
+
+        <div class="progress-shell" aria-label="Profile completion">
+            <div class="progress-bar" style="width: {{ profile_completion }}%;"></div>
+        </div>
+
+        <div class="profile-art-card">
+            <img
+                src="{% static 'images/profile-plant.svg' %}"
+                alt="Illustration of a grower profile and healthy crop"
+                class="profile-artwork"
+            >
+        </div>
+
+        <div class="profile-shortcuts">
+            <a href="{% url 'dashboard:home' %}" class="btn btn-secondary btn-block">Open dashboard</a>
+            <a href="{% url 'account:membership' %}" class="btn btn-primary btn-block">Membership</a>
+            <a href="{% url 'account:home' %}" class="btn btn-ghost btn-block">Back to home</a>
+        </div>
+    </aside>
+
+    <div class="profile-editor">
+        <span class="eyebrow">Edit Details</span>
+        <h2>Keep your account information current.</h2>
+        <p class="card-intro">Update the details used across the plant disease system interface.</p>
+
+        <div class="editor-banner">
+            <div>
+                <strong>Profile status</strong>
+                <span>Your account details help personalize dashboard actions and future diagnosis history.</span>
+            </div>
+            <img
+                src="{% static 'images/leaf-hero.svg' %}"
+                alt="Decorative plant workflow illustration"
+                class="editor-banner-image"
+            >
+        </div>
+
+        {% if form.non_field_errors %}
+            <div class="form-alert">
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+
+            <div class="form-grid">
+                <div class="field-group">
+                    <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+                    {{ form.first_name }}
+                    {% for error in form.first_name.errors %}
+                        <p class="error-text">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+                <div class="field-group">
+                    <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
+                    {{ form.last_name }}
+                    {% for error in form.last_name.errors %}
+                        <p class="error-text">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="field-group">
+                <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+                {{ form.username }}
+                {% for error in form.username.errors %}
+                    <p class="error-text">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <div class="field-group">
+                <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                {{ form.email }}
+                {% for error in form.email.errors %}
+                    <p class="error-text">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save profile</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

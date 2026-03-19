@@ -1,0 +1,128 @@
+{% extends "adminpanel/base.html" %}
+{% load static %}
+
+{% block title %}Admin Overview | Plant Disease System{% endblock %}
+{% block page_title %}Overview{% endblock %}
+
+{% block content %}
+<section class="admin-hero">
+    <div class="admin-hero-copy">
+        <span class="admin-kicker">Platform Control</span>
+        <h2>Run the product from a single staff dashboard.</h2>
+        <p>
+            Review account growth, block or reactivate users, monitor support requests, and jump into the right admin workflow without touching the public site navigation.
+        </p>
+        <div class="admin-hero-actions">
+            <a href="{% url 'adminpanel:users' %}" class="admin-btn admin-btn-primary">Manage users</a>
+            <a href="{% url 'adminpanel:messages' %}" class="admin-btn admin-btn-secondary">Review messages</a>
+        </div>
+    </div>
+    <div class="admin-hero-art">
+        <img src="{% static 'images/admin-hub.svg' %}" alt="Illustration of an admin dashboard overview" class="admin-hero-image">
+    </div>
+</section>
+
+<section class="admin-metric-grid">
+    <article class="admin-stat-card">
+        <span>Total users</span>
+        <strong>{{ total_users }}</strong>
+        <small>{{ new_users_this_week }} joined in the last 7 days</small>
+    </article>
+    <article class="admin-stat-card">
+        <span>Active users</span>
+        <strong>{{ active_users }}</strong>
+        <small>{{ blocked_users }} currently blocked</small>
+    </article>
+    <article class="admin-stat-card">
+        <span>Staff accounts</span>
+        <strong>{{ staff_users }}</strong>
+        <small>Separate admin access accounts</small>
+    </article>
+    <article class="admin-stat-card">
+        <span>Open messages</span>
+        <strong>{{ unresolved_messages }}</strong>
+        <small>Support or contact requests pending</small>
+    </article>
+</section>
+
+<section class="admin-grid">
+    <article class="admin-panel">
+        <div class="admin-panel-head">
+            <div>
+                <span class="admin-kicker">Recent users</span>
+                <h3>Latest account activity</h3>
+            </div>
+            <a href="{% url 'adminpanel:users' %}" class="admin-text-link">Full user list</a>
+        </div>
+
+        <div class="admin-list">
+            {% for user in recent_users %}
+                <div class="admin-list-row">
+                    <div>
+                        <strong>{{ user.get_full_name|default:user.username }}</strong>
+                        <span>{{ user.email|default:"No email" }}</span>
+                    </div>
+                    <div class="admin-row-meta">
+                        <span class="admin-badge {% if user.is_active %}admin-badge-success{% else %}admin-badge-danger{% endif %}">
+                            {% if user.is_active %}Active{% else %}Blocked{% endif %}
+                        </span>
+                        <span class="admin-badge {% if user.is_staff %}admin-badge-accent{% else %}admin-badge-neutral{% endif %}">
+                            {% if user.is_staff %}Staff{% else %}User{% endif %}
+                        </span>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="admin-empty">No users available yet.</p>
+            {% endfor %}
+        </div>
+    </article>
+
+    <article class="admin-panel">
+        <div class="admin-panel-head">
+            <div>
+                <span class="admin-kicker">Contact queue</span>
+                <h3>Latest incoming messages</h3>
+            </div>
+            <a href="{% url 'adminpanel:messages' %}" class="admin-text-link">Open message center</a>
+        </div>
+
+        <div class="admin-list">
+            {% for item in recent_messages %}
+                <div class="admin-list-row admin-list-row-stacked">
+                    <div>
+                        <strong>{{ item.subject }}</strong>
+                        <span>{{ item.name }} · {{ item.email }}</span>
+                    </div>
+                    <div class="admin-row-meta admin-row-meta-wrap">
+                        <span class="admin-badge {% if item.is_resolved %}admin-badge-success{% else %}admin-badge-warning{% endif %}">
+                            {% if item.is_resolved %}Resolved{% else %}Open{% endif %}
+                        </span>
+                        <span>{{ item.created_at|date:"M d, Y h:i A" }}</span>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="admin-empty">No messages submitted yet.</p>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+
+<section class="admin-secondary-grid">
+    <article class="admin-panel admin-panel-visual">
+        <div>
+            <span class="admin-kicker">User control</span>
+            <h3>Block, unblock, and assign staff access.</h3>
+            <p>Use the user management page to moderate accounts and control who can enter the admin area.</p>
+        </div>
+        <img src="{% static 'images/admin-users.svg' %}" alt="Illustration of admin user management tools" class="admin-inline-image">
+    </article>
+    <article class="admin-panel admin-panel-visual">
+        <div>
+            <span class="admin-kicker">Message triage</span>
+            <h3>Track unresolved contact requests.</h3>
+            <p>Every public contact submission is stored and can be marked resolved or reopened from the admin interface.</p>
+        </div>
+        <img src="{% static 'images/lab-analysis.svg' %}" alt="Illustration of message monitoring and analysis" class="admin-inline-image">
+    </article>
+</section>
+{% endblock %}

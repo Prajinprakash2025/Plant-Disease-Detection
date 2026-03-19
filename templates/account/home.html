@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Home | Plant Disease System{% endblock %}
+
+{% block content %}
+<section class="hero-grid">
+    <div class="hero-copy">
+        <span class="eyebrow">Crop Intelligence Platform</span>
+        <h1>Spot plant disease early, organize field work, and keep growers one step ahead.</h1>
+        <p class="lead">
+            Build a smoother workflow around leaf image diagnosis, treatment planning, and grower account management.
+            This starter UI gives your plant disease system a polished front door for every user.
+        </p>
+        <div class="hero-actions">
+            {% if request.user.is_authenticated %}
+                <a href="{% url 'dashboard:home' %}" class="btn btn-primary">Open dashboard</a>
+                <a href="{% url 'account:profile' %}" class="btn btn-secondary">Manage profile</a>
+            {% else %}
+                <a href="{% url 'account:signup' %}" class="btn btn-primary">Create account</a>
+                <a href="{% url 'account:login' %}" class="btn btn-secondary">Login</a>
+            {% endif %}
+        </div>
+        <div class="metric-row">
+            <article class="metric-card">
+                <strong>3-step flow</strong>
+                <span>Upload, review, respond</span>
+            </article>
+            <article class="metric-card">
+                <strong>Clean access</strong>
+                <span>Home, auth, profile, dashboard</span>
+            </article>
+            <article class="metric-card">
+                <strong>Mobile ready</strong>
+                <span>Responsive cards and forms</span>
+            </article>
+        </div>
+    </div>
+
+    <div class="hero-panel">
+        <div class="panel-surface">
+            <span class="panel-badge">Field Workflow</span>
+            <h2>Daily disease monitoring, without the clutter.</h2>
+            <div class="hero-visual-frame">
+                <img
+                    src="{% static 'images/leaf-hero.svg' %}"
+                    alt="Illustration of crop monitoring and disease detection"
+                    class="hero-visual"
+                >
+            </div>
+            <ul class="feature-list">
+                <li>Farmer-friendly onboarding with login and signup pages.</li>
+                <li>Profile page for account details and ongoing access management.</li>
+                <li>Dashboard entry point ready for image upload and diagnosis modules.</li>
+            </ul>
+            <div class="mini-grid">
+                <div class="mini-card">
+                    <span>Status</span>
+                    <strong>UI Ready</strong>
+                </div>
+                <div class="mini-card">
+                    <span>Focus</span>
+                    <strong>Leaf Disease Detection</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section-grid">
+    <article class="section-card">
+        <span class="section-number">01</span>
+        <h3>Grower onboarding</h3>
+        <p>New users can register quickly, return users can sign in, and everyone lands in a consistent product experience.</p>
+    </article>
+    <article class="section-card">
+        <span class="section-number">02</span>
+        <h3>Account visibility</h3>
+        <p>The profile page gives users a single place to review identity details, account timing, and personal settings.</p>
+    </article>
+    <article class="section-card">
+        <span class="section-number">03</span>
+        <h3>Action-oriented dashboard</h3>
+        <p>The dashboard layout is positioned for your next step: image uploads, prediction results, and treatment notes.</p>
+    </article>
+</section>
+
+<section class="showcase-grid">
+    <article class="media-card media-card-wide">
+        <div class="media-copy">
+            <span class="eyebrow">Visual Direction</span>
+            <h2>Built for modern agriculture interfaces.</h2>
+            <p>
+                The UI uses warm neutrals, crop-inspired greens, and large content panels so diagnosis features can expand cleanly as your project grows.
+            </p>
+        </div>
+        <img
+            src="{% static 'images/lab-analysis.svg' %}"
+            alt="Illustration of plant analysis and dashboard reporting"
+            class="media-image"
+        >
+    </article>
+    <article class="media-card">
+        <img
+            src="{% static 'images/contact-grower.svg' %}"
+            alt="Illustration of a grower reaching out for support"
+            class="media-image media-image-compact"
+        >
+        <div class="mini-card mini-card-text">
+            <span>New pages</span>
+            <strong>About, Contact, Profile</strong>
+        </div>
+    </article>
+</section>
+
+<section class="story-band">
+    <div>
+        <span class="eyebrow">Why this fits</span>
+        <h2>A more complete frontend for your plant disease system.</h2>
+    </div>
+    <p>
+        The interface uses an earthy color system, strong hierarchy, and reusable form styles so your project feels focused on agriculture instead of generic admin screens.
+    </p>
+</section>
+{% endblock %}

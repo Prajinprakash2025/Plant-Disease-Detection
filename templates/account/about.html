@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}About | Plant Disease System{% endblock %}
+
+{% block content %}
+<section class="content-hero">
+    <div class="content-copy">
+        <span class="eyebrow">About The Platform</span>
+        <h1>Designed to make plant disease detection clearer, faster, and easier to act on.</h1>
+        <p class="lead">
+            Plant Disease System is a focused web experience for growers, students, and agricultural teams who need a clean workflow around crop diagnosis and account management.
+        </p>
+    </div>
+    <div class="content-illustration-card">
+        <img
+            src="{% static 'images/lab-analysis.svg' %}"
+            alt="Illustration of plant diagnosis and analysis"
+            class="content-illustration"
+        >
+    </div>
+</section>
+
+<section class="section-grid">
+    <article class="section-card">
+        <span class="section-number">01</span>
+        <h3>Diagnosis-first workflow</h3>
+        <p>The interface is structured around the core plant disease task: upload, inspect, interpret, and respond.</p>
+    </article>
+    <article class="section-card">
+        <span class="section-number">02</span>
+        <h3>Grower-friendly access</h3>
+        <p>Signup, login, profile editing, and dashboard access are all kept simple enough for real users, not only developers.</p>
+    </article>
+    <article class="section-card">
+        <span class="section-number">03</span>
+        <h3>Ready for expansion</h3>
+        <p>This foundation is prepared for image upload modules, disease classification results, recommendations, and report history.</p>
+    </article>
+</section>
+
+<section class="highlight-panel">
+    <div class="highlight-copy">
+        <span class="eyebrow">What Makes It Useful</span>
+        <h2>One interface for monitoring, user access, and future prediction features.</h2>
+        <p>
+            Instead of separate-looking pages, the design now shares one visual system across home, account pages, and dashboard screens. That makes the project feel much closer to a finished product.
+        </p>
+    </div>
+    <div class="info-grid">
+        <article class="info-tile">
+            <strong>Responsive layout</strong>
+            <span>Works cleanly on desktop and mobile screens.</span>
+        </article>
+        <article class="info-tile">
+            <strong>Local artwork</strong>
+            <span>SVG illustrations are stored in the project and load without third-party dependencies.</span>
+        </article>
+        <article class="info-tile">
+            <strong>Reusable patterns</strong>
+            <span>Cards, forms, and navigation are consistent across pages.</span>
+        </article>
+        <article class="info-tile">
+            <strong>Easy next step</strong>
+            <span>You can now connect the actual disease prediction module into the dashboard flow.</span>
+        </article>
+    </div>
+</section>
+{% endblock %}
