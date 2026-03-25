@@ -31,7 +31,7 @@ media/
 # DATABASE (optional)
 # =========================
 # Uncomment if you DON'T want DB in repo
-# db.sqlite3
+db.sqlite3
 
 # =========================
 # IDE / OS
