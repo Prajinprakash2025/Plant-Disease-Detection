@@ -1,7 +1,6 @@
 # =========================
 # ENV / SECRETS
 # =========================
-.env
 *.env
 .gemini_api_key
 
@@ -28,10 +27,23 @@ staticfiles/
 media/
 
 # =========================
-# DATABASE (optional)
+# DATABASE
 # =========================
-# Uncomment if you DON'T want DB in repo
 db.sqlite3
+
+# =========================
+# ML (IGNORE HEAVY DATA ONLY)
+# =========================
+ml_testing/data/
+ml_testing/artifacts/
+ml_testing/logs/
+ml_testing/*.zip
+
+# ❌ DO NOT IGNORE trained_models completely
+# Keep model files (.h5) but ignore unnecessary files
+ml_testing/trained_models/*.keras
+ml_testing/trained_models/*.pt
+ml_testing/trained_models/*.pth
 
 # =========================
 # IDE / OS
@@ -41,20 +53,5 @@ db.sqlite3
 .DS_Store
 Thumbs.db
 
-# =========================
-# ML / TRAINING (optional)
-# =========================
-# Uncomment if models are large
-# ml_testing/trained_models/
-# ml_testing/data/
 
-# python cache
-__pycache__/
-
-# ML heavy stuff
-ml_testing/data/
-ml_testing/artifacts/
-ml_testing/trained_models/
-
-# optional: large media uploads
-media/uploads/
+reshma
