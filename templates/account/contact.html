@@ -1,90 +1,156 @@
 {% extends "base.html" %}
 {% load static %}
-
-{% block title %}Contact | Plant Disease System{% endblock %}
+{% block title %}Contact | PlantGuard{% endblock %}
 
 {% block content %}
-<section class="contact-layout">
-    <div class="contact-panel">
-        <span class="eyebrow">Contact Us</span>
-        <h1>Talk to the team behind your plant disease system.</h1>
-        <p class="lead">
-            Use this page for project questions, support requests, or collaboration around crop diagnosis features and dashboard improvements.
-        </p>
-
-        <div class="contact-card-stack">
-            <article class="contact-info-card">
-                <strong>Email support</strong>
-                <span>support@plantdisease.local</span>
-            </article>
-            <article class="contact-info-card">
-                <strong>Office hours</strong>
-                <span>Mon to Sat, 9:00 AM to 6:00 PM</span>
-            </article>
-            <article class="contact-info-card">
-                <strong>Project scope</strong>
-                <span>Leaf disease detection, farmer accounts, and diagnosis workflows</span>
-            </article>
+<!-- Contact hero -->
+<section class="relative overflow-hidden rounded-3xl mb-10"
+    style="background: linear-gradient(135deg, #0d1f0f 0%, #0f2a14 40%, #132416 100%);">
+    <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_15%_20%,#00e87e,transparent_45%),radial-gradient(circle_at_85%_15%,#84cc16,transparent_40%)]"></div>
+    <div class="relative grid lg:grid-cols-[1.05fr_0.95fr] gap-8 items-center p-8 md:p-12">
+        <div class="space-y-6">
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest"
+                style="background:rgba(0,200,98,0.12); color:#00e87e; border:1px solid rgba(0,200,98,0.2)">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+                Contact PlantGuard
+            </div>
+            <h1 class="font-serif text-4xl md:text-5xl text-white leading-[1.1]">We reply with real agronomy help, not canned emails.</h1>
+            <p class="text-base leading-relaxed max-w-2xl" style="color:rgba(255,255,255,0.72)">
+                Tell us what you’re trying to grow, the symptoms you see, or the feature you want. The team blends CNN + Gemini outputs with agronomist review so you get a confident plan.
+            </p>
+            <div class="grid sm:grid-cols-3 gap-3">
+                <div class="rounded-xl p-4" style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12)">
+                    <p class="text-xs uppercase tracking-wide mb-1" style="color:rgba(255,255,255,0.6)">Support</p>
+                    <p class="text-white font-semibold text-sm">support@plantguard.ai</p>
+                </div>
+                <div class="rounded-xl p-4" style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12)">
+                    <p class="text-xs uppercase tracking-wide mb-1" style="color:rgba(255,255,255,0.6)">Hours</p>
+                    <p class="text-white font-semibold text-sm">Mon–Sat · 9:00–18:00</p>
+                </div>
+                <div class="rounded-xl p-4" style="background:rgba(0,200,98,0.12); border:1px solid rgba(0,200,98,0.22)">
+                    <p class="text-xs uppercase tracking-wide mb-1" style="color:rgba(255,255,255,0.8)">Response</p>
+                    <p class="text-white font-semibold text-sm">Avg reply: 2 hrs</p>
+                </div>
+            </div>
+            <div class="flex flex-wrap gap-3 text-xs font-semibold" style="color:rgba(255,255,255,0.55)">
+                <span class="inline-flex items-center gap-2"><i data-lucide="sprout" class="w-4 h-4" style="color:#00c062"></i> Crop onboarding</span>
+                <span class="inline-flex items-center gap-2"><i data-lucide="life-buoy" class="w-4 h-4" style="color:#00c062"></i> Priority support</span>
+                <span class="inline-flex items-center gap-2"><i data-lucide="brain-circuit" class="w-4 h-4" style="color:#00c062"></i> Model fine-tuning</span>
+            </div>
         </div>
 
-        <div class="content-illustration-card content-illustration-card-soft">
-            <img
-                src="{% static 'images/contact-grower.svg' %}"
-                alt="Illustration of a grower contacting a support team"
-                class="content-illustration"
-            >
+        <div class="relative">
+            <div class="rounded-2xl bg-white shadow-2xl border border-gray-100 p-7">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center"
+                        style="background:linear-gradient(135deg,#00e87e,#00c062); color:#0a1a0c">
+                        <i data-lucide="message-square" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Send a message</p>
+                        <p class="font-bold text-gray-900">We reply in hours, not days.</p>
+                    </div>
+                </div>
+
+                {% if form.non_field_errors %}
+                    <div class="rounded-xl border border-red-200 bg-red-50 text-red-700 p-3 text-sm mb-3">
+                        {% for error in form.non_field_errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <form method="post" class="space-y-4">
+                    {% csrf_token %}
+
+                    <div>
+                        <label for="{{ form.name.id_for_label }}" class="text-sm font-semibold text-gray-800 mb-1 block">Your name</label>
+                        {{ form.name }}
+                        {% for error in form.name.errors %}
+                            <p class="text-red-600 text-xs mt-1">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+
+                    <div class="grid sm:grid-cols-2 gap-3">
+                        <div>
+                            <label for="{{ form.email.id_for_label }}" class="text-sm font-semibold text-gray-800 mb-1 block">Email</label>
+                            {{ form.email }}
+                            {% for error in form.email.errors %}
+                                <p class="text-red-600 text-xs mt-1">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        <div>
+                            <label for="{{ form.subject.id_for_label }}" class="text-sm font-semibold text-gray-800 mb-1 block">Subject</label>
+                            {{ form.subject }}
+                            {% for error in form.subject.errors %}
+                                <p class="text-red-600 text-xs mt-1">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="{{ form.message.id_for_label }}" class="text-sm font-semibold text-gray-800 mb-1 block">Message</label>
+                        {{ form.message }}
+                        {% for error in form.message.errors %}
+                            <p class="text-red-600 text-xs mt-1">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-full justify-center">
+                        <i data-lucide="send" class="w-4 h-4"></i> Send message
+                    </button>
+                </form>
+            </div>
+            <div class="absolute -top-4 -right-4 px-3 py-2 rounded-xl text-xs font-bold shadow-lg"
+                style="background:linear-gradient(135deg,#00c062,#009650); color:#fff">
+                <i data-lucide="sparkles" class="w-3 h-3 inline mr-1"></i> Avg response: 2 hrs
+            </div>
         </div>
     </div>
+</section>
 
-    <div class="auth-card contact-form-card">
-        <h2>Send a message</h2>
-        <p class="card-intro">Share your requirement and we will follow up.</p>
-
-        {% if form.non_field_errors %}
-            <div class="form-alert">
-                {% for error in form.non_field_errors %}
-                    <p>{{ error }}</p>
-                {% endfor %}
+<!-- FAQ style cards -->
+<section class="grid md:grid-cols-3 gap-4 mb-10">
+    <article class="card card-hover p-6">
+        <div class="flex items-center gap-3 mb-2">
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:#ecfdf3; color:#047857">
+                <i data-lucide="leaf" class="w-5 h-5"></i>
             </div>
-        {% endif %}
-
-        <form method="post" class="auth-form">
-            {% csrf_token %}
-
-            <div class="field-group">
-                <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
-                {{ form.name }}
-                {% for error in form.name.errors %}
-                    <p class="error-text">{{ error }}</p>
-                {% endfor %}
+            <h3 class="font-bold text-gray-900">Crop coverage</h3>
+        </div>
+        <p class="text-sm text-gray-600 leading-relaxed">Tomato, potato, rice, wheat, maize, and more. Tell us which crop to prioritize next.</p>
+    </article>
+    <article class="card card-hover p-6">
+        <div class="flex items-center gap-3 mb-2">
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:#ecfdf3; color:#047857">
+                <i data-lucide="shield-check" class="w-5 h-5"></i>
             </div>
-
-            <div class="field-group">
-                <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
-                {{ form.email }}
-                {% for error in form.email.errors %}
-                    <p class="error-text">{{ error }}</p>
-                {% endfor %}
+            <h3 class="font-bold text-gray-900">Data privacy</h3>
+        </div>
+        <p class="text-sm text-gray-600 leading-relaxed">Uploads stay in your workspace. We only use anonymized samples when you explicitly opt in.</p>
+    </article>
+    <article class="card card-hover p-6">
+        <div class="flex items-center gap-3 mb-2">
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:#ecfdf3; color:#047857">
+                <i data-lucide="clock-3" class="w-5 h-5"></i>
             </div>
+            <h3 class="font-bold text-gray-900">Support tiers</h3>
+        </div>
+        <p class="text-sm text-gray-600 leading-relaxed">Standard email support for free plans; priority Slack/WhatsApp for paid teams.</p>
+    </article>
+</section>
 
-            <div class="field-group">
-                <label for="{{ form.subject.id_for_label }}">{{ form.subject.label }}</label>
-                {{ form.subject }}
-                {% for error in form.subject.errors %}
-                    <p class="error-text">{{ error }}</p>
-                {% endfor %}
-            </div>
-
-            <div class="field-group">
-                <label for="{{ form.message.id_for_label }}">{{ form.message.label }}</label>
-                {{ form.message }}
-                {% for error in form.message.errors %}
-                    <p class="error-text">{{ error }}</p>
-                {% endfor %}
-            </div>
-
-            <button type="submit" class="btn btn-primary">Send message</button>
-        </form>
+<!-- CTA -->
+<section class="rounded-2xl p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-6"
+    style="background:linear-gradient(135deg,#00c062,#009650); box-shadow:0 20px 50px rgba(0,192,98,0.35);">
+    <div class="text-white space-y-2">
+        <p class="text-xs font-semibold uppercase tracking-[0.25em]">Need a human agronomist?</p>
+        <h3 class="text-2xl font-black">Book a 20-minute crop health call.</h3>
+        <p class="text-sm opacity-85 max-w-xl">Walk through symptoms, get a verified diagnosis, and leave with a 7-day action plan.</p>
+    </div>
+    <div class="flex gap-3">
+        <a href="mailto:support@plantguard.ai" class="btn btn-ghost">Email us</a>
+        <a href="{% url 'account:membership' %}" class="btn btn-primary">See plans</a>
     </div>
 </section>
 {% endblock %}

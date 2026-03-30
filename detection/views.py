@@ -3,6 +3,7 @@ import mimetypes
 import os
 import re
 import subprocess
+import threading
 from collections import Counter
 from pathlib import Path
 
@@ -22,6 +23,16 @@ from .models import Diagnosis, Disease, LeafDiagnosis
 
 MODEL = None
 CLASS_NAMES = None
+_MODEL_LOCK = threading.Lock()
+SUPPORTED_TRANSLATION_LANGUAGES = {
+    "en": "English",
+    "ml": "Malayalam",
+    "hi": "Hindi",
+    "ta": "Tamil",
+    "te": "Telugu",
+    "kn": "Kannada",
+    "ar": "Arabic",
+}
 
 
 def _get_model_path():
@@ -292,6 +303,116 @@ def _format_treatment_lines(text):
     return formatted_lines
 
 
+def _normalize_translation_payload(original_payload, translated_payload):
+    if not isinstance(original_payload, dict):
+        return {}
+
+    safe_payload = {
+        "result_labels": dict(original_payload.get("result_labels") or {}),
+        "result_values": dict(original_payload.get("result_values") or {}),
+        "treatment_title": str(
+            original_payload.get("treatment_title") or "Treatment plan"
+        ),
+        "treatment_items": [
+            {
+                "text": str(item.get("text") or ""),
+                "kind": str(item.get("kind") or "text"),
+            }
+            for item in (original_payload.get("treatment_items") or [])
+            if isinstance(item, dict)
+        ],
+    }
+
+    if not isinstance(translated_payload, dict):
+        return safe_payload
+
+    translated_labels = translated_payload.get("result_labels")
+    if isinstance(translated_labels, dict):
+        for key, original_value in safe_payload["result_labels"].items():
+            safe_payload["result_labels"][key] = str(
+                translated_labels.get(key) or original_value
+            )
+
+    translated_values = translated_payload.get("result_values")
+    if isinstance(translated_values, dict):
+        for key, original_value in safe_payload["result_values"].items():
+            safe_payload["result_values"][key] = str(
+                translated_values.get(key) or original_value
+            )
+
+    translated_title = translated_payload.get("treatment_title")
+    if translated_title:
+        safe_payload["treatment_title"] = str(translated_title)
+
+    translated_items = translated_payload.get("treatment_items")
+    if isinstance(translated_items, list):
+        normalized_items = []
+        for index, original_item in enumerate(safe_payload["treatment_items"]):
+            translated_item = (
+                translated_items[index]
+                if index < len(translated_items) and isinstance(translated_items[index], dict)
+                else {}
+            )
+            normalized_items.append(
+                {
+                    "text": str(translated_item.get("text") or original_item["text"]),
+                    "kind": original_item["kind"],
+                }
+            )
+        safe_payload["treatment_items"] = normalized_items
+
+    return safe_payload
+
+
+def _translate_diagnosis_payload(payload, target_lang):
+    if target_lang == "en":
+        return _normalize_translation_payload(payload, payload)
+
+    language_name = SUPPORTED_TRANSLATION_LANGUAGES.get(target_lang)
+    if not language_name:
+        raise ValueError("Unsupported translation language.")
+
+    client = _get_gemini_client()
+
+    try:
+        from google.genai import types
+    except ImportError as exc:
+        raise RuntimeError(
+            "google-genai is not installed in the Django environment."
+        ) from exc
+
+    prompt = (
+        f"Translate this plant diagnosis UI content from English to {language_name}.\n"
+        "Return JSON only.\n"
+        "Rules:\n"
+        "- Preserve the same keys and overall JSON structure.\n"
+        "- Keep all treatment_items in the same order.\n"
+        "- Preserve each treatment_items.kind value exactly as provided.\n"
+        "- Translate user-facing labels, values, and treatment text.\n"
+        "- Keep numbers and percentages unchanged.\n"
+        "- If a crop or disease does not have a natural translation, transliterate it or keep the English term.\n\n"
+        f"{json.dumps(payload, ensure_ascii=False)}"
+    )
+
+    response = client.models.generate_content(
+        model=getattr(settings, "GEMINI_MODEL_NAME", "gemini-2.5-flash"),
+        contents=[prompt],
+        config=types.GenerateContentConfig(temperature=0),
+    )
+
+    translated_text = (getattr(response, "text", "") or "").strip()
+    translated_fragment = _extract_json_fragment(translated_text)
+    if not translated_fragment:
+        raise RuntimeError("Translation service returned an empty response.")
+
+    try:
+        translated_payload = json.loads(translated_fragment)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError("Translation service returned invalid JSON.") from exc
+
+    return _normalize_translation_payload(payload, translated_payload)
+
+
 def _build_prediction_error(local_error=None, gemini_error=None):
     message_parts = ["Prediction is currently unavailable."]
     if local_error:
@@ -311,24 +432,29 @@ def _load_prediction_assets():
     if MODEL is not None and CLASS_NAMES is not None:
         return MODEL, CLASS_NAMES
 
-    try:
-        import tensorflow as tf
-    except ImportError as exc:
-        raise RuntimeError(
-            "TensorFlow is not installed in the Django environment."
-        ) from exc
+    with _MODEL_LOCK:
+        # Double-check after acquiring lock
+        if MODEL is not None and CLASS_NAMES is not None:
+            return MODEL, CLASS_NAMES
 
-    model_path = _get_model_path()
-    class_names_path = _get_class_names_path()
+        try:
+            import tensorflow as tf
+        except ImportError as exc:
+            raise RuntimeError(
+                "TensorFlow is not installed in the Django environment."
+            ) from exc
 
-    if not model_path.exists():
-        raise RuntimeError(f"Model file not found: {model_path}")
-    if not class_names_path.exists():
-        raise RuntimeError(f"Class names file not found: {class_names_path}")
+        model_path = _get_model_path()
+        class_names_path = _get_class_names_path()
 
-    MODEL = tf.keras.models.load_model(model_path)
-    with class_names_path.open(encoding="utf-8") as class_file:
-        CLASS_NAMES = json.load(class_file)
+        if not model_path.exists():
+            raise RuntimeError(f"Model file not found: {model_path}")
+        if not class_names_path.exists():
+            raise RuntimeError(f"Class names file not found: {class_names_path}")
+
+        MODEL = tf.keras.models.load_model(model_path)
+        with class_names_path.open(encoding="utf-8") as class_file:
+            CLASS_NAMES = json.load(class_file)
 
     return MODEL, CLASS_NAMES
 
@@ -565,119 +691,42 @@ def generate_treatment_guidance(disease_name, disease_record=None, plant_name="U
         lines.extend(f"- {point}" for point in preventive_points)
         return "\n".join(lines)
 
-    # Fallback for unknown disease not in the DB, ask Gemini to generate structure
-    client = _get_gemini_client()
-    try:
-        from google.genai import types
-        prompt = (
-            f"Create a short structured agricultural treatment plan for a plant called '{plant_name}' "
-            f"with the disease '{disease_name}'.\n\n"
-            "Format your response EXACTLY with these headings and bullet points below them:\n\n"
-            "Plant:\n"
-            "<plant name>\n\n"
-            "Disease:\n"
-            "<disease name>\n\n"
-            "Severity:\n"
-            "<Low / Moderate / Severe>\n\n"
-            "Symptoms:\n"
-            "- <symptom 1>\n"
-            "- <symptom 2>\n\n"
-            "Possible Causes:\n"
-            "- <cause 1>\n"
-            "- <cause 2>\n\n"
-            "Treatment:\n"
-            "- <treatment 1>\n"
-            "- <treatment 2>\n\n"
-            "Prevention:\n"
-            "- <prevention step 1>\n"
-            "- <prevention step 2>\n"
-        )
-        response = client.models.generate_content(
-            model=getattr(settings, "GEMINI_MODEL_NAME", "gemini-2.5-flash"),
-            contents=[prompt],
-            config=types.GenerateContentConfig(temperature=0.2),
-        )
-        return (getattr(response, "text", "") or "").strip()
-    except Exception:
-        fallback_text = "\n".join(
-            [
-                f"Plant:\n{plant_name}",
-                "",
-                f"Disease:\n{disease_name}",
-                "",
-                "Severity:\nModerate",
-                "",
-                "Symptoms:\n- Typical signs of infection or environmental stress.",
-                "",
-                "Possible Causes:\n- Unknown pathogen or nutrient deficiency.",
-                "",
-                "Treatment:",
-                "- Remove visibly infected leaves and isolate affected plants.",
-                "- Avoid overhead watering and improve air circulation around the crop.",
-                "- Use a crop-appropriate treatment and confirm with a local agricultural expert.",
-                "",
-                "Prevention:",
-                "- Ensure proper plant spacing.",
-                "- Water plants at soil level.",
-                "- Monitor crops regularly.",
-            ]
-        )
-        return fallback_text
+    # Static fallback — no Gemini call here, treatment via Gemini is on-demand only
+    return "\n".join(
+        [
+            f"Plant:\n{plant_name}",
+            "",
+            f"Disease:\n{disease_name}",
+            "",
+            "Severity:\nModerate",
+            "",
+            "Symptoms:\n- Typical signs of infection or environmental stress.",
+            "",
+            "Possible Causes:\n- Unknown pathogen or nutrient deficiency.",
+            "",
+            "Treatment:",
+            "- Remove visibly infected leaves and isolate affected plants.",
+            "- Avoid overhead watering and improve air circulation around the crop.",
+            "- Use a crop-appropriate treatment and confirm with a local agricultural expert.",
+            "",
+            "Prevention:",
+            "- Ensure proper plant spacing.",
+            "- Water plants at soil level.",
+            "- Monitor crops regularly.",
+        ]
+    )
 
 
 def predict_leaf_disease(image_path):
-    threshold = float(getattr(settings, "LOCAL_MODEL_CONFIDENCE_THRESHOLD", 0.80))
-
-    local_result = None
-    local_error = None
-
+    """Always returns local model result immediately. Gemini is on-demand only."""
     try:
         local_result = _predict_with_local_model(image_path)
     except ValueError:
         raise
     except RuntimeError as exc:
-        local_error = exc
+        raise RuntimeError(_build_prediction_error(local_error=exc)) from exc
 
-    if local_result and (
-        local_result["confidence"] is None or local_result["confidence"] >= (threshold * 100)
-    ):
-        return local_result
-
-    low_confidence_note = None
-    if local_result and local_result["confidence"] is not None:
-        low_confidence_note = (
-            "Low-confidence local prediction "
-            f"({local_result['confidence']:.1f}%) requires Gemini verification."
-        )
-
-    try:
-        gemini_prediction = call_gemini_api(image_path)
-    except Exception as gemini_error:
-        if local_result:
-            local_result["warning"] = "Gemini verification unavailable. Using local prediction."
-            return local_result
-        raise RuntimeError(
-            _build_prediction_error(local_error=local_error, gemini_error=gemini_error)
-        ) from gemini_error
-
-    plant_name = gemini_prediction["plant_name"]
-    if (
-        plant_name.lower() == "unknown"
-        and local_result
-        and local_result.get("plant_name")
-        and local_result["plant_name"].lower() != "unknown"
-    ):
-        plant_name = local_result["plant_name"]
-
-    result = {
-        "plant_name": plant_name,
-        "disease": gemini_prediction["disease"],
-        "confidence": local_result["confidence"] if local_result else None,
-        "source": "gemini_api",
-    }
-    if low_confidence_note:
-        result["warning"] = low_confidence_note
-    return result
+    return local_result
 
 
 def diagnose_leaf_image(image_path):
@@ -694,6 +743,105 @@ def diagnose_leaf_image(image_path):
     prediction_result["treatment_guidance"] = treatment_guidance
     prediction_result["treatment_lines"] = _format_treatment_lines(treatment_guidance)
     return prediction_result
+
+
+def _gemini_treatment_plan(disease_name, plant_name):
+    """Ask Gemini for a rich treatment plan. Called only on user request."""
+    disease_record = _lookup_disease_record(disease_name, plant_name=plant_name)
+    if disease_record:
+        return generate_treatment_guidance(disease_name, disease_record=disease_record, plant_name=plant_name)
+    try:
+        client = _get_gemini_client()
+        from google.genai import types
+        prompt = (
+            f"Create a short structured agricultural treatment plan for '{plant_name}' with disease '{disease_name}'.\n"
+            "Use EXACTLY these headings:\nPlant:\nDisease:\nSeverity:\nSymptoms:\nPossible Causes:\nTreatment:\nPrevention:\n"
+            "Put bullet points under each heading. No markdown, no extra text."
+        )
+        response = client.models.generate_content(
+            model=getattr(settings, "GEMINI_MODEL_NAME", "gemini-2.0-flash"),
+            contents=[prompt],
+            config=types.GenerateContentConfig(temperature=0.2),
+        )
+        return (getattr(response, "text", "") or "").strip()
+    except Exception:
+        return generate_treatment_guidance(disease_name, plant_name=plant_name)
+
+
+@login_required
+def gemini_verify(request):
+    """On-demand Gemini verification called via AJAX from the result page."""
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed."}, status=405)
+
+    diagnosis_id = request.POST.get("diagnosis_id")
+    if not diagnosis_id:
+        return JsonResponse({"error": "Missing diagnosis_id."}, status=400)
+
+    try:
+        diagnosis_log = LeafDiagnosis.objects.get(pk=diagnosis_id, user=request.user)
+    except LeafDiagnosis.DoesNotExist:
+        return JsonResponse({"error": "Diagnosis not found."}, status=404)
+
+    try:
+        gemini_result = call_gemini_api(diagnosis_log.image.path)
+    except Exception as exc:
+        return JsonResponse({"error": str(exc)}, status=503)
+
+    plant_name = gemini_result["plant_name"]
+    if plant_name.lower() == "unknown" and diagnosis_log.plant_name:
+        plant_name = diagnosis_log.plant_name
+
+    disease_name = gemini_result["disease"]
+    treatment_guidance = _gemini_treatment_plan(disease_name, plant_name)
+    treatment_lines = _format_treatment_lines(treatment_guidance)
+
+    # Persist Gemini result back to the diagnosis log
+    diagnosis_log.plant_name = plant_name
+    diagnosis_log.predicted_disease = disease_name
+    diagnosis_log.source = "gemini_api"
+    diagnosis_log.treatment_guidance = treatment_guidance
+    diagnosis_log.save(update_fields=["plant_name", "predicted_disease", "source", "treatment_guidance"])
+
+    return JsonResponse({
+        "plant_name": plant_name,
+        "disease": disease_name,
+        "source": "gemini_api",
+        "treatment_lines": treatment_lines,
+    })
+
+
+@login_required
+def translate_diagnosis_content(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed."}, status=405)
+
+    try:
+        request_payload = json.loads(request.body.decode("utf-8"))
+    except (AttributeError, UnicodeDecodeError, json.JSONDecodeError):
+        return JsonResponse({"error": "Invalid JSON payload."}, status=400)
+
+    target_lang = str(request_payload.get("target_lang") or "").strip().lower()
+    if not target_lang:
+        return JsonResponse({"error": "Missing target language."}, status=400)
+
+    ui_payload = request_payload.get("payload")
+    if not isinstance(ui_payload, dict):
+        return JsonResponse({"error": "Missing diagnosis payload."}, status=400)
+
+    try:
+        translated_payload = _translate_diagnosis_payload(ui_payload, target_lang)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    except Exception as exc:
+        return JsonResponse({"error": str(exc)}, status=503)
+
+    return JsonResponse(
+        {
+            "target_lang": target_lang,
+            "payload": translated_payload,
+        }
+    )
 
 
 @login_required

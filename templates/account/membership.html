@@ -1,90 +1,190 @@
 {% extends "base.html" %}
 
-{% block title %}Membership | Plant Disease System{% endblock %}
+{% block title %}Membership | PlantGuard{% endblock %}
 
 {% block content %}
-<section class="content-hero membership-hero">
-    <div class="content-copy">
-        <span class="eyebrow">Membership</span>
-        <h1>Track free leaf checks and unlock the premium demo plan.</h1>
-        <p class="lead">
-            Each free account can run up to {{ leaf_quota.limit|default:"20" }} leaf analyses. When the free limit is finished, the user can switch to the premium demo plan to continue testing without blocking the workflow.
-        </p>
-        <div class="membership-stats">
-            <article class="membership-stat">
-                <span>Current plan</span>
-                <strong>{{ leaf_quota.plan_name }}</strong>
-            </article>
-            <article class="membership-stat">
-                <span>Scans used</span>
-                <strong>{{ leaf_quota.used }}</strong>
-            </article>
-            <article class="membership-stat">
-                <span>Remaining</span>
-                <strong>{{ leaf_quota.remaining_label }}</strong>
-            </article>
+<div class="space-y-10">
+    <section class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0d1f0f] via-[#12311a] to-[#1a4725] text-white shadow-[0_28px_80px_rgba(6,45,24,0.32)]">
+        <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_15%_20%,#00e87e,transparent_40%),radial-gradient(circle_at_85%_10%,#84cc16,transparent_36%)]"></div>
+        <div class="relative grid gap-8 lg:grid-cols-[1.1fr_0.9fr] p-8 md:p-12">
+            <div class="space-y-6">
+                <div class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.3em]">
+                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Membership
+                </div>
+                <div class="space-y-3">
+                    <h1 class="font-serif text-4xl md:text-5xl leading-tight">Choose how far your crop diagnosis workflow can go.</h1>
+                    <p class="max-w-2xl text-base leading-relaxed text-white/78">
+                        Track free leaf checks, watch scan usage in real time, and switch to premium demo mode when you need unlimited analysis without blocking your team.
+                    </p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <span class="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold">Quota tracking</span>
+                    <span class="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold">Instant plan switching</span>
+                    <span class="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold">Unlimited premium demo</span>
+                </div>
+                <div class="grid gap-3 sm:grid-cols-3">
+                    <div class="rounded-2xl border border-white/10 bg-white/10 p-4">
+                        <p class="text-xs uppercase tracking-wide text-white/65">Current plan</p>
+                        <p class="mt-1 text-xl font-bold text-white">{{ leaf_quota.plan_name }}</p>
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-white/10 p-4">
+                        <p class="text-xs uppercase tracking-wide text-white/65">Scans used</p>
+                        <p class="mt-1 text-xl font-bold text-white">{{ leaf_quota.used }}</p>
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-white/10 p-4">
+                        <p class="text-xs uppercase tracking-wide text-white/65">Remaining</p>
+                        <p class="mt-1 text-xl font-bold text-white">{{ leaf_quota.remaining_label }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="relative">
+                <div class="rounded-3xl border border-white/10 bg-white/10 p-6 backdrop-blur-xl shadow-2xl">
+                    <div class="mb-4 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-300">Usage meter</p>
+                            <h2 class="mt-1 text-2xl font-black text-white">{{ leaf_quota.usage_label }}</h2>
+                        </div>
+                        <span class="rounded-full px-3 py-1 text-xs font-semibold {% if leaf_quota.is_premium %}bg-emerald-500/20 text-emerald-100{% else %}bg-white/10 text-white/80{% endif %}">
+                            {% if leaf_quota.is_premium %}Premium active{% else %}Free active{% endif %}
+                        </span>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="rounded-2xl border border-white/10 bg-black/10 p-4">
+                            <div class="mb-2 flex items-center justify-between text-sm text-white/75">
+                                <span>Quota usage</span>
+                                <span>{{ leaf_quota.usage_percent }}%</span>
+                            </div>
+                            <div class="h-3 rounded-full bg-white/10">
+                                <div class="h-3 rounded-full bg-gradient-to-r from-emerald-300 to-green-400" style="width: {{ leaf_quota.usage_percent }}%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="rounded-2xl border border-white/10 bg-black/10 p-4">
+                                <p class="text-xs uppercase tracking-wide text-white/55">Plan mode</p>
+                                <p class="mt-1 text-lg font-bold text-white">{% if leaf_quota.is_premium %}Unlimited{% else %}Capped at {{ leaf_quota.limit|default:"20" }}{% endif %}</p>
+                            </div>
+                            <div class="rounded-2xl border border-white/10 bg-black/10 p-4">
+                                <p class="text-xs uppercase tracking-wide text-white/55">Best next step</p>
+                                <p class="mt-1 text-lg font-bold text-white">{% if leaf_quota.limit_reached %}Upgrade now{% else %}Keep scanning{% endif %}</p>
+                            </div>
+                        </div>
+
+                        <div class="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4">
+                            {% if leaf_quota.is_premium %}
+                                <p class="text-sm font-semibold text-emerald-100">Premium demo is active. You can keep analyzing leaves without the free-tier limit.</p>
+                            {% elif leaf_quota.limit_reached %}
+                                <p class="text-sm font-semibold text-emerald-100">Your free quota is finished. Activate premium demo to continue immediately.</p>
+                            {% else %}
+                                <p class="text-sm font-semibold text-emerald-100">{{ leaf_quota.remaining_label }}. The free plan is still enough for quick demos and early testing.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="absolute -top-4 -right-4 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 px-3 py-2 text-xs font-bold text-white shadow-lg">
+                    PlantGuard Plans
+                </div>
+            </div>
         </div>
-    </div>
+    </section>
 
-    <aside class="content-illustration-card membership-sidecard">
-        <span class="eyebrow">Usage Meter</span>
-        <h2>{{ leaf_quota.usage_label }}</h2>
-        <div class="progress-shell" aria-label="Membership usage progress">
-            <div class="progress-bar" style="width: {{ leaf_quota.usage_percent }}%;"></div>
-        </div>
-        <p class="card-intro">
-            {% if leaf_quota.is_premium %}
-                Premium demo is active for this account.
-            {% else %}
-                Upgrade to the premium demo plan to remove the free-tier scan cap.
-            {% endif %}
-        </p>
-    </aside>
-</section>
+    <section class="grid gap-6 xl:grid-cols-2">
+        <article class="relative overflow-hidden rounded-3xl border border-gray-200 bg-white p-7 shadow-[0_18px_50px_rgba(16,24,40,0.08)] {% if not leaf_quota.is_premium %}ring-2 ring-emerald-400/40{% endif %}">
+            <div class="absolute right-0 top-0 h-32 w-32 rounded-full bg-emerald-100/60 blur-3xl"></div>
+            <div class="relative">
+                <div class="mb-5 flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Free</p>
+                        <h2 class="mt-2 text-3xl font-black text-gray-900">Starter access</h2>
+                        <p class="mt-2 text-sm text-gray-600">Built for first-time testing, demos, and validating the diagnosis workflow before scaling up.</p>
+                    </div>
+                    <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">{{ leaf_quota.limit|default:"20" }} scans</span>
+                </div>
 
-<section class="membership-grid">
-    <article class="membership-card {% if not leaf_quota.is_premium %}membership-card-featured{% endif %}">
-        <span class="eyebrow">Free</span>
-        <h2>Starter access</h2>
-        <p class="card-intro">Good for demo accounts, first-time testing, and quick validation of the diagnosis flow.</p>
-        <strong class="membership-price">{{ leaf_quota.limit|default:"20" }} scans</strong>
-        <ul class="membership-list">
-            <li>Track up to {{ leaf_quota.limit|default:"20" }} leaf diagnoses per user</li>
-            <li>Local CNN plus Gemini fallback on low confidence</li>
-            <li>Recent diagnosis history and treatment guidance</li>
-        </ul>
+                <div class="mb-6 space-y-3">
+                    <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                        <p class="text-xs uppercase tracking-wide text-gray-500">What you get</p>
+                        <p class="mt-1 text-lg font-bold text-gray-900">Local CNN diagnostics with Gemini fallback on low confidence.</p>
+                    </div>
+                    <ul class="space-y-3 text-sm text-gray-700">
+                        <li class="flex gap-3"><span class="mt-1 h-2 w-2 rounded-full bg-emerald-500"></span><span>Track up to {{ leaf_quota.limit|default:"20" }} leaf diagnoses per user.</span></li>
+                        <li class="flex gap-3"><span class="mt-1 h-2 w-2 rounded-full bg-emerald-500"></span><span>Review recent diagnosis history and treatment guidance.</span></li>
+                        <li class="flex gap-3"><span class="mt-1 h-2 w-2 rounded-full bg-emerald-500"></span><span>Perfect for demos, onboarding, and feature validation.</span></li>
+                    </ul>
+                </div>
 
-        {% if leaf_quota.is_premium %}
-            <form method="post" class="auth-form">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="switch_free">
-                <button type="submit" class="btn btn-ghost">Switch to free plan</button>
-            </form>
-        {% else %}
-            <p class="membership-note">This is your current plan.</p>
-        {% endif %}
-    </article>
+                {% if leaf_quota.is_premium %}
+                    <form method="post" class="space-y-3">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="switch_free">
+                        <button type="submit" class="btn btn-ghost w-full justify-center">Switch to free plan</button>
+                    </form>
+                {% else %}
+                    <div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">
+                        This is your current plan.
+                    </div>
+                {% endif %}
+            </div>
+        </article>
 
-    <article class="membership-card membership-card-premium">
-        <span class="eyebrow">Premium Demo</span>
-        <h2>Unlimited testing</h2>
-        <p class="card-intro">A demo upgrade flow for users who need more diagnoses after the free plan is finished.</p>
-        <strong class="membership-price">Unlimited</strong>
-        <ul class="membership-list">
-            <li>Unlimited leaf analysis requests for this user</li>
-            <li>Priority upgrade messaging in the UI</li>
-            <li>Ready for future payment integration</li>
-        </ul>
+        <article class="relative overflow-hidden rounded-3xl border border-emerald-200 bg-gradient-to-br from-[#f5fff9] via-white to-[#ebfff5] p-7 shadow-[0_18px_50px_rgba(0,160,90,0.12)] {% if leaf_quota.is_premium %}ring-2 ring-emerald-400/40{% endif %}">
+            <div class="absolute right-0 top-0 h-40 w-40 rounded-full bg-emerald-200/60 blur-3xl"></div>
+            <div class="relative">
+                <div class="mb-5 flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Premium Demo</p>
+                        <h2 class="mt-2 text-3xl font-black text-gray-900">Unlimited testing</h2>
+                        <p class="mt-2 text-sm text-gray-600">Use this when the free limit ends or when you want uninterrupted scan testing across the full flow.</p>
+                    </div>
+                    <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">Unlimited</span>
+                </div>
 
-        {% if leaf_quota.is_premium %}
-            <p class="membership-note">Premium demo is already active.</p>
-        {% else %}
-            <form method="post" class="auth-form">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="activate_premium">
-                <button type="submit" class="btn btn-primary">Activate premium demo</button>
-            </form>
-        {% endif %}
-    </article>
-</section>
+                <div class="mb-6 space-y-3">
+                    <div class="rounded-2xl border border-emerald-100 bg-white/80 p-4">
+                        <p class="text-xs uppercase tracking-wide text-gray-500">What changes</p>
+                        <p class="mt-1 text-lg font-bold text-gray-900">The free-tier scan cap disappears for this account.</p>
+                    </div>
+                    <ul class="space-y-3 text-sm text-gray-700">
+                        <li class="flex gap-3"><span class="mt-1 h-2 w-2 rounded-full bg-emerald-500"></span><span>Unlimited leaf analysis requests for the current user.</span></li>
+                        <li class="flex gap-3"><span class="mt-1 h-2 w-2 rounded-full bg-emerald-500"></span><span>Better fit for extended demos, QA, and product walkthroughs.</span></li>
+                        <li class="flex gap-3"><span class="mt-1 h-2 w-2 rounded-full bg-emerald-500"></span><span>Ready for future billing or payment integration later.</span></li>
+                    </ul>
+                </div>
+
+                {% if leaf_quota.is_premium %}
+                    <div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">
+                        Premium demo is already active.
+                    </div>
+                {% else %}
+                    <form method="post" class="space-y-3">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="activate_premium">
+                        <button type="submit" class="btn btn-primary w-full justify-center">Activate premium demo</button>
+                    </form>
+                {% endif %}
+            </div>
+        </article>
+    </section>
+
+    <section class="grid gap-4 md:grid-cols-3">
+        <article class="card card-hover p-6">
+            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Free plan fit</p>
+            <h3 class="mt-2 text-xl font-black text-gray-900">Quick demos</h3>
+            <p class="mt-2 text-sm text-gray-600">Use the free plan when you are validating the upload flow, the model pipeline, and the recent-history experience.</p>
+        </article>
+        <article class="card card-hover p-6">
+            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Premium fit</p>
+            <h3 class="mt-2 text-xl font-black text-gray-900">Longer testing sessions</h3>
+            <p class="mt-2 text-sm text-gray-600">Switch when you want to keep scanning without watching the quota and without interrupting walkthroughs.</p>
+        </article>
+        <article class="card card-hover p-6">
+            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Best flow</p>
+            <h3 class="mt-2 text-xl font-black text-gray-900">Membership plus dashboard</h3>
+            <p class="mt-2 text-sm text-gray-600">Track quota here, then jump back into the dashboard or leaf diagnosis page to keep moving.</p>
+        </article>
+    </section>
+</div>
 {% endblock %}

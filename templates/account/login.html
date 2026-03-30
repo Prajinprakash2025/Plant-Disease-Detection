@@ -1,53 +1,119 @@
 {% extends "base.html" %}
 
-{% block title %}Login | Plant Disease System{% endblock %}
+{% block title %}Login | PlantGuard{% endblock %}
 
 {% block content %}
-<section class="auth-layout">
-    <div class="auth-copy">
-        <span class="eyebrow">Welcome Back</span>
-        <h1>Log in to continue reviewing crop health activity.</h1>
-        <p>
-            Access the dashboard, manage your account, and keep the disease detection workflow moving with a focused sign-in experience.
-        </p>
-    </div>
+<div class="grid gap-6 xl:grid-cols-[0.98fr_1.02fr]">
+    <section class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0d1f0f] via-[#12311a] to-[#1a4725] text-white shadow-[0_28px_80px_rgba(6,45,24,0.32)]">
+        <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_15%_20%,#00e87e,transparent_40%),radial-gradient(circle_at_85%_10%,#84cc16,transparent_36%)]"></div>
+        <div class="relative h-full p-8 md:p-10 flex flex-col justify-between gap-8">
+            <div class="space-y-6">
+                <div class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.3em]">
+                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Welcome Back
+                </div>
 
-    <div class="auth-card">
-        <h2>Login</h2>
-        <p class="card-intro">Enter your username and password to continue.</p>
+                <div class="space-y-4">
+                    <h1 class="font-serif text-4xl md:text-5xl leading-[1.08]">
+                        Sign in and keep your crop diagnosis workflow moving.
+                    </h1>
+                    <p class="max-w-xl text-base leading-relaxed text-white/78">
+                        Access your scan history, quota, dashboard, and membership tools without losing track of the diagnosis work you have already done.
+                    </p>
+                </div>
 
-        {% if form.non_field_errors %}
-            <div class="form-alert">
-                {% for error in form.non_field_errors %}
-                    <p>{{ error }}</p>
-                {% endfor %}
-            </div>
-        {% endif %}
-
-        <form method="post" class="auth-form">
-            {% csrf_token %}
-            <input type="hidden" name="next" value="{{ next_url }}">
-
-            <div class="field-group">
-                <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
-                {{ form.username }}
-                {% for error in form.username.errors %}
-                    <p class="error-text">{{ error }}</p>
-                {% endfor %}
+                <div class="flex flex-wrap gap-2">
+                    <span class="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold">Dashboard access</span>
+                    <span class="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold">Saved scan history</span>
+                    <span class="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold">Membership controls</span>
+                </div>
             </div>
 
-            <div class="field-group">
-                <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
-                {{ form.password }}
-                {% for error in form.password.errors %}
-                    <p class="error-text">{{ error }}</p>
-                {% endfor %}
+            <div class="space-y-4">
+                <div class="rounded-3xl border border-white/10 bg-white/10 p-5 backdrop-blur-xl">
+                    <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-300">Inside your account</p>
+                    <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                        <div class="rounded-2xl border border-white/10 bg-black/10 p-4">
+                            <p class="text-xs uppercase tracking-wide text-white/55">Diagnose faster</p>
+                            <p class="mt-1 text-lg font-bold text-white">Open scan page directly</p>
+                        </div>
+                        <div class="rounded-2xl border border-white/10 bg-black/10 p-4">
+                            <p class="text-xs uppercase tracking-wide text-white/55">Track progress</p>
+                            <p class="mt-1 text-lg font-bold text-white">Review recent results</p>
+                        </div>
+                        <div class="rounded-2xl border border-white/10 bg-black/10 p-4">
+                            <p class="text-xs uppercase tracking-wide text-white/55">Quota visibility</p>
+                            <p class="mt-1 text-lg font-bold text-white">Know what scans remain</p>
+                        </div>
+                        <div class="rounded-2xl border border-white/10 bg-black/10 p-4">
+                            <p class="text-xs uppercase tracking-wide text-white/55">Membership tools</p>
+                            <p class="mt-1 text-lg font-bold text-white">Upgrade when needed</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4">
+                    <p class="text-sm font-semibold text-emerald-100">
+                        Logging in brings you back to the same PlantGuard workspace where your scans, treatment guidance, and account settings stay connected.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="card p-6 md:p-8 xl:p-10">
+        <div class="max-w-xl">
+            <div class="mb-6">
+                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Account access</p>
+                <h2 class="mt-2 text-3xl font-black text-gray-900">Login</h2>
+                <p class="mt-3 text-sm leading-relaxed text-gray-600">
+                    Enter your username and password to continue into PlantGuard.
+                </p>
             </div>
 
-            <button type="submit" class="btn btn-primary btn-block">Login</button>
-        </form>
+            {% if form.non_field_errors %}
+                <div class="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
 
-        <p class="auth-footer">Need an account? <a href="{% url 'account:signup' %}">Create one</a></p>
-    </div>
-</section>
+            <form method="post" class="space-y-5">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ next_url }}">
+
+                <div>
+                    <label for="{{ form.username.id_for_label }}" class="mb-2 block text-sm font-semibold text-gray-800">{{ form.username.label }}</label>
+                    {{ form.username }}
+                    {% for error in form.username.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+                <div>
+                    <label for="{{ form.password.id_for_label }}" class="mb-2 block text-sm font-semibold text-gray-800">{{ form.password.label }}</label>
+                    {{ form.password }}
+                    {% for error in form.password.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+                <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
+                    Use the same credentials you created during signup. After login, you will land on your dashboard or the page you originally requested.
+                </div>
+
+                <button type="submit" class="btn btn-primary w-full justify-center">Login</button>
+            </form>
+
+            <div class="mt-6 flex flex-col gap-3 border-t border-gray-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                <p class="text-sm text-gray-600">
+                    Need an account?
+                    <a href="{% url 'account:signup' %}" class="font-semibold text-emerald-700 hover:text-emerald-800">Create one</a>
+                </p>
+                <a href="{% url 'account:home' %}" class="text-sm font-semibold text-gray-500 hover:text-gray-800">Back to home</a>
+            </div>
+        </div>
+    </section>
+</div>
 {% endblock %}

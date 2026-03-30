@@ -1,58 +1,339 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Plant Disease System{% endblock %}</title>
+    <title>{% block title %}PlantGuard — AI Crop Health{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,800;1,700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        serif: ['Playfair Display', 'Georgia', 'serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50:  '#edfff6',
+                            100: '#d5ffec',
+                            200: '#aeffda',
+                            300: '#70ffc0',
+                            400: '#00e87e',
+                            500: '#00c062',
+                            600: '#009650',
+                            700: '#067542',
+                            800: '#075f38',
+                            900: '#013620',
+                            950: '#011f12',
+                        },
+                        dark: {
+                            50:  '#f4f6f4',
+                            100: '#e3e8e3',
+                            200: '#c8d2c8',
+                            300: '#a0b0a0',
+                            400: '#728872',
+                            500: '#556855',
+                            600: '#435343',
+                            700: '#374437',
+                            800: '#2d382d',
+                            900: '#1e261e',
+                            950: '#111811',
+                        },
+                    },
+                }
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}?v=2">
     {% block extra_head %}{% endblock %}
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
-<body>
-    <div class="page-shell">
-        <header class="site-header">
-            <a class="brand" href="{% url 'account:home' %}">
-                <span class="brand-mark">PL</span>
-                <span class="brand-copy">
-                    <strong>Plant Disease System</strong>
-                    <small>Faster crop health decisions</small>
-                </span>
+<body class="bg-[#f8faf8] text-dark-900 font-sans antialiased">
+
+<!-- ═══════════════════════════════════════════════
+     NAVBAR
+═══════════════════════════════════════════════ -->
+<header class="navbar-root sticky top-0 z-50 bg-gradient-to-br from-[#0d1f0f]/95 via-[#0f1e11]/92 to-[#0a1a0c]/85 backdrop-blur-lg border-b border-white/10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="navbar-shell grid grid-cols-[auto_auto] lg:grid-cols-[auto_1fr_auto] items-center gap-3 md:gap-4 w-full min-h-[68px]">
+            <!-- Brand + status -->
+            <div class="flex items-center gap-3 flex-shrink-0">
+                <a href="{% url 'account:home' %}" class="flex items-center gap-3 group">
+                    <div class="brand-logo">
+                        <i data-lucide="leaf" class="w-5 h-5 text-white relative z-10"></i>
+                    </div>
+                    <div class="leading-none">
+                        <span class="block text-[15px] font-black text-white tracking-tight">PlantGuard</span>
+                        <span class="block text-[10px] font-medium text-brand-400 tracking-wide mt-0.5">AI Crop Health</span>
+                    </div>
+                </a>
+                <span class="live-pill hidden sm:inline-flex">CNN + Gemini</span>
+            </div>
+
+            <!-- Desktop Nav -->
+            <nav class="hidden lg:flex items-center gap-1 flex-1 justify-center nav-menu min-w-0">
+                <a href="{% url 'account:home' %}" class="nav-link">
+                    <i data-lucide="home" class="w-3.5 h-3.5"></i> Home
+                </a>
+                <a href="{% url 'account:about' %}" class="nav-link">
+                    <i data-lucide="info" class="w-3.5 h-3.5"></i> About
+                </a>
+                <a href="{% url 'account:contact' %}" class="nav-link">
+                    <i data-lucide="mail" class="w-3.5 h-3.5"></i> Contact
+                </a>
+                <a href="{% url 'detection:leaf_diagnosis' %}" class="nav-link nav-link-accent">
+                    <i data-lucide="scan-line" class="w-3.5 h-3.5"></i> Scan Leaf
+                </a>
+            </nav>
+
+            <!-- Desktop actions -->
+            <div class="hidden lg:flex items-center gap-2 flex-shrink-0 justify-end min-w-0">
+                {% if request.user.is_authenticated %}
+                    <a href="{% url 'dashboard:home' %}" class="nav-link nav-link-muted">
+                        <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i> Dashboard
+                    </a>
+                    <a href="{% url 'account:membership' %}" class="nav-link nav-link-muted">
+                        <i data-lucide="crown" class="w-3.5 h-3.5"></i> Membership
+                    </a>
+                    <!-- Avatar dropdown trigger -->
+                    <div class="relative" id="avatarDropdownWrap">
+                        <button id="avatarBtn" class="avatar-trigger group">
+                            <div class="w-7 h-7 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-xs font-black text-dark-950 shadow-sm">
+                                {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                            </div>
+                            <span class="text-sm font-semibold text-white/90">{{ request.user.first_name|default:request.user.username }}</span>
+                            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-white/60 group-hover:text-white transition-colors" id="avatarChevron"></i>
+                        </button>
+                        <!-- Dropdown -->
+                        <div id="avatarDropdown" class="hidden absolute right-0 top-full mt-2 w-52 rounded-2xl bg-white shadow-2xl border border-dark-100/60 overflow-hidden z-50 py-1.5">
+                            <div class="px-4 py-3 border-b border-dark-100/50">
+                                <p class="text-xs text-dark-400 font-medium">Signed in as</p>
+                                <p class="text-sm font-bold text-dark-900 truncate">{{ request.user.username }}</p>
+                            </div>
+                            <a href="{% url 'account:profile' %}" class="dropdown-item">
+                                <i data-lucide="user" class="w-4 h-4"></i> Profile
+                            </a>
+                            <a href="{% url 'account:membership' %}" class="dropdown-item">
+                                <i data-lucide="crown" class="w-4 h-4"></i> Membership
+                            </a>
+                            <div class="border-t border-dark-100/50 mt-1 pt-1">
+                                <form action="{% url 'account:logout' %}" method="post">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item text-red-500 hover:bg-red-50 w-full text-left">
+                                        <i data-lucide="log-out" class="w-4 h-4"></i> Logout
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <a href="{% url 'account:login' %}" class="nav-link nav-link-muted">
+                        <i data-lucide="log-in" class="w-3.5 h-3.5"></i> Login
+                    </a>
+                    <a href="{% url 'account:signup' %}" class="nav-cta">
+                        <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Get Started
+                    </a>
+                {% endif %}
+            </div>
+
+            <!-- Mobile hamburger -->
+            <button id="mobileMenuBtn" class="lg:hidden flex items-center justify-center w-11 h-11 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 transition-all text-white ml-auto">
+                <i data-lucide="menu" class="w-5 h-5" id="menuIcon"></i>
+                <i data-lucide="x" class="w-5 h-5 hidden" id="closeIcon"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- ── Mobile Drawer ── -->
+    <div id="mobileMenu" class="hidden lg:hidden mobile-drawer">
+        <div class="px-4 pt-3 pb-5 space-y-1">
+            <!-- User info if logged in -->
+            {% if request.user.is_authenticated %}
+            <div class="flex items-center gap-3 px-3 py-3 mb-2 rounded-xl bg-white/5 border border-white/10">
+                <div class="w-9 h-9 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-sm font-black text-dark-950">
+                    {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                </div>
+                <div>
+                    <p class="text-sm font-bold text-white">{{ request.user.get_full_name|default:request.user.username }}</p>
+                    <p class="text-xs text-white/50">@{{ request.user.username }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <a href="{% url 'account:home' %}" class="mobile-pill">
+                <i data-lucide="home" class="w-4 h-4"></i> Home
+            </a>
+            <a href="{% url 'account:about' %}" class="mobile-pill">
+                <i data-lucide="info" class="w-4 h-4"></i> About
+            </a>
+            <a href="{% url 'account:contact' %}" class="mobile-pill">
+                <i data-lucide="mail" class="w-4 h-4"></i> Contact
+            </a>
+            <a href="{% url 'detection:leaf_diagnosis' %}" class="mobile-pill mobile-pill-accent">
+                <i data-lucide="scan-line" class="w-4 h-4"></i> Scan Leaf
             </a>
 
-            <nav class="site-nav">
-                <a href="{% url 'account:home' %}">Home</a>
-                <a href="{% url 'account:about' %}">About</a>
-                <a href="{% url 'account:contact' %}">Contact</a>
-                <a href="{% url 'detection:leaf_diagnosis' %}">Test Leaf</a>
-                {% if request.user.is_authenticated %}
-                    <a href="{% url 'dashboard:home' %}">Dashboard</a>
-                    <a href="{% url 'account:membership' %}">Membership</a>
-                    <a href="{% url 'account:profile' %}">Profile</a>
-                    <form action="{% url 'account:logout' %}" method="post" class="inline-form">
-                        {% csrf_token %}
-                        <button type="submit" class="nav-button nav-button-muted">Logout</button>
-                    </form>
-                {% else %}
-                    <a href="{% url 'account:login' %}">Login</a>
-                    <a href="{% url 'account:signup' %}" class="nav-button">Create account</a>
-                {% endif %}
-            </nav>
-        </header>
-
-        {% if messages %}
-            <section class="message-stack" aria-label="Notifications">
-                {% for message in messages %}
-                    <div class="message message-{{ message.tags|default:'info' }}">{{ message }}</div>
-                {% endfor %}
-            </section>
-        {% endif %}
-
-        <main class="site-main">
-            {% block content %}{% endblock %}
-        </main>
+            {% if request.user.is_authenticated %}
+                <div class="border-t border-white/10 my-2 pt-2">
+                    <p class="text-[10px] font-bold text-white/30 uppercase tracking-widest px-3 mb-1">Account</p>
+                </div>
+                <a href="{% url 'dashboard:home' %}" class="mobile-pill">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+                </a>
+                <a href="{% url 'account:membership' %}" class="mobile-pill">
+                    <i data-lucide="crown" class="w-4 h-4"></i> Membership
+                </a>
+                <a href="{% url 'account:profile' %}" class="mobile-pill">
+                    <i data-lucide="user" class="w-4 h-4"></i> Profile
+                </a>
+                <form action="{% url 'account:logout' %}" method="post" class="mt-1">
+                    {% csrf_token %}
+                    <button type="submit" class="mobile-pill mobile-pill-danger w-full text-left">
+                        <i data-lucide="log-out" class="w-4 h-4"></i> Logout
+                    </button>
+                </form>
+            {% else %}
+                <div class="border-t border-white/10 my-2 pt-2 space-y-2">
+                    <a href="{% url 'account:login' %}" class="mobile-pill">
+                        <i data-lucide="log-in" class="w-4 h-4"></i> Login
+                    </a>
+                    <a href="{% url 'account:signup' %}" class="flex items-center gap-2 px-4 py-3 rounded-xl bg-brand-500 text-dark-950 font-bold text-sm hover:bg-brand-400 transition-colors">
+                        <i data-lucide="user-plus" class="w-4 h-4"></i> Create Free Account
+                    </a>
+                </div>
+            {% endif %}
+        </div>
     </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════
+     FLASH MESSAGES
+═══════════════════════════════════════════════ -->
+{% if messages %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 space-y-2">
+    {% for message in messages %}
+    <div class="flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-semibold
+        {% if 'success' in message.tags %}bg-brand-50 border-brand-200 text-brand-800
+        {% elif 'error' in message.tags %}bg-red-50 border-red-200 text-red-700
+        {% elif 'warning' in message.tags %}bg-amber-50 border-amber-200 text-amber-800
+        {% else %}bg-blue-50 border-blue-200 text-blue-800{% endif %}">
+        <i data-lucide="{% if 'success' in message.tags %}check-circle-2{% elif 'error' in message.tags %}alert-circle{% elif 'warning' in message.tags %}alert-triangle{% else %}info{% endif %}" class="w-4 h-4 flex-shrink-0"></i>
+        <span>{{ message }}</span>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- ═══════════════════════════════════════════════
+     MAIN CONTENT
+═══════════════════════════════════════════════ -->
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[60vh]">
+    {% block content %}{% endblock %}
+</main>
+
+<!-- ═══════════════════════════════════════════════
+     FOOTER
+═══════════════════════════════════════════════ -->
+<footer class="mt-20 bg-dark-950 text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Top footer -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-10 py-14 border-b border-white/8">
+            <!-- Brand col -->
+            <div class="md:col-span-2">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="brand-logo">
+                        <i data-lucide="leaf" class="w-5 h-5 text-white relative z-10"></i>
+                    </div>
+                    <div>
+                        <span class="block text-base font-black text-white">PlantGuard</span>
+                        <span class="block text-xs text-brand-400 font-medium">AI Crop Health</span>
+                    </div>
+                </div>
+                <p class="text-dark-300 text-sm leading-relaxed max-w-xs">
+                    AI-powered plant disease detection for farmers, agronomists, and researchers. Upload a leaf, get an instant diagnosis.
+                </p>
+                <div class="flex items-center gap-3 mt-5">
+                    <a href="{% url 'detection:leaf_diagnosis' %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-500 text-dark-950 text-sm font-bold hover:bg-brand-400 transition-colors">
+                        <i data-lucide="scan-line" class="w-3.5 h-3.5"></i> Scan a Leaf
+                    </a>
+                </div>
+            </div>
+            <!-- Links col -->
+            <div>
+                <p class="text-xs font-bold text-white/30 uppercase tracking-widest mb-4">Platform</p>
+                <ul class="space-y-2.5">
+                    <li><a href="{% url 'account:home' %}" class="footer-link">Home</a></li>
+                    <li><a href="{% url 'account:about' %}" class="footer-link">About</a></li>
+                    <li><a href="{% url 'detection:leaf_diagnosis' %}" class="footer-link">Scan Leaf</a></li>
+                    <li><a href="{% url 'account:membership' %}" class="footer-link">Membership</a></li>
+                </ul>
+            </div>
+            <!-- Account col -->
+            <div>
+                <p class="text-xs font-bold text-white/30 uppercase tracking-widest mb-4">Account</p>
+                <ul class="space-y-2.5">
+                    {% if request.user.is_authenticated %}
+                    <li><a href="{% url 'dashboard:home' %}" class="footer-link">Dashboard</a></li>
+                    <li><a href="{% url 'account:profile' %}" class="footer-link">Profile</a></li>
+                    {% else %}
+                    <li><a href="{% url 'account:login' %}" class="footer-link">Login</a></li>
+                    <li><a href="{% url 'account:signup' %}" class="footer-link">Sign Up</a></li>
+                    {% endif %}
+                    <li><a href="{% url 'account:contact' %}" class="footer-link">Contact</a></li>
+                </ul>
+            </div>
+        </div>
+        <!-- Bottom footer -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 py-5 text-xs text-dark-400">
+            <span>© 2025 PlantGuard. All rights reserved.</span>
+            <div class="flex items-center gap-1.5">
+                <div class="w-1.5 h-1.5 rounded-full bg-brand-400 animate-pulse"></div>
+                <span>AI model running</span>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script>
+    lucide.createIcons();
+
+    // Mobile menu toggle
+    const mobileBtn = document.getElementById('mobileMenuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const menuIcon = document.getElementById('menuIcon');
+    const closeIcon = document.getElementById('closeIcon');
+    mobileBtn.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+        menuIcon.classList.toggle('hidden');
+        closeIcon.classList.toggle('hidden');
+    });
+
+    // Avatar dropdown
+    const avatarBtn = document.getElementById('avatarBtn');
+    const avatarDropdown = document.getElementById('avatarDropdown');
+    if (avatarBtn && avatarDropdown) {
+        avatarBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            avatarDropdown.classList.toggle('hidden');
+        });
+        document.addEventListener('click', () => avatarDropdown.classList.add('hidden'));
+    }
+
+    // Navbar scroll effect
+    const navbar = document.querySelector('.navbar-root');
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 10) {
+            navbar.classList.add('navbar-scrolled');
+        } else {
+            navbar.classList.remove('navbar-scrolled');
+        }
+    });
+</script>
+{% block extra_scripts %}{% endblock %}
 </body>
 </html>

@@ -1,17 +1,19 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Leaf Diagnosis | Plant Disease System{% endblock %}
+{% block title %}Leaf Diagnosis | PlantGuard{% endblock %}
 
 {% block content %}
-<section class="diagnosis-shell">
-    <div class="diagnosis-loading" id="diagnosisLoading" hidden aria-live="assertive" aria-busy="true">
-        <div class="diagnosis-loading-card">
-            <div class="diagnosis-loading-spinner" aria-hidden="true"></div>
-            <span class="eyebrow">Analyzing</span>
-            <h2>Checking your leaf image</h2>
-            <p>The local CNN is running first. Gemini will automatically verify low-confidence cases before the final answer is shown.</p>
-            <div class="diagnosis-loading-steps">
+<div class="space-y-10">
+    <!-- Loading overlay -->
+    <div id="diagnosisLoading" aria-live="assertive" aria-busy="true"
+         class="hidden fixed inset-0 z-50 grid place-items-center bg-black/60 backdrop-blur-sm">
+        <div class="w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-2xl">
+            <div class="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-500"></div>
+            <p class="text-xs font-semibold uppercase tracking-[0.25em] text-emerald-600 mb-1">Analyzing</p>
+            <h2 class="text-xl font-bold text-gray-900 mb-1">Checking your leaf image</h2>
+            <p class="text-sm text-gray-600">Running the local CNN model. Result will appear in seconds.</p>
+            <div class="mt-4 flex flex-col gap-1 text-sm text-gray-700">
                 <span>Uploading image</span>
                 <span>Reading leaf pattern</span>
                 <span>Preparing treatment plan</span>
@@ -19,171 +21,167 @@
         </div>
     </div>
 
-    <div class="diagnosis-hero diagnosis-hero-split">
-        <div class="diagnosis-hero-copy">
-            <span class="eyebrow">Leaf Test</span>
-            <h1>Upload a leaf, watch the analysis run, and get a result you can actually use.</h1>
-            <p class="lead">
-                This page is designed for one quick workflow: upload, preview, analyze, and review the diagnosis with a treatment plan. The result now shows both the plant or crop name and the disease label, and each user can see the remaining free scan quota before uploading.
-            </p>
-            <div class="diagnosis-pill-row">
-                <span class="diagnosis-pill">Visible file name</span>
-                <span class="diagnosis-pill">Plant and disease shown separately</span>
-                <span class="diagnosis-pill">Live upload preview</span>
-                <span class="diagnosis-pill">Loading animation during analysis</span>
+    <!-- Hero -->
+    <section class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0d1f0f] via-[#0f2a14] to-[#132416] text-white">
+        <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_15%_25%,#00e87e,transparent_45%),radial-gradient(circle_at_85%_20%,#84cc16,transparent_40%)]"></div>
+        <div class="relative grid lg:grid-cols-[1.1fr_0.9fr] gap-8 p-8 md:p-12">
+            <div class="space-y-6">
+                <div class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.3em]">
+                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Leaf Test
+                </div>
+                <h1 class="font-serif text-4xl md:text-5xl leading-tight">Upload a leaf, watch the analysis run, and get a result you can act on.</h1>
+                <p class="text-base leading-relaxed text-white/75 max-w-2xl">
+                    One flow: upload → preview → analyze → treatment. The result shows plant name, disease label, and your remaining free scans up front.
+                </p>
+                <div class="flex flex-wrap gap-2">
+                    <span class="px-3 py-1.5 rounded-full text-xs font-semibold bg-white/10 border border-white/10">Visible filename</span>
+                    <span class="px-3 py-1.5 rounded-full text-xs font-semibold bg-white/10 border border-white/10">Plant + disease tags</span>
+                    <span class="px-3 py-1.5 rounded-full text-xs font-semibold bg-white/10 border border-white/10">Live preview</span>
+                    <span class="px-3 py-1.5 rounded-full text-xs font-semibold bg-white/10 border border-white/10">Animated analysis</span>
+                </div>
+                <div class="grid sm:grid-cols-3 gap-3">
+                    <div class="rounded-2xl border border-white/10 bg-white/10 p-4">
+                        <p class="text-xs uppercase tracking-wide text-white/70">Plan</p>
+                        <p class="text-xl font-bold">{{ leaf_quota.plan_name }}</p>
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-white/10 p-4">
+                        <p class="text-xs uppercase tracking-wide text-white/70">Used</p>
+                        <p class="text-xl font-bold">
+                            {% if leaf_quota.limit %}{{ leaf_quota.used }} / {{ leaf_quota.limit }}{% else %}{{ leaf_quota.used }} total{% endif %}
+                        </p>
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-white/10 p-4">
+                        <p class="text-xs uppercase tracking-wide text-white/70">Remaining</p>
+                        <p class="text-xl font-bold">{{ leaf_quota.remaining_label }}</p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <a href="{% url 'dashboard:home' %}" class="btn btn-secondary">Back to Dashboard</a>
+                    <a href="{% url 'account:membership' %}" class="btn btn-primary">Membership</a>
+                    <a href="{% url 'account:profile' %}" class="btn btn-ghost">Profile</a>
+                </div>
             </div>
-            <div class="diagnosis-usage-banner">
-                <article class="diagnosis-usage-stat">
-                    <span>Plan</span>
-                    <strong>{{ leaf_quota.plan_name }}</strong>
-                </article>
-                <article class="diagnosis-usage-stat">
-                    <span>Used</span>
-                    <strong>
-                        {% if leaf_quota.limit %}
-                            {{ leaf_quota.used }} / {{ leaf_quota.limit }}
-                        {% else %}
-                            {{ leaf_quota.used }} total
-                        {% endif %}
-                    </strong>
-                </article>
-                <article class="diagnosis-usage-stat">
-                    <span>Remaining</span>
-                    <strong>{{ leaf_quota.remaining_label }}</strong>
-                </article>
-            </div>
-            <div class="diagnosis-hero-actions">
-                <a href="{% url 'dashboard:home' %}" class="btn btn-secondary">Back to Dashboard</a>
-                <a href="{% url 'account:membership' %}" class="btn btn-primary">Membership</a>
-                <a href="{% url 'account:profile' %}" class="btn btn-ghost">Profile</a>
+            <div class="relative">
+                <div class="rounded-2xl border border-white/10 bg-white/10 backdrop-blur-xl p-6 shadow-2xl">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-xs uppercase tracking-widest text-emerald-300 font-semibold">Workflow</span>
+                        <span class="text-[11px] font-semibold px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-100">Fast</span>
+                    </div>
+                    <ol class="space-y-4 text-sm text-white/80">
+                        <li class="flex gap-3">
+                            <span class="h-7 w-7 rounded-full bg-white/15 border border-white/20 flex items-center justify-center text-xs font-bold">01</span>
+                            <div><p class="font-semibold text-white">Select a leaf image</p><p>Filename stays visible so you know which sample is running.</p></div>
+                        </li>
+                        <li class="flex gap-3">
+                            <span class="h-7 w-7 rounded-full bg-white/15 border border-white/20 flex items-center justify-center text-xs font-bold">02</span>
+                            <div><p class="font-semibold text-white">Watch the analysis</p><p>Overlay shows progress instead of feeling stuck.</p></div>
+                        </li>
+                        <li class="flex gap-3">
+                            <span class="h-7 w-7 rounded-full bg-white/15 border border-white/20 flex items-center justify-center text-xs font-bold">03</span>
+                            <div><p class="font-semibold text-white">Review diagnosis</p><p>Result card groups plant, disease, confidence, and source.</p></div>
+                        </li>
+                    </ol>
+                </div>
+                <div class="absolute -top-4 -right-4 px-3 py-2 rounded-xl text-xs font-bold shadow-lg"
+                     style="background:linear-gradient(135deg,#00c062,#009650); color:#fff">
+                    <i data-lucide="cpu" class="w-3 h-3 inline mr-1"></i> CNN + Gemini
+                </div>
             </div>
         </div>
-        <aside class="diagnosis-hero-panel">
-            <div class="diagnosis-hero-visual">
-                <img src="{% static 'images/lab-analysis.svg' %}" alt="Plant disease analysis illustration">
-            </div>
-            <div class="diagnosis-step-list">
-                <div class="diagnosis-step">
-                    <span>01</span>
-                    <div>
-                        <strong>Select a leaf image</strong>
-                        <p>The uploaded filename stays visible so the user knows which sample is being checked.</p>
-                    </div>
-                </div>
-                <div class="diagnosis-step">
-                    <span>02</span>
-                    <div>
-                        <strong>Wait through the loading state</strong>
-                        <p>The page now shows an analysis overlay instead of looking stuck or broken.</p>
-                    </div>
-                </div>
-                <div class="diagnosis-step">
-                    <span>03</span>
-                    <div>
-                        <strong>Review diagnosis and treatment</strong>
-                        <p>The result card now highlights the filename, plant name, disease, confidence, source, and free-plan usage more clearly.</p>
-                    </div>
-                </div>
-            </div>
-        </aside>
-    </div>
+    </section>
 
     {% if leaf_quota.limit_reached %}
-        <div class="diagnosis-limit-banner">
-            <strong>Free plan finished</strong>
-            <p>You have already used all {{ leaf_quota.limit }} free leaf checks for this account. Open the membership page to activate the premium demo plan.</p>
-            <a href="{% url 'account:membership' %}" class="btn btn-primary">Open membership</a>
+    <div class="flex items-center justify-between gap-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+        <div>
+            <p class="font-bold">Free plan finished</p>
+            <p>You have used all {{ leaf_quota.limit }} free leaf checks. Upgrade to continue.</p>
         </div>
+        <a href="{% url 'account:membership' %}" class="btn btn-primary">Open membership</a>
+    </div>
     {% endif %}
 
-    <div class="diagnosis-grid">
-        <article class="diagnosis-card diagnosis-upload-card">
-            <div class="diagnosis-card-head">
-                <span class="eyebrow">Section A</span>
-                <span class="diagnosis-status diagnosis-status-soft">Upload</span>
-            </div>
-            <h2>Upload Leaf</h2>
-            <p class="card-intro">Choose a clear JPG or PNG image. The file name, preview, and analysis state will stay visible through the full workflow.</p>
-
-            <div class="diagnosis-quota-card">
+    <!-- Upload + Result -->
+    <div class="grid lg:grid-cols-2 gap-6">
+        <article class="card p-6 space-y-4">
+            <div class="flex items-center justify-between">
                 <div>
-                    <span class="diagnosis-quota-label">Free-tier usage</span>
-                    <strong>{{ leaf_quota.usage_label }}</strong>
+                    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Upload</p>
+                    <h2 class="text-xl font-bold text-gray-900">Upload Leaf</h2>
                 </div>
-                <div class="progress-shell" aria-label="Leaf diagnosis quota">
-                    <div class="progress-bar" style="width: {{ leaf_quota.usage_percent }}%;"></div>
+                <span class="rounded-full px-3 py-1 text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">Step 1</span>
+            </div>
+            <p class="text-sm text-gray-600">Choose a clear JPG or PNG. File name, preview, and status stay visible during analysis.</p>
+
+            <div class="rounded-xl border border-gray-200 p-4">
+                <div class="flex items-center justify-between mb-2">
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-gray-500">Free-tier usage</p>
+                        <p class="font-semibold text-gray-900">{{ leaf_quota.usage_label }}</p>
+                    </div>
+                    <p class="text-xs font-semibold text-emerald-600">{{ leaf_quota.remaining_label }}</p>
+                </div>
+                <div class="h-2 w-full rounded-full bg-gray-100">
+                    <div class="h-2 rounded-full bg-gradient-to-r from-emerald-500 to-green-400" style="width: {{ leaf_quota.usage_percent }}%;"></div>
                 </div>
             </div>
 
             {% if leaf_quota.limit_reached %}
-                <div class="diagnosis-note diagnosis-note-alert">
-                    <strong>Upload locked</strong>
-                    <p>The free plan is finished for this user. Upgrade to premium demo before starting another diagnosis.</p>
-                </div>
+            <div class="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                Upload locked. Upgrade to continue.
+            </div>
             {% endif %}
 
-            <form method="post" enctype="multipart/form-data" class="auth-form" id="diagnosisForm">
+            <form method="post" enctype="multipart/form-data" class="space-y-4" id="diagnosisForm">
                 {% csrf_token %}
 
                 {% if form.non_field_errors %}
-                    <div class="form-alert">
-                        {% for error in form.non_field_errors %}
-                            <p>{{ error }}</p>
-                        {% endfor %}
+                    <div class="rounded-xl border border-red-200 bg-red-50 text-red-700 p-3 text-sm">
+                        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
                     </div>
                 {% endif %}
 
-                <div class="field-group">
-                    <label for="{{ form.image.id_for_label }}">{{ form.image.label }}</label>
-                    <div class="diagnosis-file-shell">
+                <div class="space-y-2">
+                    <label for="{{ form.image.id_for_label }}" class="text-sm font-semibold text-gray-800">{{ form.image.label }}</label>
+                    <div class="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-4">
                         {{ form.image }}
-                        <div class="diagnosis-file-meta-row">
-                            <p class="diagnosis-file-meta" id="leafFileName">
+                        <div class="mt-2 flex items-center justify-between text-sm">
+                            <p id="leafFileName" class="text-gray-700">
                                 {% if diagnosis_log and diagnosis_log.original_filename %}
                                     {{ diagnosis_log.original_filename }}
                                 {% else %}
                                     No file selected yet.
                                 {% endif %}
                             </p>
-                            <span class="diagnosis-file-badge" id="leafFileState">
-                                {% if diagnosis_log and diagnosis_log.original_filename %}
-                                    Last upload
-                                {% else %}
-                                    Awaiting file
-                                {% endif %}
+                            <span id="leafFileState" class="rounded-full bg-white px-3 py-1 text-xs font-semibold text-gray-600 border border-gray-200">
+                                {% if diagnosis_log and diagnosis_log.original_filename %}Last upload{% else %}Awaiting file{% endif %}
                             </span>
                         </div>
                     </div>
-                    {% for error in form.image.errors %}
-                        <p class="error-text">{{ error }}</p>
-                    {% endfor %}
-                    <p class="help-text">Accepted file types: JPG, JPEG, PNG. Use a focused leaf image for the best result.</p>
+                    {% for error in form.image.errors %}<p class="text-red-600 text-xs">{{ error }}</p>{% endfor %}
+                    <p class="text-xs text-gray-500">Accepted: JPG, JPEG, PNG. Keep the leaf centered and well lit.</p>
                 </div>
 
-                <div class="diagnosis-tips">
-                    <strong>Before you upload</strong>
-                    <ul>
-                        <li>Keep the leaf centered and well lit.</li>
-                        <li>Avoid blurry, dark, or heavily zoomed-out photos.</li>
-                        <li>Show the infected area clearly if spots or patches are visible.</li>
+                <div class="rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
+                    <p class="font-semibold text-gray-900 mb-2">Before you upload</p>
+                    <ul class="list-disc pl-4 space-y-1">
+                        <li>Clear focus and good lighting.</li>
+                        <li>Show the infected area.</li>
+                        <li>Avoid heavy zoom-out or blur.</li>
                     </ul>
                 </div>
 
                 {% if leaf_quota.can_submit %}
-                    <button type="submit" class="btn btn-primary diagnosis-submit-button" id="diagnosisSubmit">
-                        Analyze Leaf
-                    </button>
+                    <button type="submit" class="btn btn-primary w-full justify-center" id="diagnosisSubmit">Analyze Leaf</button>
                 {% else %}
-                    <a href="{% url 'account:membership' %}" class="btn btn-primary diagnosis-submit-button">
-                        Upgrade to Premium
-                    </a>
+                    <a href="{% url 'account:membership' %}" class="btn btn-primary w-full justify-center">Upgrade to Premium</a>
                 {% endif %}
             </form>
 
-            <div class="diagnosis-preview">
-                <div class="diagnosis-preview-head">
-                    <strong>Preview</strong>
-                    <span id="leafPreviewCaption">
+            <div class="rounded-2xl border border-gray-200 p-4">
+                <div class="flex items-center justify-between mb-2">
+                    <strong class="text-gray-900">Preview</strong>
+                    <span id="leafPreviewCaption" class="text-xs text-gray-500">
                         {% if diagnosis_log and diagnosis_log.original_filename %}
                             {{ diagnosis_log.original_filename }}
                         {% else %}
@@ -191,178 +189,184 @@
                         {% endif %}
                     </span>
                 </div>
-                <div class="diagnosis-preview-frame diagnosis-preview-frame-portrait">
-                    <img
-                        id="leafPreview"
+                <div class="overflow-hidden rounded-xl border border-gray-100 bg-gray-50">
+                    <img id="leafPreview" class="w-full"
                         src="{% if diagnosis_log %}{{ diagnosis_log.image.url }}{% else %}data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 420 280'%3E%3Crect width='420' height='280' rx='24' fill='%23f3ead8'/%3E%3Cpath d='M210 210c47-27 83-70 95-129-56-2-100 17-126 56-11 16-18 35-20 57 21 7 39 10 51 9z' fill='%235aa36c'/%3E%3Cpath d='M137 215c27-22 50-48 68-80 15-26 27-54 37-84' stroke='%231f4b39' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E{% endif %}"
-                        alt="Leaf preview"
-                    >
+                        alt="Leaf preview">
                 </div>
             </div>
         </article>
 
-        <article class="diagnosis-card diagnosis-result-card">
-            <div class="diagnosis-card-head">
-                <span class="eyebrow">Section B</span>
-                {% if diagnosis_result %}
-                    <span class="diagnosis-status diagnosis-status-live">Ready</span>
-                {% else %}
-                    <span class="diagnosis-status diagnosis-status-soft">Waiting</span>
-                {% endif %}
+        <article class="card p-6 space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Result</p>
+                    <h2 class="text-xl font-bold text-gray-900">Prediction Result</h2>
+                </div>
+                <span class="rounded-full px-3 py-1 text-xs font-semibold {% if diagnosis_result %}bg-emerald-50 text-emerald-700 border border-emerald-100{% else %}bg-gray-100 text-gray-600 border border-gray-200{% endif %}">
+                    {% if diagnosis_result %}Ready{% else %}Waiting{% endif %}
+                </span>
             </div>
-            <h2>Prediction Result</h2>
-            <p class="card-intro">The result card now keeps the uploaded filename, plant name, disease, confidence, and model source in one place.</p>
+            <p class="text-sm text-gray-600">Filename, plant, disease, confidence, and model source in one place.</p>
+
             {% if diagnosis_result %}
-                <div class="diagnosis-summary">
-                    <span class="diagnosis-summary-label">Detected result</span>
-                    <strong>{{ diagnosis_result.disease }}</strong>
-                    <div class="diagnosis-chip-row">
+                <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-2">
+                    <p class="text-xs uppercase tracking-wide text-gray-500">Detected result</p>
+                    <p id="resultHeadlineDisease" class="text-lg font-bold text-gray-900">{{ diagnosis_result.disease }}</p>
+                    <div class="flex flex-wrap gap-2">
                         {% if diagnosis_log and diagnosis_log.original_filename %}
-                            <span class="diagnosis-chip">Leaf file: {{ diagnosis_log.original_filename }}</span>
+                            <span class="px-3 py-1 rounded-full bg-white border border-gray-200 text-xs font-semibold">Leaf file: {{ diagnosis_log.original_filename }}</span>
                         {% endif %}
                         {% if diagnosis_result.plant_name %}
-                            <span class="diagnosis-chip">Plant: {{ diagnosis_result.plant_name }}</span>
+                            <span id="resultPlantChip" class="px-3 py-1 rounded-full bg-white border border-gray-200 text-xs font-semibold">Plant: {{ diagnosis_result.plant_name }}</span>
                         {% endif %}
-                        <span class="diagnosis-chip {% if diagnosis_result.source == 'gemini_api' %}diagnosis-chip-verified{% endif %}">
-                            {% if diagnosis_result.source == "gemini_api" %}
-                                Gemini verified
-                            {% else %}
-                                Local CNN result
-                            {% endif %}
+                        <span id="resultSourceChip" class="px-3 py-1 rounded-full text-xs font-semibold {% if diagnosis_result.source == 'gemini_api' %}bg-emerald-50 text-emerald-700 border border-emerald-100{% else %}bg-white border border-gray-200 text-gray-800{% endif %}">
+                            {% if diagnosis_result.source == "gemini_api" %}Gemini verified{% else %}Local CNN result{% endif %}
                         </span>
                     </div>
-                    <p>
-                        {% if diagnosis_log %}
-                            Analysis saved on {{ diagnosis_log.created_at|date:"M d, Y h:i A" }}.
-                        {% else %}
-                            Review the diagnosis details below.
-                        {% endif %}
+                    <p class="text-sm text-gray-600">
+                        {% if diagnosis_log %}Analysis saved on {{ diagnosis_log.created_at|date:"M d, Y h:i A" }}.{% else %}Review the diagnosis details below.{% endif %}
                     </p>
                 </div>
 
                 {% if diagnosis_result.warning %}
-                    <div class="diagnosis-note">
-                        <strong>Verification note</strong>
+                    <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                        <strong class="block text-amber-900 mb-1">Verification note</strong>
                         <p>{{ diagnosis_result.warning }}</p>
                     </div>
                 {% endif %}
 
                 {% if diagnosis_result.confidence or diagnosis_result.confidence == 0 %}
-                    <div class="diagnosis-confidence">
-                        <div class="diagnosis-confidence-head">
-                            <span>Confidence meter</span>
-                            <strong>{{ diagnosis_result.confidence }}%</strong>
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between text-sm font-semibold text-gray-800">
+                            <span>Confidence</span>
+                            <span>{{ diagnosis_result.confidence }}%</span>
                         </div>
-                        <div class="diagnosis-confidence-track" aria-hidden="true">
-                            <span class="diagnosis-confidence-bar" style="width: {{ diagnosis_result.confidence }}%;"></span>
+                        <div class="h-2 rounded-full bg-gray-100">
+                            <span class="block h-2 rounded-full bg-gradient-to-r from-emerald-500 to-green-400" style="width: {{ diagnosis_result.confidence }}%;"></span>
                         </div>
                     </div>
                 {% endif %}
 
-                <div class="diagnosis-stat-grid">
-                    <div class="diagnosis-result-item">
-                        <span>Plant / crop</span>
-                        <strong>{{ diagnosis_result.plant_name|default:"Unknown" }}</strong>
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div class="rounded-xl border border-gray-200 p-3 bg-gray-50">
+                        <p id="resultPlantLabel" class="text-xs text-gray-500">Plant</p>
+                        <p id="resultPlantName" class="font-semibold text-gray-900">{{ diagnosis_result.plant_name|default:"Unknown plant" }}</p>
                     </div>
-                    <div class="diagnosis-result-item">
-                        <span>Leaf name</span>
-                        <strong>
-                            {% if diagnosis_log and diagnosis_log.original_filename %}
-                                {{ diagnosis_log.original_filename }}
-                            {% else %}
-                                Latest upload
-                            {% endif %}
-                        </strong>
+                    <div class="rounded-xl border border-gray-200 p-3 bg-gray-50">
+                        <p id="resultDiseaseLabel" class="text-xs text-gray-500">Disease</p>
+                        <p id="resultDisease" class="font-semibold text-gray-900">{{ diagnosis_result.disease|default:"No disease detected" }}</p>
                     </div>
-                    <div class="diagnosis-result-item">
-                        <span>Disease</span>
-                        <strong>{{ diagnosis_result.disease }}</strong>
+                    <div class="rounded-xl border border-gray-200 p-3 bg-gray-50">
+                        <p id="resultConfidenceLabel" class="text-xs text-gray-500">Confidence</p>
+                        <p id="resultConfidenceValue" class="font-semibold text-gray-900">
+                            {% if diagnosis_result.confidence or diagnosis_result.confidence == 0 %}{{ diagnosis_result.confidence }}%{% else %}N/A{% endif %}
+                        </p>
                     </div>
-                    <div class="diagnosis-result-item">
-                        <span>Confidence</span>
-                        <strong>
-                            {% if diagnosis_result.confidence or diagnosis_result.confidence == 0 %}
-                                {{ diagnosis_result.confidence }}%
-                            {% else %}
-                                N/A
-                            {% endif %}
-                        </strong>
-                    </div>
-                    <div class="diagnosis-result-item">
-                        <span>Source</span>
-                        <strong>
-                            {% if diagnosis_result.source == "gemini_api" %}
-                                Gemini validation
-                            {% else %}
-                                Local CNN model
-                            {% endif %}
-                        </strong>
+                    <div class="rounded-xl border border-gray-200 p-3 bg-gray-50">
+                        <p id="resultSourceLabel" class="text-xs text-gray-500">Source</p>
+                        <p id="resultSource" class="font-semibold text-gray-900">
+                            {% if diagnosis_result.source == "gemini_api" %}Gemini validation{% else %}Local CNN model{% endif %}
+                        </p>
                     </div>
                 </div>
-            {% else %}
-                <div class="diagnosis-empty-state">
-                    <strong>No result yet</strong>
-                    <p>Upload a leaf image to see the file name, predicted disease, confidence score, and model source here.</p>
-                </div>
-            {% endif %}
-        </article>
 
-        <article class="diagnosis-card diagnosis-card-wide">
-            <div class="diagnosis-card-head">
-                <span class="eyebrow">Section C</span>
-                <span class="diagnosis-status diagnosis-status-soft">Treatment Plan</span>
-            </div>
-            <h2>Treatment Plan</h2>
-            <p class="card-intro">Once a diagnosis is ready, this section gives the user clear next steps instead of dumping raw output text.</p>
-            {% if diagnosis_result and diagnosis_result.treatment_guidance %}
-                <div class="treatment-plan">
-                    {% for line in diagnosis_result.treatment_lines %}
-                        {% if line == "Plant:" or line == "Disease:" or line == "Severity:" or line == "Symptoms:" or line == "Possible Causes:" or line == "Treatment:" or line == "Prevention:" or line == "Suggested Action:" %}
-                            <p class="treatment-label">{{ line }}</p>
-                        {% elif line|slice:":2" == "- " %}
-                            <p class="treatment-point">{{ line|slice:"2:" }}</p>
-                        {% else %}
-                            <p class="treatment-copy">{{ line }}</p>
-                        {% endif %}
-                    {% endfor %}
+                {% if diagnosis_log %}
+                <div class="pt-2 space-y-3">
+                    <!-- TTS Play Button -->
+                    <div class="rounded-xl border border-emerald-100 bg-emerald-50 p-4 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <p class="text-xs font-bold text-emerald-800 uppercase tracking-widest">Listen to Result</p>
+                            <p class="text-xs text-emerald-600">Reads diagnosis &amp; treatment aloud</p>
+                        </div>
+                        <!-- Language selector -->
+                        <div class="flex flex-wrap gap-2" id="ttsLangSelector">
+                            <button type="button" data-lang="en-US" data-code="en" data-label="English"
+                                class="tts-lang-btn px-3 py-1.5 rounded-full text-xs font-bold border transition-all">English</button>
+                            <button type="button" data-lang="ml-IN" data-code="ml" data-label="Malayalam"
+                                class="tts-lang-btn px-3 py-1.5 rounded-full text-xs font-bold border transition-all">Malayalam</button>
+                            <button type="button" data-lang="hi-IN" data-code="hi" data-label="Hindi"
+                                class="tts-lang-btn px-3 py-1.5 rounded-full text-xs font-bold border transition-all">Hindi</button>
+                            <button type="button" data-lang="ta-IN" data-code="ta" data-label="Tamil"
+                                class="tts-lang-btn px-3 py-1.5 rounded-full text-xs font-bold border transition-all">Tamil</button>
+                            <button type="button" data-lang="te-IN" data-code="te" data-label="Telugu"
+                                class="tts-lang-btn px-3 py-1.5 rounded-full text-xs font-bold border transition-all">Telugu</button>
+                            <button type="button" data-lang="kn-IN" data-code="kn" data-label="Kannada"
+                                class="tts-lang-btn px-3 py-1.5 rounded-full text-xs font-bold border transition-all">Kannada</button>
+                            <button type="button" data-lang="ar-SA" data-code="ar" data-label="Arabic"
+                                class="tts-lang-btn px-3 py-1.5 rounded-full text-xs font-bold border transition-all">Arabic</button>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button id="ttsPlayBtn" type="button"
+                                class="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all"
+                                style="background:linear-gradient(135deg,#00c062,#009650);color:#fff;box-shadow:0 2px 10px rgba(0,192,98,0.3)">
+                                <i data-lucide="play" class="w-4 h-4" id="ttsIcon"></i>
+                                <span id="ttsBtnText">Play</span>
+                            </button>
+                            <button id="ttsStopBtn" type="button"
+                                class="hidden flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-all">
+                                <i data-lucide="square" class="w-4 h-4"></i> Stop
+                            </button>
+                            <span id="ttsLangLabel" class="text-xs font-semibold text-emerald-700">English</span>
+                        </div>
+                        <p id="ttsStatus" class="text-xs text-emerald-700"></p>
+                    </div>
+                    <button id="geminiVerifyBtn" class="btn btn-primary" type="button" data-diagnosis-id="{{ diagnosis_log.pk }}">
+                        Verify with Gemini AI
+                    </button>
+                    <p id="geminiVerifyStatus" class="mt-2 text-sm text-gray-600"></p>
                 </div>
+                {% endif %}
             {% else %}
-                <div class="diagnosis-empty-state">
-                    <strong>Treatment guidance will appear here</strong>
-                    <p>The system will show suggested next steps once a diagnosis has been completed.</p>
+                <div class="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center">
+                    <p class="font-bold text-gray-900 mb-1">No result yet</p>
+                    <p class="text-sm text-gray-600">Upload a leaf image to see the predicted disease and confidence here.</p>
                 </div>
             {% endif %}
+
+            <div class="rounded-xl border border-gray-200 p-4 bg-gray-50">
+                <p id="treatmentTitle" class="text-xs uppercase tracking-wide text-gray-500 mb-2">Treatment plan</p>
+                {% if diagnosis_result and diagnosis_result.treatment_guidance %}
+                    <div class="space-y-2 text-sm text-gray-800" id="treatmentPlan">
+                        {% for line in diagnosis_result.treatment_lines %}
+                            {% if line == "Plant:" or line == "Disease:" or line == "Severity:" or line == "Symptoms:" or line == "Possible Causes:" or line == "Treatment:" or line == "Prevention:" or line == "Suggested Action:" %}
+                                <p data-kind="heading" class="font-semibold text-gray-900">{{ line }}</p>
+                            {% elif line|slice:":2" == "- " %}
+                                <p data-kind="bullet" class="pl-3">- {{ line|slice:"2:" }}</p>
+                            {% else %}
+                                <p data-kind="text">{{ line }}</p>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-sm text-gray-600">Guidance will appear once a diagnosis is ready.</p>
+                {% endif %}
+            </div>
         </article>
     </div>
 
-    <section class="diagnosis-history">
-        <div class="diagnosis-history-head">
-            <span class="eyebrow">Recent Activity</span>
-            <h2>Your latest leaf tests</h2>
-            <p class="card-intro">Recent uploads stay here so the user can compare files, diagnosis results, and confidence scores.</p>
+    <!-- History -->
+    <section class="card p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Recent Activity</p>
+                <h2 class="text-xl font-bold text-gray-900">Your latest leaf tests</h2>
+                <p class="text-sm text-gray-600">Compare uploads, diagnoses, and confidence scores.</p>
+            </div>
         </div>
-
-        <div class="diagnosis-history-grid">
+        <div class="grid md:grid-cols-3 gap-4">
             {% for item in recent_diagnoses %}
-                <article class="diagnosis-history-card">
-                    <div class="diagnosis-history-meta">
+                <article class="rounded-xl border border-gray-200 p-4 bg-gray-50">
+                    <div class="flex items-center justify-between text-xs text-gray-500 mb-1">
                         <span>{{ item.created_at|date:"M d, Y h:i A" }}</span>
                         <span>
-                            {% if item.source == "gemini_api" %}
-                                Gemini validation
-                            {% else %}
-                                Local CNN model
-                            {% endif %}
+                            {% if item.source == "gemini_api" %}Gemini validation{% else %}Local CNN model{% endif %}
                         </span>
                     </div>
-                    {% if item.original_filename %}
-                        <p class="diagnosis-history-file">{{ item.original_filename }}</p>
-                    {% endif %}
-                    {% if item.plant_name %}
-                        <p class="diagnosis-history-file">Plant: {{ item.plant_name }}</p>
-                    {% endif %}
-                    <strong>{{ item.predicted_disease|default:"Pending diagnosis" }}</strong>
-                    <p>
+                    {% if item.original_filename %}<p class="text-sm font-semibold text-gray-800">{{ item.original_filename }}</p>{% endif %}
+                    {% if item.plant_name %}<p class="text-sm text-gray-600">Plant: {{ item.plant_name }}</p>{% endif %}
+                    <p class="text-base font-bold text-gray-900 mt-1">{{ item.predicted_disease|default:"Pending diagnosis" }}</p>
+                    <p class="text-sm text-gray-600">
                         {% if item.confidence or item.confidence == 0 %}
                             Confidence: {{ item.confidence }}%
                         {% else %}
@@ -371,15 +375,16 @@
                     </p>
                 </article>
             {% empty %}
-                <article class="diagnosis-history-card">
-                    <strong>No diagnosis history yet</strong>
-                    <p>Your uploaded leaf analyses will appear here after you run the first test.</p>
+                <article class="rounded-xl border border-dashed border-gray-300 p-5 text-center text-sm text-gray-600">
+                    No diagnosis history yet. Your uploads will appear here after the first run.
                 </article>
             {% endfor %}
         </div>
     </section>
-</section>
+</div>
+{% endblock %}
 
+{% block extra_scripts %}
 <script>
     const diagnosisForm = document.getElementById("diagnosisForm");
     const diagnosisLoading = document.getElementById("diagnosisLoading");
@@ -389,20 +394,50 @@
     const leafFileName = document.getElementById("leafFileName");
     const leafPreviewCaption = document.getElementById("leafPreviewCaption");
     const leafFileState = document.getElementById("leafFileState");
+    const csrfToken = document.querySelector('[name="csrfmiddlewaretoken"]')?.value || "{{ csrf_token }}";
+
+    let overlayTimeout;
+
+    function refreshIcons() {
+        if (window.lucide && typeof window.lucide.createIcons === "function") {
+            window.lucide.createIcons();
+        }
+    }
+
+    const hideOverlay = () => {
+        if (diagnosisLoading) {
+            diagnosisLoading.classList.add("hidden");
+        }
+        document.body.classList.remove("page-busy");
+        if (overlayTimeout) {
+            clearTimeout(overlayTimeout);
+        }
+    };
+
+    const showOverlay = () => {
+        if (diagnosisLoading) {
+            diagnosisLoading.classList.remove("hidden");
+        }
+        document.body.classList.add("page-busy");
+        overlayTimeout = setTimeout(() => {
+            hideOverlay();
+            const status = document.getElementById("geminiVerifyStatus");
+            if (status && !status.textContent) {
+                status.textContent = "Analysis is taking longer than expected. Please retry or check your connection.";
+            }
+        }, 15000);
+    };
+
+    document.addEventListener("DOMContentLoaded", hideOverlay);
+    window.addEventListener("load", hideOverlay);
 
     if (leafInput && leafPreview) {
         leafInput.addEventListener("change", (event) => {
             const [file] = event.target.files;
             if (!file) {
-                if (leafFileName) {
-                    leafFileName.textContent = "No file selected yet.";
-                }
-                if (leafPreviewCaption) {
-                    leafPreviewCaption.textContent = "Selected image before analysis";
-                }
-                if (leafFileState) {
-                    leafFileState.textContent = "Awaiting file";
-                }
+                if (leafFileName) leafFileName.textContent = "No file selected yet.";
+                if (leafPreviewCaption) leafPreviewCaption.textContent = "Selected image before analysis";
+                if (leafFileState) leafFileState.textContent = "Awaiting file";
                 return;
             }
 
@@ -410,14 +445,8 @@
                 const fileSizeMb = (file.size / (1024 * 1024)).toFixed(2);
                 leafFileName.textContent = `${file.name} | ${fileSizeMb} MB`;
             }
-
-            if (leafPreviewCaption) {
-                leafPreviewCaption.textContent = file.name;
-            }
-
-            if (leafFileState) {
-                leafFileState.textContent = "Ready to analyze";
-            }
+            if (leafPreviewCaption) leafPreviewCaption.textContent = file.name;
+            if (leafFileState) leafFileState.textContent = "Ready to analyze";
 
             const reader = new FileReader();
             reader.onload = (loadEvent) => {
@@ -430,19 +459,515 @@
     if (diagnosisForm) {
         diagnosisForm.addEventListener("submit", () => {
             if (leafInput && leafInput.files.length > 0) {
-                if (diagnosisLoading) {
-                    diagnosisLoading.hidden = false;
-                    diagnosisLoading.classList.add("is-visible");
-                }
-
+                showOverlay();
                 if (diagnosisSubmit) {
                     diagnosisSubmit.disabled = true;
                     diagnosisSubmit.textContent = "Analyzing...";
                 }
-
-                document.body.classList.add("page-busy");
             }
         });
+    }
+
+    const geminiBtn = document.getElementById("geminiVerifyBtn");
+    const geminiStatus = document.getElementById("geminiVerifyStatus");
+    const treatmentPlan = document.getElementById("treatmentPlan");
+    const treatmentTitle = document.getElementById("treatmentTitle");
+
+    const ttsPlayBtn = document.getElementById("ttsPlayBtn");
+    const ttsStopBtn = document.getElementById("ttsStopBtn");
+    const ttsBtnText = document.getElementById("ttsBtnText");
+    const ttsIcon = document.getElementById("ttsIcon");
+    const ttsLangLabel = document.getElementById("ttsLangLabel");
+    const ttsStatus = document.getElementById("ttsStatus");
+    const langBtns = Array.from(document.querySelectorAll(".tts-lang-btn"));
+
+    const TREATMENT_HEADERS = new Set([
+        "Plant:",
+        "Disease:",
+        "Severity:",
+        "Symptoms:",
+        "Possible Causes:",
+        "Treatment:",
+        "Prevention:",
+        "Suggested Action:",
+    ]);
+    const ACTIVE_CLS = ["bg-emerald-600", "text-white", "border-emerald-600"];
+    const INACTIVE_CLS = ["bg-white", "text-gray-700", "border-gray-200", "hover:border-emerald-400", "hover:text-emerald-700"];
+
+    let ttsLang = "en-US";
+    let ttsLangCode = "en";
+    let currentDiagnosisLangCode = "en";
+    let diagnosisPayloadCache = {};
+    let translationRequestId = 0;
+
+    function setTtsStatus(message = "", tone = "normal") {
+        if (!ttsStatus) return;
+        ttsStatus.textContent = message;
+        ttsStatus.classList.remove("text-emerald-700", "text-red-600");
+        ttsStatus.classList.add(tone === "error" ? "text-red-600" : "text-emerald-700");
+    }
+
+    function setLanguageButtonsDisabled(disabled) {
+        langBtns.forEach((btn) => {
+            btn.disabled = disabled;
+            btn.classList.toggle("opacity-60", disabled);
+            btn.classList.toggle("cursor-not-allowed", disabled);
+        });
+    }
+
+    function getLangButtonByCode(langCode) {
+        return langBtns.find((btn) => btn.dataset.code === langCode) || null;
+    }
+
+    function setActiveLang(btn) {
+        if (!btn) return;
+        langBtns.forEach((button) => {
+            button.classList.remove(...ACTIVE_CLS);
+            button.classList.add(...INACTIVE_CLS);
+        });
+        btn.classList.remove(...INACTIVE_CLS);
+        btn.classList.add(...ACTIVE_CLS);
+        ttsLang = btn.dataset.lang || "en-US";
+        ttsLangCode = btn.dataset.code || "en";
+        if (ttsLangLabel) {
+            ttsLangLabel.textContent = btn.dataset.label || "English";
+        }
+    }
+
+    function getText(id) {
+        return document.getElementById(id)?.textContent?.trim() || "";
+    }
+
+    function setText(id, value) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = value;
+        }
+    }
+
+    function escapeHtml(value) {
+        return String(value || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    function normalizeBulletText(text) {
+        return String(text || "").replace(/^\s*[-*]\s*/, "").trim();
+    }
+
+    function renderTreatmentItems(items) {
+        if (!treatmentPlan) return;
+        if (!items || !items.length) {
+            treatmentPlan.innerHTML = '<p class="text-sm text-gray-600">Guidance will appear once a diagnosis is ready.</p>';
+            return;
+        }
+
+        treatmentPlan.innerHTML = items.map((item) => {
+            const kind = item.kind || "text";
+            const text = String(item.text || "").trim();
+            if (!text) return "";
+            if (kind === "heading") {
+                return `<p data-kind="heading" class="font-semibold text-gray-900">${escapeHtml(text)}</p>`;
+            }
+            if (kind === "bullet") {
+                return `<p data-kind="bullet" class="pl-3">- ${escapeHtml(normalizeBulletText(text))}</p>`;
+            }
+            return `<p data-kind="text">${escapeHtml(text)}</p>`;
+        }).join("");
+    }
+
+    function treatmentLinesToItems(lines) {
+        return (lines || []).map((line) => {
+            const text = String(line || "").trim();
+            if (!text) {
+                return null;
+            }
+            if (TREATMENT_HEADERS.has(text)) {
+                return { text, kind: "heading" };
+            }
+            if (text.startsWith("- ")) {
+                return { text: text.slice(2), kind: "bullet" };
+            }
+            return { text, kind: "text" };
+        }).filter(Boolean);
+    }
+
+    function collectDiagnosisPayloadFromDom() {
+        if (!document.getElementById("resultDisease") && !treatmentPlan) {
+            return null;
+        }
+
+        return {
+            result_labels: {
+                plant: getText("resultPlantLabel") || "Plant",
+                disease: getText("resultDiseaseLabel") || "Disease",
+                confidence: getText("resultConfidenceLabel") || "Confidence",
+                source: getText("resultSourceLabel") || "Source",
+            },
+            result_values: {
+                plant: getText("resultPlantName") || "Unknown plant",
+                disease: getText("resultDisease") || "No disease detected",
+                confidence: getText("resultConfidenceValue") || "N/A",
+                source: getText("resultSource") || "Local CNN model",
+            },
+            treatment_title: getText("treatmentTitle") || "Treatment plan",
+            treatment_items: treatmentPlan
+                ? Array.from(treatmentPlan.querySelectorAll("p")).map((item) => ({
+                    text: item.textContent.trim(),
+                    kind: item.dataset.kind || "text",
+                })).filter((item) => item.text)
+                : [],
+        };
+    }
+
+    function storeEnglishDiagnosisPayload() {
+        const payload = collectDiagnosisPayloadFromDom();
+        if (!payload) {
+            diagnosisPayloadCache = {};
+            return null;
+        }
+        diagnosisPayloadCache = { en: payload };
+        return payload;
+    }
+
+    function applyDiagnosisPayload(payload) {
+        if (!payload) return;
+
+        const labels = payload.result_labels || {};
+        const values = payload.result_values || {};
+
+        setText("resultPlantLabel", labels.plant || "Plant");
+        setText("resultDiseaseLabel", labels.disease || "Disease");
+        setText("resultConfidenceLabel", labels.confidence || "Confidence");
+        setText("resultSourceLabel", labels.source || "Source");
+
+        setText("resultPlantName", values.plant || "Unknown plant");
+        setText("resultDisease", values.disease || "No disease detected");
+        setText("resultHeadlineDisease", values.disease || "No disease detected");
+        setText("resultConfidenceValue", values.confidence || "N/A");
+        setText("resultSource", values.source || "Local CNN model");
+        setText("treatmentTitle", payload.treatment_title || "Treatment plan");
+
+        const plantChip = document.getElementById("resultPlantChip");
+        if (plantChip) {
+            plantChip.textContent = `${labels.plant || "Plant"}: ${values.plant || "Unknown plant"}`;
+        }
+
+        const sourceChip = document.getElementById("resultSourceChip");
+        if (sourceChip) {
+            sourceChip.textContent = values.source || "Local CNN model";
+        }
+
+        renderTreatmentItems(payload.treatment_items || []);
+    }
+
+    async function switchDiagnosisLanguage(langCode, options = {}) {
+        const force = Boolean(options.force);
+        const languageLabel = options.label || getLangButtonByCode(langCode)?.dataset.label || "English";
+        const englishPayload = diagnosisPayloadCache.en || storeEnglishDiagnosisPayload();
+        if (!englishPayload) {
+            return true;
+        }
+
+        currentDiagnosisLangCode = langCode;
+        if (langCode === "en") {
+            applyDiagnosisPayload(englishPayload);
+            setTtsStatus("");
+            return true;
+        }
+
+        if (!force && diagnosisPayloadCache[langCode]) {
+            applyDiagnosisPayload(diagnosisPayloadCache[langCode]);
+            setTtsStatus("");
+            return true;
+        }
+
+        const requestId = ++translationRequestId;
+        setLanguageButtonsDisabled(true);
+        if (ttsPlayBtn) {
+            ttsPlayBtn.disabled = true;
+        }
+        setTtsStatus(`Translating result to ${languageLabel}...`);
+
+        try {
+            const response = await fetch("{% url 'detection:translate_diagnosis' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken,
+                },
+                body: JSON.stringify({
+                    target_lang: langCode,
+                    payload: englishPayload,
+                }),
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || "Translation failed.");
+            }
+            if (requestId !== translationRequestId) {
+                return false;
+            }
+
+            diagnosisPayloadCache[langCode] = data.payload;
+            if (currentDiagnosisLangCode === langCode) {
+                applyDiagnosisPayload(data.payload);
+            }
+            setTtsStatus("");
+            return true;
+        } catch (error) {
+            if (requestId === translationRequestId) {
+                applyDiagnosisPayload(englishPayload);
+                currentDiagnosisLangCode = "en";
+                setTtsStatus(error.message || "Translation failed. Showing English instead.", "error");
+            }
+            return false;
+        } finally {
+            if (requestId === translationRequestId) {
+                setLanguageButtonsDisabled(false);
+                if (ttsPlayBtn) {
+                    ttsPlayBtn.disabled = false;
+                }
+            }
+        }
+    }
+
+    function buildSpeechTextFromDisplayedContent() {
+        const parts = [];
+        const resultPairs = [
+            [getText("resultPlantLabel"), getText("resultPlantName")],
+            [getText("resultDiseaseLabel"), getText("resultDisease")],
+            [getText("resultConfidenceLabel"), getText("resultConfidenceValue")],
+            [getText("resultSourceLabel"), getText("resultSource")],
+        ];
+
+        resultPairs.forEach(([label, value]) => {
+            if (label && value) {
+                parts.push(`${label}: ${value}.`);
+            }
+        });
+
+        const treatmentHeading = getText("treatmentTitle");
+        const treatmentLines = treatmentPlan
+            ? Array.from(treatmentPlan.querySelectorAll("p")).map((item) => item.textContent.trim()).filter(Boolean)
+            : [];
+        if (treatmentHeading && treatmentLines.length) {
+            parts.push(`${treatmentHeading}. ${treatmentLines.join(". ")}`);
+        }
+
+        return parts.join(" ").trim();
+    }
+
+    function pickVoice(lang) {
+        const voices = window.speechSynthesis.getVoices();
+        return voices.find((voice) => voice.lang === lang)
+            || voices.find((voice) => voice.lang.startsWith(lang.split("-")[0]))
+            || null;
+    }
+
+    function resetTtsBtn() {
+        if (ttsPlayBtn) {
+            ttsPlayBtn.classList.remove("hidden");
+            ttsPlayBtn.disabled = false;
+        }
+        if (ttsStopBtn) {
+            ttsStopBtn.classList.add("hidden");
+        }
+        if (ttsBtnText) {
+            ttsBtnText.textContent = "Play";
+        }
+        if (ttsIcon) {
+            ttsIcon.setAttribute("data-lucide", "play");
+            refreshIcons();
+        }
+    }
+
+    if (langBtns.length) {
+        langBtns.forEach((btn) => {
+            btn.classList.add(...INACTIVE_CLS);
+        });
+        setActiveLang(getLangButtonByCode("en") || langBtns[0]);
+        langBtns.forEach((btn) => {
+            btn.addEventListener("click", async () => {
+                if (window.speechSynthesis && window.speechSynthesis.speaking) {
+                    window.speechSynthesis.cancel();
+                    resetTtsBtn();
+                }
+
+                const previousLangCode = currentDiagnosisLangCode;
+                const previousButton = getLangButtonByCode(previousLangCode);
+                setActiveLang(btn);
+                const translated = await switchDiagnosisLanguage(btn.dataset.code || "en", {
+                    label: btn.dataset.label || "English",
+                });
+                if (!translated) {
+                    if (previousLangCode !== "en" && diagnosisPayloadCache[previousLangCode]) {
+                        applyDiagnosisPayload(diagnosisPayloadCache[previousLangCode]);
+                        setActiveLang(previousButton || getLangButtonByCode("en") || langBtns[0]);
+                        currentDiagnosisLangCode = previousLangCode;
+                    } else {
+                        applyDiagnosisPayload(diagnosisPayloadCache.en || storeEnglishDiagnosisPayload());
+                        setActiveLang(getLangButtonByCode("en") || langBtns[0]);
+                        currentDiagnosisLangCode = "en";
+                    }
+                }
+            });
+        });
+    }
+
+    if (ttsPlayBtn) {
+        ttsPlayBtn.addEventListener("click", () => {
+            if (!("speechSynthesis" in window)) {
+                alert("Your browser does not support text-to-speech.");
+                return;
+            }
+            if (window.speechSynthesis.speaking) {
+                window.speechSynthesis.cancel();
+                resetTtsBtn();
+                return;
+            }
+
+            const speechText = buildSpeechTextFromDisplayedContent();
+            if (!speechText) {
+                setTtsStatus("No diagnosis text is available to read yet.", "error");
+                return;
+            }
+
+            setTtsStatus("");
+            if (ttsBtnText) {
+                ttsBtnText.textContent = "Playing...";
+            }
+            if (ttsIcon) {
+                ttsIcon.setAttribute("data-lucide", "loader-2");
+                refreshIcons();
+            }
+
+            const utterance = new SpeechSynthesisUtterance(speechText);
+            utterance.lang = ttsLang;
+            utterance.rate = 0.88;
+            utterance.pitch = 1.0;
+            const voice = pickVoice(ttsLang);
+            if (voice) {
+                utterance.voice = voice;
+            }
+
+            utterance.onstart = () => {
+                if (ttsStopBtn) {
+                    ttsStopBtn.classList.remove("hidden");
+                }
+            };
+            utterance.onend = resetTtsBtn;
+            utterance.onerror = () => {
+                setTtsStatus("Audio playback failed in this browser.", "error");
+                resetTtsBtn();
+            };
+
+            window.speechSynthesis.speak(utterance);
+        });
+    }
+
+    if (ttsStopBtn) {
+        ttsStopBtn.addEventListener("click", () => {
+            if (window.speechSynthesis) {
+                window.speechSynthesis.cancel();
+            }
+            resetTtsBtn();
+        });
+    }
+
+    if ("speechSynthesis" in window) {
+        window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+    }
+
+    if (geminiBtn) {
+        geminiBtn.addEventListener("click", async () => {
+            const diagnosisId = geminiBtn.dataset.diagnosisId;
+            if (!diagnosisId) {
+                if (geminiStatus) {
+                    geminiStatus.textContent = "No diagnosis found. Please upload an image first.";
+                }
+                return;
+            }
+
+            geminiBtn.disabled = true;
+            geminiBtn.textContent = "Asking Gemini...";
+            if (geminiStatus) {
+                geminiStatus.textContent = "Sending image to Gemini AI, please wait...";
+            }
+
+            const formData = new FormData();
+            formData.append("diagnosis_id", diagnosisId);
+            formData.append("csrfmiddlewaretoken", csrfToken);
+
+            try {
+                const response = await fetch("{% url 'detection:gemini_verify' %}", {
+                    method: "POST",
+                    body: formData,
+                });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    if (geminiStatus) {
+                        geminiStatus.textContent = "Gemini error: " + (data.error || "Unknown error.");
+                    }
+                    geminiBtn.disabled = false;
+                    geminiBtn.textContent = "Verify with Gemini AI";
+                    return;
+                }
+
+                setText("resultPlantName", data.plant_name || "Unknown");
+                setText("resultDisease", data.disease || "Unknown");
+                setText("resultHeadlineDisease", data.disease || "Unknown");
+                setText("resultSource", "Gemini validation");
+
+                const plantChip = document.getElementById("resultPlantChip");
+                if (plantChip) {
+                    plantChip.textContent = `${getText("resultPlantLabel") || "Plant"}: ${data.plant_name || "Unknown"}`;
+                }
+
+                const sourceChip = document.getElementById("resultSourceChip");
+                if (sourceChip) {
+                    sourceChip.textContent = "Gemini validation";
+                }
+
+                if (treatmentPlan && data.treatment_lines && data.treatment_lines.length) {
+                    renderTreatmentItems(treatmentLinesToItems(data.treatment_lines));
+                }
+
+                storeEnglishDiagnosisPayload();
+                const selectedLangCode = currentDiagnosisLangCode;
+                if (selectedLangCode !== "en") {
+                    const englishPayload = diagnosisPayloadCache.en;
+                    diagnosisPayloadCache = { en: englishPayload };
+                    const translated = await switchDiagnosisLanguage(selectedLangCode, {
+                        force: true,
+                        label: getLangButtonByCode(selectedLangCode)?.dataset.label || "English",
+                    });
+                    if (!translated) {
+                        setActiveLang(getLangButtonByCode("en") || langBtns[0]);
+                        currentDiagnosisLangCode = "en";
+                    }
+                }
+
+                if (geminiStatus) {
+                    geminiStatus.textContent = "Gemini verification complete.";
+                }
+                geminiBtn.textContent = "Verified";
+            } catch (error) {
+                if (geminiStatus) {
+                    geminiStatus.textContent = "Network error. Please try again.";
+                }
+                geminiBtn.disabled = false;
+                geminiBtn.textContent = "Verify with Gemini AI";
+            }
+        });
+    }
+
+    if (document.getElementById("resultDisease")) {
+        storeEnglishDiagnosisPayload();
     }
 </script>
 {% endblock %}

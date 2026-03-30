@@ -1,69 +1,145 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}About | Plant Disease System{% endblock %}
+{% block title %}About | PlantGuard{% endblock %}
 
 {% block content %}
-<section class="content-hero">
-    <div class="content-copy">
-        <span class="eyebrow">About The Platform</span>
-        <h1>Designed to make plant disease detection clearer, faster, and easier to act on.</h1>
-        <p class="lead">
-            Plant Disease System is a focused web experience for growers, students, and agricultural teams who need a clean workflow around crop diagnosis and account management.
-        </p>
-    </div>
-    <div class="content-illustration-card">
-        <img
-            src="{% static 'images/lab-analysis.svg' %}"
-            alt="Illustration of plant diagnosis and analysis"
-            class="content-illustration"
-        >
+<!-- Hero -->
+<section class="relative overflow-hidden rounded-3xl mb-10"
+    style="background: linear-gradient(135deg, #0d1f0f 0%, #0f2a14 40%, #132416 100%);">
+    <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_20%_20%,#00e87e,transparent_45%),radial-gradient(circle_at_80%_10%,#84cc16,transparent_35%)]"></div>
+    <div class="relative grid lg:grid-cols-2 gap-0 items-center min-h-[460px]">
+        <div class="px-8 py-14 lg:py-18 lg:pl-14 space-y-6">
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest"
+                style="background:rgba(0,200,98,0.12); color:#00e87e; border:1px solid rgba(0,200,98,0.2)">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+                About PlantGuard
+            </div>
+            <h1 class="font-serif text-4xl md:text-5xl xl:text-5xl text-white leading-[1.1]">
+                Building an AI co-pilot for crop health.
+            </h1>
+            <p class="text-base leading-relaxed max-w-xl" style="color:rgba(255,255,255,0.72)">
+                PlantGuard blends CNN leaf detection with Gemini language guidance so growers move from photo to treatment with confidence. Every screen is tuned for speed, clarity, and follow-through.
+            </p>
+            <div class="flex flex-wrap gap-3">
+                <a href="{% url 'detection:leaf_diagnosis' %}" class="btn btn-primary">
+                    <i data-lucide="scan-line" class="w-4 h-4"></i> Scan a Leaf
+                </a>
+                <a href="{% url 'dashboard:home' %}" class="btn btn-secondary">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> View Dashboard
+                </a>
+            </div>
+            <div class="flex flex-wrap gap-4 text-xs font-semibold" style="color:rgba(255,255,255,0.55)">
+                <span class="inline-flex items-center gap-2"><i data-lucide="cpu" class="w-4 h-4" style="color:#00c062"></i> CNN + Gemini AI</span>
+                <span class="inline-flex items-center gap-2"><i data-lucide="zap" class="w-4 h-4" style="color:#00c062"></i> <3s avg diagnosis</span>
+                <span class="inline-flex items-center gap-2"><i data-lucide="shield-check" class="w-4 h-4" style="color:#00c062"></i> 20 free scans</span>
+            </div>
+        </div>
+
+        <div class="hidden lg:flex items-center justify-center p-10">
+            <div class="relative w-full max-w-md">
+                <div class="rounded-2xl p-6 shadow-2xl backdrop-blur-xl"
+                    style="background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12)">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-xs font-bold uppercase tracking-widest" style="color:#00e87e">Impact Snapshot</span>
+                        <span class="text-[11px] font-semibold px-3 py-1 rounded-full" style="background:rgba(0,200,98,0.12); color:#00e87e">Live</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 text-white">
+                        <div class="rounded-xl p-4" style="background:rgba(0,200,98,0.1); border:1px solid rgba(0,200,98,0.18)">
+                            <p class="text-xs uppercase tracking-wide mb-1" style="color:rgba(255,255,255,0.6)">Diseases tracked</p>
+                            <p class="text-2xl font-black">23</p>
+                        </div>
+                        <div class="rounded-xl p-4" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08)">
+                            <p class="text-xs uppercase tracking-wide mb-1" style="color:rgba(255,255,255,0.6)">Avg accuracy</p>
+                            <p class="text-2xl font-black" style="color:#00e87e">95%</p>
+                        </div>
+                        <div class="rounded-xl p-4 col-span-2 flex items-center justify-between"
+                            style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08)">
+                            <div>
+                                <p class="text-xs uppercase tracking-wide mb-1" style="color:rgba(255,255,255,0.6)">Avg diagnosis time</p>
+                                <p class="text-xl font-bold">2.8s</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs uppercase tracking-wide mb-1" style="color:rgba(255,255,255,0.6)">Free scans</p>
+                                <p class="text-xl font-bold" style="color:#00e87e">20 / account</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="absolute -top-4 -right-4 px-3 py-2 rounded-xl text-xs font-bold shadow-lg"
+                    style="background:linear-gradient(135deg,#00c062,#009650); color:#fff">
+                    <i data-lucide="leaf" class="w-3 h-3 inline mr-1"></i> Verified by agronomists
+                </div>
+            </div>
+        </div>
     </div>
 </section>
 
-<section class="section-grid">
-    <article class="section-card">
-        <span class="section-number">01</span>
-        <h3>Diagnosis-first workflow</h3>
-        <p>The interface is structured around the core plant disease task: upload, inspect, interpret, and respond.</p>
+<!-- Pillars -->
+<section class="grid md:grid-cols-3 gap-4 mb-10">
+    <article class="card card-hover p-6 relative overflow-hidden">
+        <div class="absolute -right-6 -top-6 w-24 h-24 rounded-full opacity-10" style="background:#00c062"></div>
+        <span class="text-xs font-bold uppercase tracking-[0.2em] text-brand-600 mb-2 block">01</span>
+        <h3 class="font-bold text-lg text-gray-900 mb-2">Diagnosis-first workflow</h3>
+        <p class="text-gray-600 text-sm leading-relaxed">Upload, interpret, and act within the same flow. No hunting for the next step.</p>
     </article>
-    <article class="section-card">
-        <span class="section-number">02</span>
-        <h3>Grower-friendly access</h3>
-        <p>Signup, login, profile editing, and dashboard access are all kept simple enough for real users, not only developers.</p>
+    <article class="card card-hover p-6 relative overflow-hidden">
+        <div class="absolute -right-6 -top-6 w-24 h-24 rounded-full opacity-10" style="background:#84cc16"></div>
+        <span class="text-xs font-bold uppercase tracking-[0.2em] text-brand-600 mb-2 block">02</span>
+        <h3 class="font-bold text-lg text-gray-900 mb-2">Grower-friendly access</h3>
+        <p class="text-gray-600 text-sm leading-relaxed">Memberships, dashboard, and support are obvious, not hidden in menus.</p>
     </article>
-    <article class="section-card">
-        <span class="section-number">03</span>
-        <h3>Ready for expansion</h3>
-        <p>This foundation is prepared for image upload modules, disease classification results, recommendations, and report history.</p>
+    <article class="card card-hover p-6 relative overflow-hidden">
+        <div class="absolute -right-6 -top-6 w-24 h-24 rounded-full opacity-10" style="background:#00c062"></div>
+        <span class="text-xs font-bold uppercase tracking-[0.2em] text-brand-600 mb-2 block">03</span>
+        <h3 class="font-bold text-lg text-gray-900 mb-2">Ready for expansion</h3>
+        <p class="text-gray-600 text-sm leading-relaxed">Plug in more crops, alerts, and recommendations without redesigning the UI.</p>
     </article>
+ </section>
+
+<!-- Story -->
+<section class="card p-8 md:p-10 mb-10">
+    <div class="grid md:grid-cols-2 gap-8 items-center">
+        <div class="space-y-4">
+            <span class="section-label mb-2"><i data-lucide="sparkles" class="w-3 h-3"></i> Why it matters</span>
+            <h2 class="font-serif text-3xl text-gray-900 leading-tight">From lab insights to field decisions—fast.</h2>
+            <p class="text-gray-600 leading-relaxed">We pair high-recall CNN detection with contextual Gemini explanations so farmers trust the diagnosis and know the next action. The UI keeps latency low and clarity high.</p>
+            <div class="grid sm:grid-cols-2 gap-3">
+                <div class="rounded-xl border border-gray-200 p-4">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Human-in-the-loop</p>
+                    <p class="font-bold text-gray-900">Review + override suggestions anytime.</p>
+                </div>
+                <div class="rounded-xl border border-gray-200 p-4">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Actionable exports</p>
+                    <p class="font-bold text-gray-900">Share PDF reports or dashboard follow-ups.</p>
+                </div>
+            </div>
+        </div>
+        <div class="rounded-2xl p-6 bg-gradient-to-br from-green-50 via-white to-emerald-50 border border-green-100">
+            <h3 class="font-bold text-lg text-gray-900 mb-3 flex items-center gap-2">
+                <i data-lucide="route" class="w-5 h-5 text-brand-600"></i> Rollout path
+            </h3>
+            <ol class="space-y-3 text-sm text-gray-700">
+                <li><strong class="text-gray-900">1) Data capture:</strong> Leaf uploads + quick metadata.</li>
+                <li><strong class="text-gray-900">2) Model run:</strong> CNN detects class; Gemini drafts treatment.</li>
+                <li><strong class="text-gray-900">3) Review:</strong> Farmer confirms, edits, or requests human help.</li>
+                <li><strong class="text-gray-900">4) Follow-up:</strong> Dashboard reminders, spray log, and yield notes.</li>
+            </ol>
+        </div>
+    </div>
 </section>
 
-<section class="highlight-panel">
-    <div class="highlight-copy">
-        <span class="eyebrow">What Makes It Useful</span>
-        <h2>One interface for monitoring, user access, and future prediction features.</h2>
-        <p>
-            Instead of separate-looking pages, the design now shares one visual system across home, account pages, and dashboard screens. That makes the project feel much closer to a finished product.
-        </p>
+<!-- CTA -->
+<section class="rounded-2xl p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-6"
+    style="background:linear-gradient(135deg,#00c062,#009650); box-shadow:0 20px 50px rgba(0,192,98,0.35);">
+    <div class="text-white space-y-2">
+        <p class="text-xs font-semibold uppercase tracking-[0.25em]">Get involved</p>
+        <h3 class="text-2xl font-black">Partner with us on the next 50 crops.</h3>
+        <p class="text-sm opacity-85 max-w-xl">Share datasets, agronomy expertise, or run the system in your region. We’re expanding crop coverage and regional calibrations.</p>
     </div>
-    <div class="info-grid">
-        <article class="info-tile">
-            <strong>Responsive layout</strong>
-            <span>Works cleanly on desktop and mobile screens.</span>
-        </article>
-        <article class="info-tile">
-            <strong>Local artwork</strong>
-            <span>SVG illustrations are stored in the project and load without third-party dependencies.</span>
-        </article>
-        <article class="info-tile">
-            <strong>Reusable patterns</strong>
-            <span>Cards, forms, and navigation are consistent across pages.</span>
-        </article>
-        <article class="info-tile">
-            <strong>Easy next step</strong>
-            <span>You can now connect the actual disease prediction module into the dashboard flow.</span>
-        </article>
+    <div class="flex gap-3">
+        <a href="{% url 'account:contact' %}" class="btn btn-ghost">Contact Team</a>
+        <a href="{% url 'account:membership' %}" class="btn btn-primary">View Memberships</a>
     </div>
 </section>
 {% endblock %}

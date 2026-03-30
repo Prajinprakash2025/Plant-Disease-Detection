@@ -1,48 +1,220 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard | Plant Disease System{% endblock %}
+{% block title %}Dashboard | PlantGuard{% endblock %}
 
 {% block content %}
-<section class="dashboard-hero">
-    <div>
-        <span class="eyebrow">Dashboard</span>
-        <h1>Welcome, {{ request.user.first_name|default:request.user.username }}.</h1>
-        <p class="lead">
-            This space is prepared for the next layer of your plant disease system: image uploads, prediction summaries, treatment guidance, and field reporting.
-        </p>
-    </div>
-    <div class="dashboard-actions">
-        <a href="{% url 'detection:leaf_diagnosis' %}" class="btn btn-primary">Test Leaf</a>
-        <a href="{% url 'account:membership' %}" class="btn btn-secondary">Membership</a>
-        <a href="{% url 'account:profile' %}" class="btn btn-secondary">Update profile</a>
-        <a href="{% url 'account:home' %}" class="btn btn-ghost">Home</a>
-    </div>
-</section>
+<div class="space-y-10">
+    <section class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0d1f0f] via-[#12311a] to-[#1a4725] text-white shadow-[0_28px_80px_rgba(6,45,24,0.32)]">
+        <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_15%_20%,#00e87e,transparent_40%),radial-gradient(circle_at_85%_10%,#84cc16,transparent_36%)]"></div>
+        <div class="relative grid lg:grid-cols-[1.15fr_0.85fr] gap-8 p-8 md:p-12">
+            <div class="space-y-6">
+                <div class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.3em]">
+                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Dashboard
+                </div>
+                <div class="space-y-3">
+                    <h1 class="font-serif text-4xl md:text-5xl leading-tight">
+                        {{ request.user.first_name|default:request.user.username }}, your crop health command center.
+                    </h1>
+                    <p class="max-w-2xl text-base leading-relaxed text-white/78">
+                        Track scan usage, review recent diagnoses, and move from upload to treatment faster. This dashboard brings your plant checks, membership status, and next actions into one place.
+                    </p>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <a href="{% url 'detection:leaf_diagnosis' %}" class="btn btn-primary">Scan Leaf</a>
+                    <a href="{% url 'account:membership' %}" class="btn btn-secondary">Membership</a>
+                    <a href="{% url 'account:profile' %}" class="btn btn-secondary">Update profile</a>
+                    <a href="{% url 'account:home' %}" class="btn btn-ghost">Home</a>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <span class="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold">Quota tracking</span>
+                    <span class="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold">Recent diagnosis history</span>
+                    <span class="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold">Gemini verification status</span>
+                </div>
+            </div>
 
-<section class="dashboard-grid">
-    <article class="section-card">
-        <span class="section-number">Q</span>
-        <h3>Leaf test quota</h3>
-        {% if leaf_quota.is_premium %}
-            <p>Premium demo is active. You can keep testing leaf images without the 20-scan free limit.</p>
-        {% else %}
-            <p>{{ leaf_quota.used }} of {{ leaf_quota.limit }} free leaf checks are already used. {{ leaf_quota.remaining }} scans are left for this account.</p>
-        {% endif %}
-    </article>
-    <article class="section-card">
-        <span class="section-number">A</span>
-        <h3>Diagnosis intake</h3>
-        <p>Upload a leaf image, run the local CNN model, and trigger Gemini validation when confidence is low.</p>
-    </article>
-    <article class="section-card">
-        <span class="section-number">B</span>
-        <h3>Treatment plan</h3>
-        <p>Reserve this area for disease-specific recommendations, fertilizer notes, or pesticide guidance.</p>
-    </article>
-    <article class="section-card">
-        <span class="section-number">C</span>
-        <h3>Farmer records</h3>
-        <p>Track who submitted samples, when they were reviewed, and which follow-up actions were taken.</p>
-    </article>
-</section>
+            <div class="relative">
+                <div class="rounded-3xl border border-white/10 bg-white/10 p-6 backdrop-blur-xl shadow-2xl">
+                    <div class="mb-4 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-300">Membership snapshot</p>
+                            <h2 class="mt-1 text-2xl font-black text-white">{{ leaf_quota.plan_name }}</h2>
+                        </div>
+                        <span class="rounded-full px-3 py-1 text-xs font-semibold {% if leaf_quota.is_premium %}bg-emerald-500/20 text-emerald-100{% else %}bg-white/10 text-white/80{% endif %}">
+                            {% if leaf_quota.is_premium %}Unlimited{% else %}Free tier{% endif %}
+                        </span>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="rounded-2xl border border-white/10 bg-black/10 p-4">
+                            <div class="mb-2 flex items-center justify-between text-sm text-white/75">
+                                <span>Usage</span>
+                                <span>{{ leaf_quota.usage_label }}</span>
+                            </div>
+                            <div class="h-2 rounded-full bg-white/10">
+                                <div class="h-2 rounded-full bg-gradient-to-r from-emerald-300 to-green-400" style="width: {{ leaf_quota.usage_percent }}%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="rounded-2xl border border-white/10 bg-black/10 p-4">
+                                <p class="text-xs uppercase tracking-wide text-white/55">Remaining</p>
+                                <p class="mt-1 text-xl font-bold text-white">{{ leaf_quota.remaining_label }}</p>
+                            </div>
+                            <div class="rounded-2xl border border-white/10 bg-black/10 p-4">
+                                <p class="text-xs uppercase tracking-wide text-white/55">Verified scans</p>
+                                <p class="mt-1 text-xl font-bold text-white">{{ dashboard_metrics.verified_count }}</p>
+                            </div>
+                        </div>
+
+                        <div class="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4">
+                            {% if leaf_quota.limit_reached %}
+                                <p class="text-sm font-semibold text-emerald-100">Your free scans are finished. Upgrade membership to keep diagnosing without interruption.</p>
+                            {% elif leaf_quota.is_premium %}
+                                <p class="text-sm font-semibold text-emerald-100">Premium is active. Keep scanning leaves and validating low-confidence predictions with Gemini.</p>
+                            {% else %}
+                                <p class="text-sm font-semibold text-emerald-100">{{ leaf_quota.remaining }} scans left. This is a good time to use them on your highest-priority samples.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="absolute -top-4 -right-4 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 px-3 py-2 text-xs font-bold text-white shadow-lg">
+                    PlantGuard Live
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <article class="card card-hover p-6">
+            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Total scans</p>
+            <h2 class="mt-3 text-3xl font-black text-gray-900">{{ dashboard_metrics.diagnosis_count }}</h2>
+            <p class="mt-2 text-sm text-gray-600">All completed leaf diagnoses saved to this account.</p>
+        </article>
+        <article class="card card-hover p-6">
+            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Plants tracked</p>
+            <h2 class="mt-3 text-3xl font-black text-gray-900">{{ dashboard_metrics.tracked_plants }}</h2>
+            <p class="mt-2 text-sm text-gray-600">Distinct plant names identified in your recent scan history.</p>
+        </article>
+        <article class="card card-hover p-6">
+            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Gemini verified</p>
+            <h2 class="mt-3 text-3xl font-black text-gray-900">{{ dashboard_metrics.verified_count }}</h2>
+            <p class="mt-2 text-sm text-gray-600">Scans validated through Gemini review after model prediction.</p>
+        </article>
+        <article class="card card-hover p-6">
+            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Avg confidence</p>
+            <h2 class="mt-3 text-3xl font-black text-gray-900">
+                {% if dashboard_metrics.avg_confidence is not None %}
+                    {{ dashboard_metrics.avg_confidence }}%
+                {% else %}
+                    --
+                {% endif %}
+            </h2>
+            <p class="mt-2 text-sm text-gray-600">Average confidence across scans that already have a score.</p>
+        </article>
+    </section>
+
+    <section class="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+        <article class="card p-6 md:p-8">
+            <div class="mb-6 flex items-start justify-between gap-4">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Operations</p>
+                    <h2 class="mt-2 text-2xl font-black text-gray-900">Scan pipeline</h2>
+                    <p class="mt-2 max-w-xl text-sm text-gray-600">Your next best actions, quota visibility, and the exact flow from upload to treatment guidance.</p>
+                </div>
+                <div class="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-right">
+                    <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">Usage status</p>
+                    <p class="mt-1 text-lg font-bold text-emerald-900">{{ leaf_quota.usage_label }}</p>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div class="rounded-2xl border border-gray-200 p-5">
+                    <div class="mb-3 flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-bold text-gray-900">Quota progress</p>
+                            <p class="text-sm text-gray-600">{{ leaf_quota.remaining_label }}</p>
+                        </div>
+                        <span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">{{ leaf_quota.plan_name }}</span>
+                    </div>
+                    <div class="h-3 rounded-full bg-gray-100">
+                        <div class="h-3 rounded-full bg-gradient-to-r from-emerald-500 to-green-400" style="width: {{ leaf_quota.usage_percent }}%;"></div>
+                    </div>
+                </div>
+
+                <div class="grid gap-4 md:grid-cols-3">
+                    <div class="rounded-2xl border border-gray-200 bg-gray-50 p-5">
+                        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">01</p>
+                        <h3 class="mt-2 text-lg font-bold text-gray-900">Diagnosis intake</h3>
+                        <p class="mt-2 text-sm text-gray-600">Upload a clear image and keep the infected region centered for a cleaner prediction.</p>
+                    </div>
+                    <div class="rounded-2xl border border-gray-200 bg-gray-50 p-5">
+                        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">02</p>
+                        <h3 class="mt-2 text-lg font-bold text-gray-900">Treatment planning</h3>
+                        <p class="mt-2 text-sm text-gray-600">Use the diagnosis page to review confidence, guidance, and Gemini validation in one place.</p>
+                    </div>
+                    <div class="rounded-2xl border border-gray-200 bg-gray-50 p-5">
+                        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">03</p>
+                        <h3 class="mt-2 text-lg font-bold text-gray-900">Farmer records</h3>
+                        <p class="mt-2 text-sm text-gray-600">Build a clean history of samples, outcomes, and follow-up actions over time.</p>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <article class="card p-6 md:p-8">
+            <div class="mb-6 flex items-start justify-between gap-4">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Recent scans</p>
+                    <h2 class="mt-2 text-2xl font-black text-gray-900">Latest diagnosis activity</h2>
+                    <p class="mt-2 text-sm text-gray-600">Open the newest scans quickly and keep an eye on model confidence and verification status.</p>
+                </div>
+                <a href="{% url 'detection:leaf_diagnosis' %}" class="btn btn-primary">New scan</a>
+            </div>
+
+            <div class="space-y-4">
+                {% for item in recent_diagnoses %}
+                    <article class="rounded-2xl border border-gray-200 bg-gray-50 p-5">
+                        <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                                <p class="text-sm font-bold text-gray-900">{{ item.predicted_disease|default:"Pending diagnosis" }}</p>
+                                <p class="text-xs text-gray-500">{{ item.created_at|date:"M d, Y h:i A" }}</p>
+                            </div>
+                            <span class="rounded-full px-3 py-1 text-xs font-semibold {% if item.source == 'gemini_api' %}bg-emerald-100 text-emerald-800{% else %}bg-white text-gray-700 border border-gray-200{% endif %}">
+                                {% if item.source == "gemini_api" %}Gemini verified{% else %}Local CNN{% endif %}
+                            </span>
+                        </div>
+
+                        <div class="grid gap-3 sm:grid-cols-3">
+                            <div>
+                                <p class="text-xs uppercase tracking-wide text-gray-500">Leaf file</p>
+                                <p class="mt-1 text-sm font-semibold text-gray-800">{{ item.original_filename|default:"Unnamed upload" }}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs uppercase tracking-wide text-gray-500">Plant</p>
+                                <p class="mt-1 text-sm font-semibold text-gray-800">{{ item.plant_name|default:"Unknown" }}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs uppercase tracking-wide text-gray-500">Confidence</p>
+                                <p class="mt-1 text-sm font-semibold text-gray-800">
+                                    {% if item.confidence or item.confidence == 0 %}
+                                        {{ item.confidence }}%
+                                    {% else %}
+                                        Not available
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </article>
+                {% empty %}
+                    <div class="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
+                        <p class="text-lg font-bold text-gray-900">No scans yet</p>
+                        <p class="mt-2 text-sm text-gray-600">Start with your first leaf upload and this area will turn into a quick review board.</p>
+                        <a href="{% url 'detection:leaf_diagnosis' %}" class="btn btn-primary mt-4">Run first scan</a>
+                    </div>
+                {% endfor %}
+            </div>
+        </article>
+    </section>
+</div>
 {% endblock %}

@@ -1,128 +1,208 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Profile | Plant Disease System{% endblock %}
+{% block title %}Profile | PlantGuard{% endblock %}
 
 {% block content %}
-<section class="profile-layout">
-    <aside class="profile-card">
-        <div class="profile-avatar">
-            {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
-        </div>
-        <span class="eyebrow">Account Overview</span>
-        <h1>{{ request.user.get_full_name|default:request.user.username }}</h1>
-        <p class="profile-subtitle">@{{ request.user.username }}</p>
-
-        <dl class="profile-meta">
-            <div>
-                <dt>Email</dt>
-                <dd>{{ request.user.email|default:"Not added yet" }}</dd>
-            </div>
-            <div>
-                <dt>Joined</dt>
-                <dd>{{ joined_date|date:"M d, Y" }}</dd>
-            </div>
-            <div>
-                <dt>Last login</dt>
-                <dd>{% if last_login %}{{ last_login|date:"M d, Y h:i A" }}{% else %}First session{% endif %}</dd>
-            </div>
-            <div>
-                <dt>Completion</dt>
-                <dd>{{ profile_completion }}% ready</dd>
-            </div>
-            <div>
-                <dt>Plan</dt>
-                <dd>{{ leaf_quota.plan_name }}</dd>
-            </div>
-            <div>
-                <dt>Leaf scans</dt>
-                <dd>{{ leaf_quota.remaining_label }}</dd>
-            </div>
-        </dl>
-
-        <div class="progress-shell" aria-label="Profile completion">
-            <div class="progress-bar" style="width: {{ profile_completion }}%;"></div>
-        </div>
-
-        <div class="profile-art-card">
-            <img
-                src="{% static 'images/profile-plant.svg' %}"
-                alt="Illustration of a grower profile and healthy crop"
-                class="profile-artwork"
-            >
-        </div>
-
-        <div class="profile-shortcuts">
-            <a href="{% url 'dashboard:home' %}" class="btn btn-secondary btn-block">Open dashboard</a>
-            <a href="{% url 'account:membership' %}" class="btn btn-primary btn-block">Membership</a>
-            <a href="{% url 'account:home' %}" class="btn btn-ghost btn-block">Back to home</a>
-        </div>
-    </aside>
-
-    <div class="profile-editor">
-        <span class="eyebrow">Edit Details</span>
-        <h2>Keep your account information current.</h2>
-        <p class="card-intro">Update the details used across the plant disease system interface.</p>
-
-        <div class="editor-banner">
-            <div>
-                <strong>Profile status</strong>
-                <span>Your account details help personalize dashboard actions and future diagnosis history.</span>
-            </div>
-            <img
-                src="{% static 'images/leaf-hero.svg' %}"
-                alt="Decorative plant workflow illustration"
-                class="editor-banner-image"
-            >
-        </div>
-
-        {% if form.non_field_errors %}
-            <div class="form-alert">
-                {% for error in form.non_field_errors %}
-                    <p>{{ error }}</p>
-                {% endfor %}
-            </div>
-        {% endif %}
-
-        <form method="post" class="auth-form">
-            {% csrf_token %}
-
-            <div class="form-grid">
-                <div class="field-group">
-                    <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
-                    {{ form.first_name }}
-                    {% for error in form.first_name.errors %}
-                        <p class="error-text">{{ error }}</p>
-                    {% endfor %}
+<div class="space-y-10">
+    <section class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0d1f0f] via-[#12311a] to-[#1a4725] text-white shadow-[0_28px_80px_rgba(6,45,24,0.32)]">
+        <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_15%_20%,#00e87e,transparent_40%),radial-gradient(circle_at_85%_10%,#84cc16,transparent_36%)]"></div>
+        <div class="relative grid gap-8 lg:grid-cols-[0.95fr_1.05fr] p-8 md:p-12">
+            <div class="space-y-6">
+                <div class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.3em]">
+                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Profile
                 </div>
 
-                <div class="field-group">
-                    <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
-                    {{ form.last_name }}
-                    {% for error in form.last_name.errors %}
-                        <p class="error-text">{{ error }}</p>
-                    {% endfor %}
+                <div class="flex items-center gap-4">
+                    <div class="flex h-20 w-20 items-center justify-center rounded-3xl bg-white/10 text-3xl font-black text-white shadow-xl">
+                        {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                    </div>
+                    <div>
+                        <h1 class="font-serif text-4xl md:text-5xl leading-tight">{{ request.user.get_full_name|default:request.user.username }}</h1>
+                        <p class="mt-2 text-lg text-white/75">@{{ request.user.username }}</p>
+                    </div>
+                </div>
+
+                <p class="max-w-2xl text-base leading-relaxed text-white/78">
+                    Keep your account details current so PlantGuard can personalize your dashboard, membership, and scan history across the platform.
+                </p>
+
+                <div class="flex flex-wrap gap-3">
+                    <a href="{% url 'dashboard:home' %}" class="btn btn-secondary">Open dashboard</a>
+                    <a href="{% url 'account:membership' %}" class="btn btn-primary">Membership</a>
+                    <a href="{% url 'account:home' %}" class="btn btn-ghost">Back to home</a>
                 </div>
             </div>
 
-            <div class="field-group">
-                <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
-                {{ form.username }}
-                {% for error in form.username.errors %}
-                    <p class="error-text">{{ error }}</p>
-                {% endfor %}
+            <div class="relative">
+                <div class="rounded-3xl border border-white/10 bg-white/10 p-6 backdrop-blur-xl shadow-2xl">
+                    <div class="mb-4 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-300">Account status</p>
+                            <h2 class="mt-1 text-2xl font-black text-white">{{ profile_completion }}% ready</h2>
+                        </div>
+                        <span class="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-100">{{ leaf_quota.plan_name }}</span>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="rounded-2xl border border-white/10 bg-black/10 p-4">
+                            <div class="mb-2 flex items-center justify-between text-sm text-white/75">
+                                <span>Profile completion</span>
+                                <span>{{ profile_completion }}%</span>
+                            </div>
+                            <div class="h-3 rounded-full bg-white/10">
+                                <div class="h-3 rounded-full bg-gradient-to-r from-emerald-300 to-green-400" style="width: {{ profile_completion }}%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="rounded-2xl border border-white/10 bg-black/10 p-4">
+                                <p class="text-xs uppercase tracking-wide text-white/55">Leaf scans</p>
+                                <p class="mt-1 text-lg font-bold text-white">{{ leaf_quota.remaining_label }}</p>
+                            </div>
+                            <div class="rounded-2xl border border-white/10 bg-black/10 p-4">
+                                <p class="text-xs uppercase tracking-wide text-white/55">Email</p>
+                                <p class="mt-1 text-lg font-bold text-white break-all">{{ request.user.email|default:"Not added yet" }}</p>
+                            </div>
+                        </div>
+
+                        <div class="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4">
+                            <p class="text-sm font-semibold text-emerald-100">
+                                {% if request.user.first_name and request.user.last_name and request.user.email %}
+                                    Your account is fully set up and ready for diagnosis history, dashboard actions, and plan changes.
+                                {% else %}
+                                    Add the missing profile details to make the account feel complete across PlantGuard.
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="absolute -top-4 -right-4 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 px-3 py-2 text-xs font-bold text-white shadow-lg">
+                    Account Overview
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+        <aside class="space-y-6">
+            <article class="card p-6">
+                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Profile details</p>
+                <h2 class="mt-2 text-2xl font-black text-gray-900">Account snapshot</h2>
+
+                <dl class="mt-5 space-y-4">
+                    <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                        <dt class="text-xs uppercase tracking-wide text-gray-500">Email</dt>
+                        <dd class="mt-1 text-base font-semibold text-gray-900 break-all">{{ request.user.email|default:"Not added yet" }}</dd>
+                    </div>
+                    <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                        <dt class="text-xs uppercase tracking-wide text-gray-500">Joined</dt>
+                        <dd class="mt-1 text-base font-semibold text-gray-900">{{ joined_date|date:"M d, Y" }}</dd>
+                    </div>
+                    <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                        <dt class="text-xs uppercase tracking-wide text-gray-500">Last login</dt>
+                        <dd class="mt-1 text-base font-semibold text-gray-900">{% if last_login %}{{ last_login|date:"M d, Y h:i A" }}{% else %}First session{% endif %}</dd>
+                    </div>
+                    <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                        <dt class="text-xs uppercase tracking-wide text-gray-500">Plan</dt>
+                        <dd class="mt-1 text-base font-semibold text-gray-900">{{ leaf_quota.plan_name }}</dd>
+                    </div>
+                </dl>
+            </article>
+
+            <article class="card p-6 overflow-hidden">
+                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Visual status</p>
+                <h2 class="mt-2 text-2xl font-black text-gray-900">PlantGuard identity card</h2>
+                <div class="mt-5 rounded-3xl bg-gradient-to-br from-[#f6efe0] via-[#fffaf0] to-[#eef9f1] p-5">
+                    <img
+                        src="{% static 'images/profile-plant.svg' %}"
+                        alt="Illustration of a grower profile and healthy crop"
+                        class="mx-auto w-full max-w-sm"
+                    >
+                </div>
+            </article>
+        </aside>
+
+        <article class="card p-6 md:p-8">
+            <div class="mb-6 flex items-start justify-between gap-4">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Edit details</p>
+                    <h2 class="mt-2 text-2xl font-black text-gray-900">Keep your account information current.</h2>
+                    <p class="mt-2 max-w-xl text-sm text-gray-600">Update the details PlantGuard uses across your dashboard, diagnosis history, and membership experience.</p>
+                </div>
+                <div class="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-right">
+                    <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">Current plan</p>
+                    <p class="mt-1 text-lg font-bold text-emerald-900">{{ leaf_quota.plan_name }}</p>
+                </div>
             </div>
 
-            <div class="field-group">
-                <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
-                {{ form.email }}
-                {% for error in form.email.errors %}
-                    <p class="error-text">{{ error }}</p>
-                {% endfor %}
+            <div class="mb-6 rounded-3xl border border-gray-200 bg-gradient-to-r from-emerald-50 via-white to-green-50 p-5">
+                <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <p class="text-sm font-bold text-gray-900">Profile status</p>
+                        <p class="mt-1 text-sm text-gray-600">Your account details help personalize future scan history, quota messaging, and dashboard shortcuts.</p>
+                    </div>
+                    <img
+                        src="{% static 'images/leaf-hero.svg' %}"
+                        alt="Decorative plant workflow illustration"
+                        class="h-24 w-auto"
+                    >
+                </div>
             </div>
 
-            <button type="submit" class="btn btn-primary">Save profile</button>
-        </form>
-    </div>
-</section>
+            {% if form.non_field_errors %}
+                <div class="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <form method="post" class="space-y-5">
+                {% csrf_token %}
+
+                <div class="grid gap-4 md:grid-cols-2">
+                    <div>
+                        <label for="{{ form.first_name.id_for_label }}" class="mb-2 block text-sm font-semibold text-gray-800">{{ form.first_name.label }}</label>
+                        {{ form.first_name }}
+                        {% for error in form.first_name.errors %}
+                            <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.last_name.id_for_label }}" class="mb-2 block text-sm font-semibold text-gray-800">{{ form.last_name.label }}</label>
+                        {{ form.last_name }}
+                        {% for error in form.last_name.errors %}
+                            <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div>
+                    <label for="{{ form.username.id_for_label }}" class="mb-2 block text-sm font-semibold text-gray-800">{{ form.username.label }}</label>
+                    {{ form.username }}
+                    {% for error in form.username.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+                <div>
+                    <label for="{{ form.email.id_for_label }}" class="mb-2 block text-sm font-semibold text-gray-800">{{ form.email.label }}</label>
+                    {{ form.email }}
+                    {% for error in form.email.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+                <div class="flex flex-wrap gap-3 pt-2">
+                    <button type="submit" class="btn btn-primary">Save profile</button>
+                    <a href="{% url 'dashboard:home' %}" class="btn btn-secondary">Open dashboard</a>
+                    <a href="{% url 'account:membership' %}" class="btn btn-ghost">Membership</a>
+                </div>
+            </form>
+        </article>
+    </section>
+</div>
 {% endblock %}

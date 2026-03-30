@@ -15,6 +15,7 @@ from django.views.decorators.http import require_POST
 from .forms import AdminLoginForm, ContactForm, LoginForm, SignUpForm, UserProfileForm
 from .models import ContactMessage, MembershipProfile
 from .utils import get_leaf_quota_summary, get_or_create_membership
+from detection.models import Crop, Disease, LeafDiagnosis
 
 
 def staff_required(view_func):
@@ -37,7 +38,25 @@ def _safe_redirect(request, fallback):
 
 
 def home(request):
-    return render(request, "account/home.html")
+    context = {
+        "crop_count": Crop.objects.count(),
+        "disease_count": Disease.objects.count(),
+        "featured_crops": list(
+            Crop.objects.order_by("name").values_list("name", flat=True)[:8]
+        ),
+    }
+
+    if request.user.is_authenticated:
+        recent_diagnoses = list(LeafDiagnosis.objects.filter(user=request.user)[:3])
+        context.update(
+            {
+                "leaf_quota": get_leaf_quota_summary(request.user),
+                "recent_diagnoses": recent_diagnoses,
+                "latest_diagnosis": recent_diagnoses[0] if recent_diagnoses else None,
+            }
+        )
+
+    return render(request, "account/home.html", context)
 
 
 def about_view(request):

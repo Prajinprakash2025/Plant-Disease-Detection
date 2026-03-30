@@ -138,9 +138,9 @@ PLANT_DISEASE_CLASS_NAMES_PATH = BASE_DIR / 'ml_testing' / 'trained_models' / 'p
 PLANT_DISEASE_IMAGE_SIZE = (224, 224)
 ML_RUNTIME_PYTHON = BASE_DIR / 'ml_venv' / ('Scripts' if os.name == 'nt' else 'bin') / ('python.exe' if os.name == 'nt' else 'python')
 ML_RUNTIME_PREDICT_SCRIPT = BASE_DIR / 'ml_testing' / 'predict_image.py'
-LOCAL_MODEL_CONFIDENCE_THRESHOLD = 0.80
+LOCAL_MODEL_CONFIDENCE_THRESHOLD = 0.60
 REQUIRE_GEMINI_FOR_LOW_CONFIDENCE = True
-GEMINI_MODEL_NAME = 'gemini-2.5-flash'
+GEMINI_MODEL_NAME = 'gemini-2.0-flash'
 GEMINI_VOTE_COUNT = 1
 FREE_TIER_LEAF_DIAGNOSIS_LIMIT = 20
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")

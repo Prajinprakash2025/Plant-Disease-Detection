@@ -1,3 +1,4 @@
+import json
 import shutil
 import tempfile
 from unittest import mock
@@ -110,6 +111,97 @@ class DetectionViewTests(TestCase):
         self.assertRedirects(
             response,
             f"{reverse('account:login')}?next={reverse('detection:leaf_diagnosis')}",
+        )
+
+    def test_translate_diagnosis_requires_login(self):
+        response = self.client.post(
+            reverse("detection:translate_diagnosis"),
+            content_type="application/json",
+            data='{"target_lang":"ml","payload":{}}',
+        )
+        self.assertRedirects(
+            response,
+            f"{reverse('account:login')}?next={reverse('detection:translate_diagnosis')}",
+        )
+
+    def test_translate_diagnosis_returns_translated_payload(self):
+        self.client.force_login(self.user)
+        payload = {
+            "result_labels": {
+                "plant": "Plant",
+                "disease": "Disease",
+                "confidence": "Confidence",
+                "source": "Source",
+            },
+            "result_values": {
+                "plant": "Tomato",
+                "disease": "Early blight",
+                "confidence": "94.7%",
+                "source": "Local CNN model",
+            },
+            "treatment_title": "Treatment plan",
+            "treatment_items": [
+                {"text": "Symptoms:", "kind": "heading"},
+                {"text": "Typical leaf spots.", "kind": "bullet"},
+            ],
+        }
+        translated_payload = {
+            "result_labels": {
+                "plant": "ചെടി",
+                "disease": "രോഗം",
+                "confidence": "വിശ്വാസ്യത",
+                "source": "ഉറവിടം",
+            },
+            "result_values": {
+                "plant": "തക്കാളി",
+                "disease": "എർലി ബ്ലൈറ്റ്",
+                "confidence": "94.7%",
+                "source": "ലോക്കൽ സി.എൻ.എൻ മോഡൽ",
+            },
+            "treatment_title": "ചികിത്സാ പദ്ധതി",
+            "treatment_items": [
+                {"text": "ലക്ഷണങ്ങൾ:", "kind": "heading"},
+                {"text": "സാധാരണ ഇല പാടുകൾ.", "kind": "bullet"},
+            ],
+        }
+
+        with mock.patch(
+            "detection.views._translate_diagnosis_payload",
+            return_value=translated_payload,
+        ) as translate_mock:
+            response = self.client.post(
+                reverse("detection:translate_diagnosis"),
+                data=json.dumps(
+                    {
+                        "target_lang": "ml",
+                        "payload": payload,
+                    }
+                ),
+                content_type="application/json",
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(
+            response.content,
+            {
+                "target_lang": "ml",
+                "payload": translated_payload,
+            },
+        )
+        translate_mock.assert_called_once_with(payload, "ml")
+
+    def test_translate_diagnosis_rejects_invalid_payload(self):
+        self.client.force_login(self.user)
+        response = self.client.post(
+            reverse("detection:translate_diagnosis"),
+            data=json.dumps({"target_lang": "ml"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertJSONEqual(
+            response.content,
+            {"error": "Missing diagnosis payload."},
         )
 
     def test_leaf_diagnosis_page_logs_result(self):
