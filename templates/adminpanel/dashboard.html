@@ -39,6 +39,11 @@
         <small>Separate admin access accounts</small>
     </article>
     <article class="admin-stat-card">
+        <span>Diagnosis logs</span>
+        <strong>{{ total_diagnoses }}</strong>
+        <small>{{ recent_diagnoses|length }} most recent records</small>
+    </article>
+    <article class="admin-stat-card">
         <span>Open messages</span>
         <strong>{{ unresolved_messages }}</strong>
         <small>Support or contact requests pending</small>

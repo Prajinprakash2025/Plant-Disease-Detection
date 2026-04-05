@@ -12,6 +12,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from account.models import ContactMessage
+from detection.models import LeafDiagnosis
 
 from .forms import AdminLoginForm
 
@@ -70,6 +71,7 @@ def dashboard_view(request):
     week_ago = timezone.now() - timedelta(days=7)
     users = User.objects.order_by("-date_joined")
     messages_qs = ContactMessage.objects.order_by("-created_at")
+    diagnoses_qs = LeafDiagnosis.objects.order_by("-created_at")
 
     context = {
         "total_users": users.count(),
@@ -78,8 +80,10 @@ def dashboard_view(request):
         "staff_users": users.filter(is_staff=True).count(),
         "new_users_this_week": users.filter(date_joined__gte=week_ago).count(),
         "unresolved_messages": messages_qs.filter(is_resolved=False).count(),
+        "total_diagnoses": diagnoses_qs.count(),
         "recent_users": users[:6],
         "recent_messages": messages_qs[:6],
+        "recent_diagnoses": diagnoses_qs[:6],
     }
     return render(request, "adminpanel/dashboard.html", context)
 
@@ -150,6 +154,39 @@ def messages_view(request):
             "query": query,
             "status": status,
             "total_results": messages_qs.count(),
+        },
+    )
+
+
+@staff_required
+def diagnoses_view(request):
+    query = request.GET.get("q", "").strip()
+    status = request.GET.get("status", "all")
+
+    diagnoses = LeafDiagnosis.objects.select_related("user").order_by("-created_at")
+    if query:
+        diagnoses = diagnoses.filter(
+            Q(user__username__icontains=query)
+            | Q(plant_name__icontains=query)
+            | Q(predicted_disease__icontains=query)
+        )
+
+    if status == "local":
+        diagnoses = diagnoses.filter(source=LeafDiagnosis.SOURCE_LOCAL_MODEL)
+    elif status == "gemini":
+        diagnoses = diagnoses.filter(source=LeafDiagnosis.SOURCE_GEMINI_API)
+
+    paginator = Paginator(diagnoses, 10)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    return render(
+        request,
+        "adminpanel/diagnoses.html",
+        {
+            "page_obj": page_obj,
+            "query": query,
+            "status": status,
+            "total_results": diagnoses.count(),
         },
     )
 

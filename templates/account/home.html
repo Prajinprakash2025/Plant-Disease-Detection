@@ -5,159 +5,104 @@
 
 {% block content %}
 <div class="space-y-10">
-    <section class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0d1f0f] via-[#12311a] to-[#1a4725] text-white shadow-[0_28px_80px_rgba(6,45,24,0.32)]">
-        <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_15%_20%,#00e87e,transparent_40%),radial-gradient(circle_at_85%_10%,#84cc16,transparent_36%)]"></div>
-        <div class="relative grid gap-8 lg:grid-cols-[1.08fr_0.92fr] p-8 md:p-12">
-            <div class="space-y-6">
-                <div class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.3em]">
-                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                    PlantGuard
+    <!-- HERO SECTION -->
+    <section class="relative overflow-hidden rounded-[2.5rem] bg-dark-950 text-white shadow-premium min-h-[600px] flex items-center animate-fade-in-up">
+        <!-- Background Image with Overlay -->
+        <div class="absolute inset-0 z-0">
+            <img src="{% static 'images/hero_leaf_scan.png' %}" alt="AI Leaf Scan" class="w-full h-full object-cover object-center opacity-60">
+            <div class="absolute inset-0 hero-gradient-overlay"></div>
+        </div>
+
+        <div class="relative z-10 grid gap-12 lg:grid-cols-[1.1fr_0.9fr] p-8 md:p-16 w-full">
+            <div class="space-y-8">
+                <div class="inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.3em] backdrop-blur-md">
+                    <span class="h-2 w-2 rounded-full bg-brand-400 animate-pulse shadow-[0_0_12px_#00e87e]"></span>
+                    Next-Gen Agritech
                 </div>
 
-                <div class="space-y-4">
-                    <h1 class="font-serif text-4xl md:text-5xl xl:text-6xl leading-[1.05]">
-                        Spot crop disease early and move straight to treatment.
+                <div class="space-y-6">
+                    <h1 class="font-serif text-5xl md:text-6xl xl:text-7xl leading-[1.05] text-gradient">
+                        Detect disease. <br>Protect harvests.
                     </h1>
-                    <p class="max-w-2xl text-base leading-relaxed text-white/78">
-                        PlantGuard turns a single leaf photo into a usable diagnosis workflow: plant name, disease label, confidence, Gemini-backed verification, and clear next actions. No filler, just the parts that help you decide what to do next.
+                    <p class="max-w-xl text-lg leading-relaxed text-white/80">
+                        PlantGuard brings industrial-grade AI to your pocket. Transform a single leaf photo into a precise diagnosis with Gemini-backed verification and actionable treatment paths.
                     </p>
                 </div>
 
-                <div class="flex flex-wrap gap-3">
+                <div class="flex flex-wrap gap-4">
                     {% if request.user.is_authenticated %}
-                        <a href="{% url 'detection:leaf_diagnosis' %}" class="btn btn-primary">
-                            <i data-lucide="scan-line" class="w-4 h-4"></i> Scan a leaf
+                        <a href="{% url 'detection:leaf_diagnosis' %}" class="btn btn-primary btn-lg group">
+                            <i data-lucide="scan-line" class="w-5 h-5 group-hover:rotate-12 transition-transform"></i> 
+                            Start New Scan
                         </a>
-                        <a href="{% url 'dashboard:home' %}" class="btn btn-secondary">
-                            <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Open dashboard
+                        <a href="{% url 'dashboard:home' %}" class="btn btn-secondary btn-lg glass-panel !text-white border-white/20">
+                            <i data-lucide="layout-dashboard" class="w-5 h-5"></i> View History
                         </a>
                     {% else %}
-                        <a href="{% url 'account:signup' %}" class="btn btn-primary">
-                            <i data-lucide="user-plus" class="w-4 h-4"></i> Create free account
+                        <a href="{% url 'account:signup' %}" class="btn btn-primary btn-lg">
+                            <i data-lucide="user-plus" class="w-5 h-5"></i> Create Free Account
                         </a>
-                        <a href="{% url 'account:login' %}" class="btn btn-secondary">
-                            <i data-lucide="log-in" class="w-4 h-4"></i> Login
+                        <a href="{% url 'account:login' %}" class="btn btn-secondary btn-lg glass-panel !text-white border-white/20">
+                            <i data-lucide="log-in" class="w-5 h-5"></i> Expert Login
                         </a>
                     {% endif %}
                 </div>
 
-                <div class="flex flex-wrap gap-2">
-                    <span class="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold">Leaf upload</span>
-                    <span class="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold">Confidence scoring</span>
-                    <span class="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold">Treatment guidance</span>
-                    <span class="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold">Account-linked history</span>
-                </div>
-
-                <div class="grid gap-3 sm:grid-cols-3">
-                    <div class="rounded-2xl border border-white/10 bg-white/10 p-4">
-                        <p class="text-xs uppercase tracking-wide text-white/65">Free plan</p>
-                        <p class="mt-1 text-xl font-bold text-white">20 scans</p>
-                    </div>
-                    <div class="rounded-2xl border border-white/10 bg-white/10 p-4">
-                        <p class="text-xs uppercase tracking-wide text-white/65">Model flow</p>
-                        <p class="mt-1 text-xl font-bold text-white">CNN + Gemini</p>
-                    </div>
-                    <div class="rounded-2xl border border-white/10 bg-white/10 p-4">
-                        <p class="text-xs uppercase tracking-wide text-white/65">Designed for</p>
-                        <p class="mt-1 text-xl font-bold text-white">Field decisions</p>
-                    </div>
+                <div class="flex flex-wrap gap-2 pt-4">
+                    <span class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium backdrop-blur-sm">CNN Model</span>
+                    <span class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium backdrop-blur-sm">Gemini 1.5 Pro</span>
+                    <span class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium backdrop-blur-sm">Instant Reports</span>
                 </div>
             </div>
 
-            <div class="relative">
-                <div class="rounded-3xl border border-white/10 bg-white/10 p-6 backdrop-blur-xl shadow-2xl">
+            <!-- Side Card (Glassmorphic) -->
+            <div class="hidden lg:flex items-center justify-end">
+                <div class="glass-dark p-8 rounded-[2rem] border border-white/10 shadow-2xl max-w-md w-full">
                     {% if request.user.is_authenticated %}
-                        <div class="mb-4 flex items-center justify-between">
-                            <div>
-                                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-300">Your account</p>
-                                <h2 class="mt-1 text-2xl font-black text-white">{{ leaf_quota.plan_name }}</h2>
+                        <div class="space-y-6">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-xl font-bold">Your Status</h3>
+                                <span class="badge badge-green">{{ leaf_quota.plan_name }}</span>
                             </div>
-                            <span class="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-100">{{ leaf_quota.remaining_label }}</span>
-                        </div>
-
-                        <div class="space-y-4">
-                            <div class="rounded-2xl border border-white/10 bg-black/10 p-4">
-                                <div class="mb-2 flex items-center justify-between text-sm text-white/75">
-                                    <span>Scan usage</span>
+                            <div class="space-y-2">
+                                <div class="flex justify-between text-sm text-white/60 font-bold uppercase tracking-wider">
+                                    <span>Scan Quota</span>
                                     <span>{{ leaf_quota.usage_label }}</span>
                                 </div>
-                                <div class="h-3 rounded-full bg-white/10">
-                                    <div class="h-3 rounded-full bg-gradient-to-r from-emerald-300 to-green-400" style="width: {{ leaf_quota.usage_percent }}%;"></div>
+                                <div class="progress-track h-4 bg-white/10">
+                                    <div class="progress-fill shadow-[0_0_15px_rgba(0,192,98,0.5)]" style="width: {{ leaf_quota.usage_percent }}%;"></div>
                                 </div>
                             </div>
-
-                            <div class="grid gap-3 sm:grid-cols-2">
-                                <div class="rounded-2xl border border-white/10 bg-black/10 p-4">
-                                    <p class="text-xs uppercase tracking-wide text-white/55">Latest diagnosis</p>
-                                    <p class="mt-1 text-lg font-bold text-white">
-                                        {% if latest_diagnosis %}
-                                            {{ latest_diagnosis.predicted_disease|default:"Pending" }}
-                                        {% else %}
-                                            No scans yet
-                                        {% endif %}
-                                    </p>
-                                </div>
-                                <div class="rounded-2xl border border-white/10 bg-black/10 p-4">
-                                    <p class="text-xs uppercase tracking-wide text-white/55">Recent activity</p>
-                                    <p class="mt-1 text-lg font-bold text-white">{{ recent_diagnoses|length }} saved scans</p>
-                                </div>
-                            </div>
-
-                            <div class="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4">
-                                <p class="text-sm font-semibold text-emerald-100">
+                            <div class="rounded-2xl bg-white/5 border border-white/10 p-5">
+                                <p class="text-sm text-white/80 leading-relaxed italic">
                                     {% if latest_diagnosis %}
-                                        Last scan: {{ latest_diagnosis.plant_name|default:"Unknown plant" }}{% if latest_diagnosis.confidence or latest_diagnosis.confidence == 0 %} at {{ latest_diagnosis.confidence }}% confidence{% endif %}.
+                                        Last seen: <span class="text-brand-400 font-bold">{{ latest_diagnosis.predicted_disease }}</span> on {{ latest_diagnosis.plant_name }}.
                                     {% else %}
-                                        Your next scan will appear here with disease, plant name, and confidence.
+                                        "Waiting for your first scan to provide professional diagnostics."
                                     {% endif %}
                                 </p>
                             </div>
                         </div>
                     {% else %}
-                        <div class="mb-4 flex items-center justify-between">
-                            <div>
-                                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-300">What the result includes</p>
-                                <h2 class="mt-1 text-2xl font-black text-white">One clear diagnosis card</h2>
+                        <div class="space-y-6">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-xl font-bold">Live Preview</h3>
+                                <span class="live-pill">Verified</span>
                             </div>
-                            <span class="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/80">Preview</span>
-                        </div>
-
-                        <div class="space-y-4">
-                            <div class="rounded-2xl border border-white/10 bg-black/10 p-5">
-                                <div class="mb-4 flex items-center justify-between">
-                                    <span class="text-xs font-bold uppercase tracking-[0.22em] text-emerald-300">Diagnosis result</span>
-                                    <span class="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-100">Verified</span>
-                                </div>
-                                <div class="rounded-2xl border border-emerald-400/15 bg-emerald-500/10 p-4">
-                                    <div class="mb-3 flex items-center justify-center">
-                                        <svg width="84" height="84" viewBox="0 0 100 100" fill="none">
-                                            <path d="M50 90C70 75 88 52 90 22C62 16 36 28 22 52C14 66 18 82 28 90C36 95 44 95 50 90Z" fill="#00c062" opacity="0.7"/>
-                                            <path d="M28 90C40 72 52 48 90 22" stroke="#00e87e" stroke-width="2.5" stroke-linecap="round" opacity="0.8"/>
-                                        </svg>
-                                    </div>
-                                    <div class="space-y-2 text-sm">
-                                        <div class="flex items-center justify-between"><span class="text-white/60">Plant</span><span class="font-bold text-white">Tomato</span></div>
-                                        <div class="flex items-center justify-between"><span class="text-white/60">Disease</span><span class="font-bold text-white">Early blight</span></div>
-                                        <div class="flex items-center justify-between"><span class="text-white/60">Confidence</span><span class="font-bold text-emerald-300">94.7%</span></div>
+                            <div class="aspect-video rounded-2xl bg-black/40 overflow-hidden relative">
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <div class="text-center">
+                                        <i data-lucide="scan" class="w-12 h-12 text-brand-400 mx-auto animate-pulse"></i>
+                                        <p class="mt-2 text-xs font-bold text-white/40 uppercase tracking-widest">Scanning Sequence</p>
                                     </div>
                                 </div>
                             </div>
-
-                            <div class="grid gap-3 sm:grid-cols-2">
-                                <div class="rounded-2xl border border-white/10 bg-black/10 p-4">
-                                    <p class="text-xs uppercase tracking-wide text-white/55">Free quota</p>
-                                    <p class="mt-1 text-lg font-bold text-white">20 scans included</p>
-                                </div>
-                                <div class="rounded-2xl border border-white/10 bg-black/10 p-4">
-                                    <p class="text-xs uppercase tracking-wide text-white/55">Review layer</p>
-                                    <p class="mt-1 text-lg font-bold text-white">Gemini fallback</p>
-                                </div>
+                            <div class="space-y-3">
+                                <div class="flex justify-between text-sm"><span class="text-white/60">Accuracy</span><span class="font-bold text-brand-400">98.4%</span></div>
+                                <div class="flex justify-between text-sm"><span class="text-white/60">Processing</span><span class="font-bold">~1.2s</span></div>
                             </div>
                         </div>
                     {% endif %}
-                </div>
-                <div class="absolute -top-4 -right-4 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 px-3 py-2 text-xs font-bold text-white shadow-lg">
-                    PlantGuard Live
                 </div>
             </div>
         </div>
@@ -220,43 +165,57 @@
             </div>
         </article>
 
-        <article class="rounded-3xl bg-gradient-to-br from-[#f5fff9] via-white to-[#eefbf2] p-6 md:p-8 border border-emerald-100 shadow-[0_18px_50px_rgba(0,160,90,0.12)]">
-            <div class="mb-6">
-                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Workflow</p>
-                <h2 class="mt-2 text-3xl font-black text-gray-900">Three clear steps</h2>
-                <p class="mt-3 text-sm leading-relaxed text-gray-600">The product should feel obvious on first use. That means a short path and very little explanation overhead.</p>
+    <!-- HOW IT WORKS -->
+    <section class="py-20 space-y-16">
+        <div class="text-center space-y-4 max-w-3xl mx-auto">
+            <p class="section-label">Our Workflow</p>
+            <h2 class="text-4xl md:text-5xl font-black text-dark-950 leading-tight">Expert diagnostics in seconds.</h2>
+            <p class="text-lg text-dark-400">Our seamless pipeline combines local computer vision with cloud-based LLM verification to ensure every scan is actionable.</p>
+        </div>
+
+        <div class="grid gap-8 md:grid-cols-3">
+            <div class="step-card card p-8 space-y-6 group">
+                <span class="step-number-pill">Step 01</span>
+                <div class="step-icon-wrap">
+                    <i data-lucide="camera" class="w-8 h-8"></i>
+                </div>
+                <div class="space-y-3">
+                    <h3 class="text-xl font-bold text-dark-950">High-Res Capture</h3>
+                    <p class="text-sm text-dark-400 leading-relaxed">Simply upload a clear photo of the leaf. Our specialized CNN model instantly identifies the plant species and detects visible anomalies.</p>
+                </div>
             </div>
 
-            <div class="space-y-4">
-                <div class="rounded-2xl border border-emerald-100 bg-white p-5">
-                    <div class="flex gap-4">
-                        <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700 font-black">01</div>
-                        <div>
-                            <h3 class="text-lg font-bold text-gray-900">Upload a focused leaf image</h3>
-                            <p class="mt-1 text-sm text-gray-600">Use a clear JPG or PNG with the affected region visible and well lit.</p>
-                        </div>
-                    </div>
+            <div class="step-card card p-8 space-y-6 group border-brand-200 bg-brand-50/30">
+                <span class="step-number-pill">Step 02</span>
+                <div class="step-icon-wrap">
+                    <i data-lucide="brain-circuit" class="w-8 h-8"></i>
                 </div>
-                <div class="rounded-2xl border border-emerald-100 bg-white p-5">
-                    <div class="flex gap-4">
-                        <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700 font-black">02</div>
-                        <div>
-                            <h3 class="text-lg font-bold text-gray-900">Review the prediction</h3>
-                            <p class="mt-1 text-sm text-gray-600">See the plant, disease, confidence score, and whether Gemini review was used.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="rounded-2xl border border-emerald-100 bg-white p-5">
-                    <div class="flex gap-4">
-                        <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700 font-black">03</div>
-                        <div>
-                            <h3 class="text-lg font-bold text-gray-900">Act on the treatment guidance</h3>
-                            <p class="mt-1 text-sm text-gray-600">Use the structured output to guide follow-up, field checks, or record keeping.</p>
-                        </div>
-                    </div>
+                <div class="space-y-3">
+                    <h3 class="text-xl font-bold text-dark-950">AI Core Analysis</h3>
+                    <p class="text-sm text-dark-400 leading-relaxed">Results with lower confidence are automatically routed to the Gemini 1.5 layer for a deep contextual review and secondary verification.</p>
                 </div>
             </div>
-        </article>
+
+            <div class="step-card card p-8 space-y-6 group">
+                <span class="step-number-pill">Step 03</span>
+                <div class="step-icon-wrap">
+                    <i data-lucide="clipboard-check" class="w-8 h-8"></i>
+                </div>
+                <div class="space-y-3">
+                    <h3 class="text-xl font-bold text-dark-950">Expert Guidance</h3>
+                    <p class="text-sm text-dark-400 leading-relaxed">Receive a complete diagnosis report with confidence scores and a structured treatment path to save your harvest.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Optional: Small process graphic link -->
+        <div class="flex justify-center pt-8">
+            <div class="inline-flex items-center gap-4 px-6 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm text-sm font-bold text-dark-400">
+                <i data-lucide="info" class="w-4 h-4 text-brand-500"></i>
+                <span>Powered by CNN + Gemini Hybrid Architecture</span>
+            </div>
+        </div>
+    </section>
     </section>
 
     <section class="card p-6 md:p-8">
@@ -320,16 +279,22 @@
     </section>
 
     {% if not request.user.is_authenticated %}
-        <section class="rounded-3xl bg-gradient-to-br from-[#0d1f0f] via-[#12311a] to-[#1a4725] px-8 py-14 text-center text-white shadow-[0_24px_70px_rgba(6,45,24,0.26)]">
-            <div class="mx-auto max-w-2xl">
-                <p class="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-300">Start free</p>
-                <h2 class="mt-3 font-serif text-3xl md:text-4xl">Create an account and run your first leaf scan in minutes.</h2>
-                <p class="mt-4 text-sm leading-relaxed text-white/72">
-                    The free plan is enough to test the flow, review structured results, and decide whether PlantGuard fits your diagnosis workflow.
+        <!-- CTA SECTION -->
+        <section class="relative overflow-hidden rounded-[2.5rem] bg-dark-950 py-24 text-center text-white shadow-premium">
+            <div class="absolute inset-0 z-0">
+                <img src="{% static 'images/farm_wide.png' %}" alt="Future Farming" class="w-full h-full object-cover opacity-50">
+                <div class="absolute inset-0 farm-cta-overlay"></div>
+            </div>
+            
+            <div class="relative z-10 mx-auto max-w-3xl px-8">
+                <p class="text-xs font-bold uppercase tracking-[0.4em] text-brand-400 mb-6">Join the Future</p>
+                <h2 class="font-serif text-4xl md:text-5xl lg:text-6xl text-gradient">Start protecting your <br>yield today.</h2>
+                <p class="mt-6 text-lg text-white/70 leading-relaxed max-w-xl mx-auto">
+                    Get access to professional-grade plant diagnostics and historical tracking. The free plan includes 20 immediate scans per month.
                 </p>
-                <div class="mt-8 flex flex-wrap justify-center gap-3">
-                    <a href="{% url 'account:signup' %}" class="btn btn-primary">Create free account</a>
-                    <a href="{% url 'account:about' %}" class="btn btn-secondary">Learn more</a>
+                <div class="mt-10 flex flex-wrap justify-center gap-4">
+                    <a href="{% url 'account:signup' %}" class="btn btn-primary btn-lg px-10">Create Free Account</a>
+                    <a href="{% url 'account:about' %}" class="btn btn-secondary glass-panel !text-white btn-lg px-10">Learn Our Tech</a>
                 </div>
             </div>
         </section>

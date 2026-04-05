@@ -13,6 +13,12 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 import os
 from pathlib import Path
 
+# Silence TensorFlow startup noise
+os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "3")       # hide C++ logs
+os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")      # hide oneDNN messages
+os.environ.setdefault("TF_GPU_ALLOCATOR", "cuda_malloc_async")  # suppress GPU warning
+os.environ.setdefault("ABSL_MIN_LOG_LEVEL", "3")          # hide absl logs
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -46,6 +52,7 @@ INSTALLED_APPS = [
     'account',
     'detection',
     'dashboard',
+    'adminpanel',
 ]
 
 MIDDLEWARE = [

@@ -24,6 +24,7 @@
             <nav class="admin-nav">
                 <a href="{% url 'adminpanel:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}is-active{% endif %}">Overview</a>
                 <a href="{% url 'adminpanel:users' %}" class="{% if request.resolver_match.url_name == 'users' %}is-active{% endif %}">Users</a>
+                <a href="{% url 'adminpanel:diagnoses' %}" class="{% if request.resolver_match.url_name == 'diagnoses' %}is-active{% endif %}">Diagnoses</a>
                 <a href="{% url 'adminpanel:messages' %}" class="{% if request.resolver_match.url_name == 'messages' %}is-active{% endif %}">Messages</a>
                 <a href="{% url 'account:home' %}">Public Site</a>
                 <a href="{% url 'dashboard:home' %}">User Dashboard</a>

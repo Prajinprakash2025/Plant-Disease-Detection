@@ -14,8 +14,12 @@
     --page-bg:     #f8faf8;
     --radius-xl:   1.25rem;
     --radius-2xl:  1.5rem;
+    --radius-3xl:  2rem;
     --shadow-card: 0 4px 24px rgba(0,0,0,0.07);
     --shadow-lg:   0 8px 40px rgba(0,0,0,0.12);
+    --shadow-premium: 0 20px 50px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.05);
+    --glass-bg:    rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.4);
 }
 
 /* ═══════════════════════════════════════════════
@@ -401,6 +405,90 @@ a:hover .brand-logo {
     font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
+}
+
+/* ═══════════════════════════════════════════════
+   PREMIUM UTILITIES
+   ═══════════════════════════════════════════════ */
+.glass-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-premium);
+}
+
+.glass-dark {
+    background: rgba(13, 31, 15, 0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.text-gradient {
+    background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.7) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.animate-fade-in-up {
+    animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.hero-gradient-overlay {
+    background: linear-gradient(to right, rgba(13, 31, 15, 0.95), rgba(13, 31, 15, 0.4), transparent);
+}
+
+.farm-cta-overlay {
+    background: linear-gradient(135deg, rgba(13, 31, 15, 0.92), rgba(0, 192, 98, 0.4));
+}
+
+.step-card {
+    position: relative;
+}
+
+.step-number-pill {
+    position: absolute;
+    top: -12px;
+    left: 20px;
+    background: var(--brand);
+    color: white;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 800;
+}
+
+.step-icon-wrap {
+    width: 60px;
+    height: 60px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(0, 192, 98, 0.1), rgba(0, 192, 98, 0.05));
+    border: 1px solid rgba(0, 192, 98, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--brand);
+    transition: all 0.3s ease;
+}
+
+.step-card:hover .step-icon-wrap {
+    background: var(--brand);
+    color: white;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 192, 98, 0.3);
 }
 
 /* ═══════════════════════════════════════════════
