@@ -102,8 +102,8 @@
     {% endif %}
 
     <!-- Upload + Result -->
-    <div class="grid lg:grid-cols-2 gap-6">
-        <article class="card p-6 space-y-4">
+    <div class="grid items-start gap-6 lg:grid-cols-2">
+        <article class="card self-start p-6 space-y-4">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Upload</p>
@@ -189,8 +189,8 @@
                         {% endif %}
                     </span>
                 </div>
-                <div class="overflow-hidden rounded-xl border border-gray-100 bg-gray-50">
-                    <img id="leafPreview" class="w-full"
+                <div class="overflow-hidden rounded-xl border border-gray-100 bg-[radial-gradient(circle_at_top,#f7fbf8,#f2f5f3_55%,#edf2ef)] aspect-[4/3] max-h-[440px]">
+                    <img id="leafPreview" class="h-full w-full object-contain"
                         src="{% if diagnosis_log %}{{ diagnosis_log.image.url }}{% else %}data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 420 280'%3E%3Crect width='420' height='280' rx='24' fill='%23f3ead8'/%3E%3Cpath d='M210 210c47-27 83-70 95-129-56-2-100 17-126 56-11 16-18 35-20 57 21 7 39 10 51 9z' fill='%235aa36c'/%3E%3Cpath d='M137 215c27-22 50-48 68-80 15-26 27-54 37-84' stroke='%231f4b39' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E{% endif %}"
                         alt="Leaf preview">
                 </div>
@@ -318,9 +318,52 @@
                 </div>
                 {% endif %}
             {% else %}
-                <div class="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center">
-                    <p class="font-bold text-gray-900 mb-1">No result yet</p>
-                    <p class="text-sm text-gray-600">Upload a leaf image to see the predicted disease and confidence here.</p>
+                <div class="rounded-2xl border border-dashed border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-lime-50 p-5">
+                    <div class="flex items-start gap-4">
+                        <div class="grid h-14 w-14 flex-shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-lg shadow-emerald-200/80">
+                            <i data-lucide="scan-line" class="h-6 w-6"></i>
+                        </div>
+                        <div class="space-y-2">
+                            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Waiting for analysis</p>
+                            <h3 class="text-2xl font-bold text-gray-900">Your diagnosis will appear here</h3>
+                            <p class="text-sm leading-relaxed text-gray-600">
+                                Upload a clear leaf photo and PlantGuard will fill this panel with the plant name, disease label, confidence score, and treatment guidance.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mt-5 grid gap-3 sm:grid-cols-3">
+                        <div class="rounded-xl border border-white/80 bg-white/80 p-3 shadow-sm">
+                            <p class="text-xs uppercase tracking-wide text-gray-500">Plant</p>
+                            <p class="mt-1 font-semibold text-gray-900">Pending</p>
+                        </div>
+                        <div class="rounded-xl border border-white/80 bg-white/80 p-3 shadow-sm">
+                            <p class="text-xs uppercase tracking-wide text-gray-500">Disease</p>
+                            <p class="mt-1 font-semibold text-gray-900">Waiting for upload</p>
+                        </div>
+                        <div class="rounded-xl border border-white/80 bg-white/80 p-3 shadow-sm">
+                            <p class="text-xs uppercase tracking-wide text-gray-500">Confidence</p>
+                            <p class="mt-1 font-semibold text-gray-900">--</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-5 rounded-xl border border-emerald-100 bg-white/85 p-4">
+                        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Next steps</p>
+                        <div class="mt-3 grid gap-3 sm:grid-cols-3">
+                            <div class="rounded-xl border border-gray-200 bg-gray-50 p-3">
+                                <p class="text-sm font-semibold text-gray-900">1. Pick a clear image</p>
+                                <p class="mt-1 text-xs leading-relaxed text-gray-600">Keep the leaf centered and well lit.</p>
+                            </div>
+                            <div class="rounded-xl border border-gray-200 bg-gray-50 p-3">
+                                <p class="text-sm font-semibold text-gray-900">2. Run analysis</p>
+                                <p class="mt-1 text-xs leading-relaxed text-gray-600">The model checks the visible disease pattern.</p>
+                            </div>
+                            <div class="rounded-xl border border-gray-200 bg-gray-50 p-3">
+                                <p class="text-sm font-semibold text-gray-900">3. Review guidance</p>
+                                <p class="mt-1 text-xs leading-relaxed text-gray-600">You will get the result and treatment plan here.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             {% endif %}
 
@@ -339,7 +382,13 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    <p class="text-sm text-gray-600">Guidance will appear once a diagnosis is ready.</p>
+                    <div class="space-y-2 text-sm text-gray-600">
+                        <p>Guidance will appear once a diagnosis is ready.</p>
+                        <div class="grid gap-2 sm:grid-cols-2">
+                            <div class="rounded-lg border border-dashed border-gray-200 bg-white px-3 py-2">Symptoms and likely cause</div>
+                            <div class="rounded-lg border border-dashed border-gray-200 bg-white px-3 py-2">Suggested treatment path</div>
+                        </div>
+                    </div>
                 {% endif %}
             </div>
         </article>

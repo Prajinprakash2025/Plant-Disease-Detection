@@ -9,8 +9,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="admin-body">
+    <button id="backToTop" class="admin-back-to-top" title="Go to top">↑</button>
     <div class="admin-shell">
         <aside class="admin-sidebar">
             <a href="{% url 'adminpanel:dashboard' %}" class="admin-brand">
@@ -26,6 +28,14 @@
                 <a href="{% url 'adminpanel:users' %}" class="{% if request.resolver_match.url_name == 'users' %}is-active{% endif %}">Users</a>
                 <a href="{% url 'adminpanel:diagnoses' %}" class="{% if request.resolver_match.url_name == 'diagnoses' %}is-active{% endif %}">Diagnoses</a>
                 <a href="{% url 'adminpanel:messages' %}" class="{% if request.resolver_match.url_name == 'messages' %}is-active{% endif %}">Messages</a>
+                
+                <div class="admin-nav-divider"></div>
+                <span class="admin-nav-label">Resources</span>
+                <a href="{% url 'adminpanel:crops' %}" class="{% if 'crop' in request.resolver_match.url_name %}is-active{% endif %}">Crops</a>
+                <a href="{% url 'adminpanel:diseases' %}" class="{% if 'disease' in request.resolver_match.url_name %}is-active{% endif %}">Diseases</a>
+                <a href="{% url 'adminpanel:datasets' %}" class="{% if 'dataset' in request.resolver_match.url_name %}is-active{% endif %}">Storage</a>
+                
+                <div class="admin-nav-divider"></div>
                 <a href="{% url 'account:home' %}">Public Site</a>
                 <a href="{% url 'dashboard:home' %}">User Dashboard</a>
             </nav>
@@ -66,5 +76,23 @@
             </main>
         </div>
     </div>
+
+    <script>
+        // Scroll to Top Logic
+        const backToTop = document.getElementById('backToTop');
+        const mainContent = document.querySelector('.admin-main');
+        
+        mainContent.addEventListener('scroll', () => {
+            if (mainContent.scrollTop > 300) {
+                backToTop.classList.add('show');
+            } else {
+                backToTop.classList.remove('show');
+            }
+        });
+        
+        backToTop.addEventListener('click', () => {
+            mainContent.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    </script>
 </body>
 </html>

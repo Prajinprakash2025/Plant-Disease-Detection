@@ -5,14 +5,14 @@
 
 {% block content %}
 <section class="admin-panel">
-    <form method="get" class="admin-filter-row" aria-label="Filter diagnoses">
-        <input type="text" name="q" value="{{ query }}" placeholder="Search by user/disease/plant" class="admin-input">
-        <select name="status" class="admin-select">
+    <form method="get" class="admin-filter-bar" aria-label="Filter diagnoses">
+        <input type="text" name="q" value="{{ query }}" placeholder="Search by user/disease/plant..." class="admin-input-small">
+        <select name="status">
             <option value="all" {% if status == 'all' %}selected{% endif %}>All sources</option>
             <option value="local" {% if status == 'local' %}selected{% endif %}>Local model</option>
             <option value="gemini" {% if status == 'gemini' %}selected{% endif %}>Gemini API</option>
         </select>
-        <button type="submit" class="admin-btn admin-btn-primary">Filter</button>
+        <button type="submit" class="admin-btn admin-btn-primary">Apply Filters</button>
     </form>
 
     <p class="admin-meta">{{ total_results }} diagnosis records found.</p>
@@ -36,13 +36,13 @@
     </div>
 
     {% if page_obj.has_other_pages %}
-    <div class="admin-pagination">
+    <div class="admin-pagination mt-6">
         {% if page_obj.has_previous %}
-            <a href="?page={{ page_obj.previous_page_number }}&q={{ query }}&status={{ status }}" class="admin-link">Previous</a>
+            <a href="?page={{ page_obj.previous_page_number }}&q={{ query }}&status={{ status }}" class="admin-btn admin-btn-secondary">Previous</a>
         {% endif %}
-        <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        <span class="text-sm font-semibold">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
         {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}&q={{ query }}&status={{ status }}" class="admin-link">Next</a>
+            <a href="?page={{ page_obj.next_page_number }}&q={{ query }}&status={{ status }}" class="admin-btn admin-btn-secondary">Next</a>
         {% endif %}
     </div>
     {% endif %}

@@ -25,12 +25,27 @@ class MembershipProfile(models.Model):
         (PLAN_PREMIUM, "Premium Demo"),
     )
 
+    STATUS_NONE = "none"
+    STATUS_PENDING = "pending"
+    STATUS_APPROVED = "approved"
+    STATUS_DENIED = "denied"
+    STATUS_CHOICES = (
+        (STATUS_NONE, "No Request"),
+        (STATUS_PENDING, "Pending Approval"),
+        (STATUS_APPROVED, "Approved"),
+        (STATUS_DENIED, "Denied"),
+    )
+
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="membership_profile",
     )
     plan = models.CharField(max_length=20, choices=PLAN_CHOICES, default=PLAN_FREE)
+    request_status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default=STATUS_NONE
+    )
+    requested_at = models.DateTimeField(null=True, blank=True)
     upgraded_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -41,6 +56,10 @@ class MembershipProfile(models.Model):
     @property
     def is_premium(self):
         return self.plan == self.PLAN_PREMIUM
+
+    @property
+    def is_pending(self):
+        return self.request_status == self.STATUS_PENDING
 
     def __str__(self):
         return f"{self.user.username} - {self.get_plan_display()}"

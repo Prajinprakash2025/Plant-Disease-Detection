@@ -156,14 +156,20 @@
 
                 {% if leaf_quota.is_premium %}
                     <div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">
-                        Premium demo is already active.
+                        Premium membership is active.
                     </div>
+                {% elif membership.is_pending %}
+                    <div class="rounded-2xl border border-yellow-200 bg-yellow-50 p-4 text-sm font-semibold text-yellow-800 flex items-center gap-3">
+                        <span class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
+                        Upgrade Request Pending Approval.
+                    </div>
+                {% elif membership.request_status == 'denied' %}
+                    <div class="mb-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800">
+                        Your previous request was declined. You can try again below.
+                    </div>
+                    <a href="{% url 'account:checkout' %}" class="btn btn-primary w-full justify-center">Purchase Premium Again</a>
                 {% else %}
-                    <form method="post" class="space-y-3">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="activate_premium">
-                        <button type="submit" class="btn btn-primary w-full justify-center">Activate premium demo</button>
-                    </form>
+                    <a href="{% url 'account:checkout' %}" class="btn btn-primary w-full justify-center">Upgrade to Premium</a>
                 {% endif %}
             </div>
         </article>

@@ -39,14 +39,29 @@
         <small>Separate admin access accounts</small>
     </article>
     <article class="admin-stat-card">
-        <span>Diagnosis logs</span>
-        <strong>{{ total_diagnoses }}</strong>
-        <small>{{ recent_diagnoses|length }} most recent records</small>
+        <span>Crops</span>
+        <strong>{{ total_crops }}</strong>
+        <small>Active categories</small>
     </article>
     <article class="admin-stat-card">
-        <span>Open messages</span>
+        <span>Diseases</span>
+        <strong>{{ total_diseases }}</strong>
+        <small>Diagnostic patterns</small>
+    </article>
+    <article class="admin-stat-card">
+        <span>Storage</span>
+        <strong>{{ total_datasets }}</strong>
+        <small>Global agri-datasets</small>
+    </article>
+    <article class="admin-stat-card">
+        <span>Logs</span>
+        <strong>{{ total_diagnoses }}</strong>
+        <small>Recent diagnoses</small>
+    </article>
+    <article class="admin-stat-card">
+        <span>Messages</span>
         <strong>{{ unresolved_messages }}</strong>
-        <small>Support or contact requests pending</small>
+        <small>Open contact requests</small>
     </article>
 </section>
 
@@ -130,4 +145,69 @@
         <img src="{% static 'images/lab-analysis.svg' %}" alt="Illustration of message monitoring and analysis" class="admin-inline-image">
     </article>
 </section>
+
+<section class="admin-panel mt-8">
+    <div class="admin-panel-head">
+        <div>
+            <span class="admin-kicker">Data Trends</span>
+            <h3>Diagnostic Activity (Last 7 Days)</h3>
+        </div>
+    </div>
+    <div class="p-4" style="height: 350px; position: relative;">
+        <canvas id="diagnosesChart"></canvas>
+    </div>
+</section>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('diagnosesChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ chart_labels|safe }},
+                datasets: [{
+                    label: 'Daily Diagnoses',
+                    data: {{ chart_data|safe }},
+                    borderColor: '#2d6a4f',
+                    backgroundColor: 'rgba(45, 106, 79, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#2d6a4f',
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                            font: { family: 'Manrope', weight: 'bold' }
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: { family: 'Manrope', weight: 'bold' }
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
 {% endblock %}

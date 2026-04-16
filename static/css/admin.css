@@ -20,6 +20,10 @@
     box-sizing: border-box;
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
 body {
     margin: 0;
     font-family: "Manrope", "Segoe UI", sans-serif;
@@ -28,6 +32,7 @@ body {
         radial-gradient(circle at top left, rgba(199, 133, 50, 0.18), transparent 25%),
         radial-gradient(circle at top right, rgba(45, 106, 79, 0.22), transparent 24%),
         linear-gradient(180deg, #0f201b 0%, #162b24 48%, #101d1a 100%);
+    overflow-x: hidden;
 }
 
 a {
@@ -45,21 +50,24 @@ img {
 }
 
 .admin-shell {
-    min-height: 100vh;
+    height: 100vh;
     display: grid;
     grid-template-columns: 290px minmax(0, 1fr);
+    overflow: hidden;
 }
 
 .admin-sidebar {
     padding: 28px 22px;
-    background: rgba(10, 21, 18, 0.88);
-    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(10, 21, 18, 0.95);
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
     display: flex;
     flex-direction: column;
     gap: 24px;
     position: sticky;
     top: 0;
-    min-height: 100vh;
+    height: 100vh;
+    overflow-y: auto;
+    z-index: 100;
 }
 
 .admin-brand {
@@ -110,7 +118,22 @@ img {
 .admin-nav a.is-active {
     color: #fffdf8;
     background: rgba(255, 255, 255, 0.08);
-    transform: translateX(2px);
+    transform: translateX(4px);
+}
+
+.admin-nav-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.06);
+    margin: 12px 16px;
+}
+
+.admin-nav-label {
+    padding: 0 16px 8px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(248, 243, 233, 0.35);
 }
 
 .admin-sidebar-card {
@@ -142,6 +165,9 @@ img {
 
 .admin-main {
     padding: 28px;
+    height: 100vh;
+    overflow-y: auto;
+    scroll-behavior: smooth;
 }
 
 .admin-topbar {
@@ -362,18 +388,47 @@ img {
     justify-content: flex-end;
 }
 
-.admin-panel-visual {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 220px;
-    gap: 18px;
+.admin-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
     align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding: 18px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 20px;
+    border: 1px solid var(--admin-border);
 }
 
-.admin-filter-bar {
-    display: grid;
-    grid-template-columns: minmax(0, 1.6fr) 220px auto;
-    gap: 14px;
-    margin-bottom: 18px;
+.admin-input-small,
+.admin-filter-bar select {
+    min-height: 44px;
+    padding: 0 16px;
+    border-radius: 12px;
+    border: 1px solid var(--admin-border);
+    background: #fff;
+    color: var(--admin-text);
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    outline: none;
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.admin-input-small {
+    flex: 1;
+    min-width: 240px;
+}
+
+.admin-filter-bar select {
+    min-width: 160px;
+    cursor: pointer;
+}
+
+.admin-input-small:focus,
+.admin-filter-bar select:focus {
+    border-color: var(--admin-primary);
+    box-shadow: 0 0 0 4px rgba(45, 106, 79, 0.08);
 }
 
 .admin-table-wrap {
@@ -608,17 +663,65 @@ img {
     }
 }
 
+.admin-back-to-top {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    background: var(--admin-primary);
+    color: white;
+    border-radius: 50%;
+    border: none;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    z-index: 999;
+    transition: transform 160ms ease, background 160ms ease;
+}
+
+.admin-back-to-top:hover {
+    background: var(--admin-primary-dark);
+    transform: translateY(-5px);
+}
+
+.admin-back-to-top.show {
+    display: flex;
+}
+
 @media (max-width: 980px) {
     .admin-shell {
         grid-template-columns: 1fr;
     }
 
     .admin-sidebar {
-        position: static;
+        position: relative;
+        height: auto;
         min-height: auto;
+        padding: 20px;
     }
 
-    .admin-topbar,
+    .admin-main {
+        padding: 28px;
+        height: auto;
+        overflow-y: visible;
+    }
+
+    .admin-topbar {
+        position: sticky;
+        top: 0;
+        z-index: 90;
+        background: rgba(15, 32, 27, 0.95);
+        backdrop-filter: blur(10px);
+        margin: -28px -28px 24px;
+        padding: 20px 28px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
     .admin-panel-head,
     .admin-message-top {
         flex-direction: column;

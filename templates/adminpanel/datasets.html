@@ -1,0 +1,83 @@
+{% extends "adminpanel/base.html" %}
+
+{% block title %}Manage Storage | Admin Console{% endblock %}
+{% block page_title %}Agricultural Dataset Storage{% endblock %}
+
+{% block content %}
+<section class="admin-panel mb-8">
+    <div class="admin-panel-head">
+        <div>
+            <span class="admin-kicker">Data Assets</span>
+            <h3>Global agricultural records</h3>
+        </div>
+    </div>
+
+    <div class="admin-table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>File Name</th>
+                    <th>Uploaded By</th>
+                    <th>Size / Type</th>
+                    <th>Upload Date</th>
+                    <th class="text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for dataset in page_obj %}
+                <tr>
+                    <td>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xl">📊</span>
+                            <div>
+                                <strong class="text-gray-900">{{ dataset.name }}</strong>
+                                <p class="text-xs text-gray-500">{{ dataset.dataset_file.name }}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="flex items-center gap-2">
+                            <span class="h-6 w-6 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold">
+                                {{ dataset.uploaded_by.username|slice:":2"|upper }}
+                            </span>
+                            <span class="text-sm font-semibold text-gray-700">{{ dataset.uploaded_by.username }}</span>
+                        </div>
+                    </td>
+                    <td><span class="admin-badge admin-badge-neutral">{{ dataset.dataset_file.size|filesizeformat }}</span></td>
+                    <td><span class="text-sm text-gray-500">{{ dataset.uploaded_at|date:"M d, Y" }}</span></td>
+                    <td class="text-right">
+                        <div class="flex justify-end gap-2">
+                            <a href="{{ dataset.dataset_file.url }}" download class="admin-btn-icon" title="Download">
+                                ⬇
+                            </a>
+                            <form action="{% url 'adminpanel:dataset_delete' dataset.id %}" method="post" onsubmit="return confirm('Are you sure you want to permanently delete this dataset?')">
+                                {% csrf_token %}
+                                <button type="submit" class="admin-btn-icon text-red-500" title="Delete">
+                                    🗑
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="admin-empty">No datasets uploaded to the platform yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="admin-pagination mt-6">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}" class="admin-btn admin-btn-secondary">Previous</a>
+        {% endif %}
+        <span class="text-sm font-semibold">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="admin-btn admin-btn-secondary">Next</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

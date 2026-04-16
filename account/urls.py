@@ -20,4 +20,8 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('profile/', views.profile_view, name='profile'),
     path('membership/', views.membership_view, name='membership'),
+    path('membership/checkout/', views.checkout_view, name='checkout'),
+    path('membership/confirm-payment/', views.confirm_payment_view, name='confirm_payment'),
+    path('admin-login/membership-requests/', views.admin_membership_requests_view, name='admin_membership_requests'),
+    path('admin-login/membership-requests/<int:membership_id>/handle/', views.handle_membership_request_view, name='handle_membership_request'),
 ]

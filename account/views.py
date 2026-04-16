@@ -191,37 +191,45 @@ def profile_view(request):
 @login_required
 def membership_view(request):
     membership = get_or_create_membership(request.user)
-
-    if request.method == "POST":
-        action = request.POST.get("action")
-
-        if action == "activate_premium":
-            membership.plan = MembershipProfile.PLAN_PREMIUM
-            membership.upgraded_at = timezone.now()
-            membership.save(update_fields=["plan", "upgraded_at", "updated_at"])
-            messages.success(
-                request,
-                "Premium demo mode is active. Your leaf checks are now unlimited.",
-            )
-            return redirect("account:membership")
-
-        if action == "switch_free":
-            membership.plan = MembershipProfile.PLAN_FREE
-            membership.save(update_fields=["plan", "updated_at"])
-            messages.success(
-                request,
-                "Your account has been switched back to the free plan.",
-            )
-            return redirect("account:membership")
+    leaf_quota = get_leaf_quota_summary(request.user)
 
     return render(
         request,
         "account/membership.html",
         {
             "membership": membership,
-            "leaf_quota": get_leaf_quota_summary(request.user),
+            "leaf_quota": leaf_quota,
         },
     )
+
+
+@login_required
+def checkout_view(request):
+    membership = get_or_create_membership(request.user)
+    if membership.is_premium:
+        messages.info(request, "You already have a premium account.")
+        return redirect("account:membership")
+
+    return render(request, "account/checkout.html", {"membership": membership})
+
+
+@login_required
+@require_POST
+def confirm_payment_view(request):
+    membership = get_or_create_membership(request.user)
+    if membership.is_premium:
+        return redirect("account:membership")
+
+    # Simulate payment processing
+    membership.request_status = MembershipProfile.STATUS_PENDING
+    membership.requested_at = timezone.now()
+    membership.save(update_fields=["request_status", "requested_at", "updated_at"])
+
+    messages.success(
+        request,
+        "Payment simulated successfully! Your request for Unlimited Access has been sent to the administrator for approval.",
+    )
+    return redirect("account:membership")
 
 
 @staff_required
@@ -239,6 +247,7 @@ def admin_dashboard_view(request):
         "unresolved_messages": contact_messages.filter(is_resolved=False).count(),
         "recent_users": users[:6],
         "recent_messages": contact_messages[:6],
+        "pending_membership_requests": MembershipProfile.objects.filter(request_status=MembershipProfile.STATUS_PENDING).count(),
     }
     return render(request, "account/admin/dashboard.html", context)
 
@@ -311,6 +320,47 @@ def admin_messages_view(request):
             "total_results": contact_messages.count(),
         },
     )
+
+
+@staff_required
+def admin_membership_requests_view(request):
+    status_filter = request.GET.get("status", MembershipProfile.STATUS_PENDING)
+    requests_qs = MembershipProfile.objects.filter(request_status=status_filter).order_by("-requested_at")
+    
+    pending_count = MembershipProfile.objects.filter(request_status=MembershipProfile.STATUS_PENDING).count()
+    
+    paginator = Paginator(requests_qs, 10)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    return render(
+        request, 
+        "account/admin/membership_requests.html", 
+        {
+            "page_obj": page_obj,
+            "status_filter": status_filter,
+            "pending_count": pending_count,
+        }
+    )
+
+
+@staff_required
+@require_POST
+def handle_membership_request_view(request, membership_id):
+    membership = get_object_or_404(MembershipProfile, pk=membership_id)
+    action = request.POST.get("action")
+
+    if action == "approve":
+        membership.plan = MembershipProfile.PLAN_PREMIUM
+        membership.request_status = MembershipProfile.STATUS_APPROVED
+        membership.upgraded_at = timezone.now()
+        membership.save(update_fields=["plan", "request_status", "upgraded_at", "updated_at"])
+        messages.success(request, f"Premium access approved for {membership.user.username}.")
+    elif action == "deny":
+        membership.request_status = MembershipProfile.STATUS_DENIED
+        membership.save(update_fields=["request_status", "updated_at"])
+        messages.warning(request, f"Premium access denied for {membership.user.username}.")
+
+    return redirect("account:admin_membership_requests")
 
 
 @staff_required

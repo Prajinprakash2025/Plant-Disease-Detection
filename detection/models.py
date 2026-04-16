@@ -4,6 +4,7 @@ from django.db import models
 
 class Crop(models.Model):
     name = models.CharField(max_length=120, unique=True)
+    name_ml = models.CharField(max_length=150, blank=True, verbose_name="Name (Malayalam)")
     description = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -16,10 +17,14 @@ class Crop(models.Model):
 
 class Disease(models.Model):
     name = models.CharField(max_length=150)
+    name_ml = models.CharField(max_length=150, blank=True, verbose_name="Name (Malayalam)")
     crop = models.ForeignKey(Crop, on_delete=models.CASCADE, related_name="diseases")
     symptoms = models.TextField()
+    symptoms_ml = models.TextField(blank=True, verbose_name="Symptoms (Malayalam)")
     treatment_recommendations = models.TextField()
+    treatment_recommendations_ml = models.TextField(blank=True, verbose_name="Treatment (Malayalam)")
     preventive_measures = models.TextField()
+    preventive_measures_ml = models.TextField(blank=True, verbose_name="Prevention (Malayalam)")
 
     class Meta:
         ordering = ["crop__name", "name"]

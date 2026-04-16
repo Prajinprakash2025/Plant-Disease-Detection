@@ -14,14 +14,14 @@
     </div>
 
     <form method="get" class="admin-filter-bar">
-        <input type="text" name="q" value="{{ query }}" placeholder="Search username, name, or email" class="form-input">
-        <select name="status" class="form-input">
+        <input type="text" name="q" value="{{ query }}" placeholder="Search username, name, or email" class="admin-input-small">
+        <select name="status">
             <option value="all" {% if status == 'all' %}selected{% endif %}>All users</option>
             <option value="active" {% if status == 'active' %}selected{% endif %}>Active only</option>
             <option value="blocked" {% if status == 'blocked' %}selected{% endif %}>Blocked only</option>
             <option value="staff" {% if status == 'staff' %}selected{% endif %}>Staff only</option>
         </select>
-        <button type="submit" class="admin-btn admin-btn-primary">Apply</button>
+        <button type="submit" class="admin-btn admin-btn-primary">Apply Filters</button>
     </form>
 
     <div class="admin-table-wrap">

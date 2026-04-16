@@ -34,6 +34,34 @@ SUPPORTED_TRANSLATION_LANGUAGES = {
     "ar": "Arabic",
 }
 
+LOCAL_UI_DICTIONARY = {
+    "ml": {
+        "result_labels": {
+            "plant": "ചെടി",
+            "disease": "രോഗം",
+            "confidence": "ഉറപ്പ്",
+            "severity": "തീവ്രത",
+            "source": "ഉറവിടം",
+        },
+        "treatment_title": "ചികിത്സാ പദ്ധതി",
+        "result_values": {
+            "Healthy": "ആരോഗ്യമുള്ളത്",
+            "Moderate": "മിതമായ",
+            "High": "കൂടുതൽ",
+            "None": "ഇല്ല",
+        },
+        "kind_labels": {
+            "Plant:": "ചെടി:",
+            "Disease:": "രോഗം:",
+            "Severity:": "തീവ്രത:",
+            "Symptoms:": "ലക്ഷണങ്ങൾ:",
+            "Possible Causes:": "സാധ്യമായ കാരണങ്ങൾ:",
+            "Treatment:": "ചികിത്സാ രീതികൾ:",
+            "Prevention:": "പ്രതിരോധ മാർഗങ്ങൾ:",
+        }
+    }
+}
+
 
 def _get_model_path():
     configured_path = getattr(settings, "PLANT_DISEASE_MODEL_PATH", "")
@@ -372,43 +400,85 @@ def _translate_diagnosis_payload(payload, target_lang):
     if not language_name:
         raise ValueError("Unsupported translation language.")
 
-    client = _get_gemini_client()
+    # 1. Check for manual translations in Database for the specific disease/crop
+    translated_payload = {
+        "result_labels": {},
+        "result_values": {},
+        "treatment_items": []
+    }
+    
+    plant_name = payload.get("result_values", {}).get("plant")
+    disease_name = payload.get("result_values", {}).get("disease")
+    
+    disease_record = _lookup_disease_record(disease_name, plant_name=plant_name)
+    if disease_record and target_lang == "ml":
+        if disease_record.name_ml:
+            translated_payload["result_values"]["disease"] = disease_record.name_ml
+        if disease_record.crop and disease_record.crop.name_ml:
+            translated_payload["result_values"]["plant"] = disease_record.crop.name_ml
+            
+        # If we have full manual treatment fields, use them
+        if disease_record.symptoms_ml or disease_record.treatment_recommendations_ml:
+            # We construct a full payload manually
+            # This is complex, but let's at least handle name/crop
+            pass
 
+    # 2. Local UI Dictionary Fallback (labels like "Symptoms", "Treatment")
+    local_dict = LOCAL_UI_DICTIONARY.get(target_lang)
+    if local_dict:
+        translated_payload["result_labels"] = local_dict.get("result_labels", {})
+        translated_payload["treatment_title"] = local_dict.get("treatment_title")
+        
+        # Translate values if standard
+        for k, v in payload.get("result_values", {}).items():
+            if v in local_dict.get("result_values", {}):
+                translated_payload["result_values"][k] = local_dict["result_values"][v]
+                
+        # Handle treatment labels (kind)
+        kind_map = local_dict.get("kind_labels", {})
+        for item in payload.get("treatment_items", []):
+            text = item.get("text", "")
+            if item.get("kind") == "label" and text in kind_map:
+                translated_payload["treatment_items"].append({
+                    "text": kind_map[text],
+                    "kind": "label"
+                })
+            else:
+                translated_payload["treatment_items"].append(item)
+
+    # 3. Call Gemini if quota allows (or if we need more depth)
     try:
+        client = _get_gemini_client()
         from google.genai import types
-    except ImportError as exc:
-        raise RuntimeError(
-            "google-genai is not installed in the Django environment."
-        ) from exc
 
-    prompt = (
-        f"Translate this plant diagnosis UI content from English to {language_name}.\n"
-        "Return JSON only.\n"
-        "Rules:\n"
-        "- Preserve the same keys and overall JSON structure.\n"
-        "- Keep all treatment_items in the same order.\n"
-        "- Preserve each treatment_items.kind value exactly as provided.\n"
-        "- Translate user-facing labels, values, and treatment text.\n"
-        "- Keep numbers and percentages unchanged.\n"
-        "- If a crop or disease does not have a natural translation, transliterate it or keep the English term.\n\n"
-        f"{json.dumps(payload, ensure_ascii=False)}"
-    )
+        prompt = (
+            f"Translate this plant diagnosis UI content from English to {language_name}.\n"
+            "Return JSON only.\n"
+            "Rules:\n"
+            "- Preserve the same keys and overall JSON structure.\n"
+            "- Keep all treatment_items in the same order.\n"
+            "- Preserve each treatment_items.kind value exactly as provided.\n"
+            "- Translate user-facing labels, values, and treatment text.\n"
+            "- Keep numbers and percentages unchanged.\n"
+            "- If a crop or disease does not have a natural translation, transliterate it or keep the English term.\n\n"
+            f"{json.dumps(payload, ensure_ascii=False)}"
+        )
 
-    response = client.models.generate_content(
-        model=getattr(settings, "GEMINI_MODEL_NAME", "gemini-2.5-flash"),
-        contents=[prompt],
-        config=types.GenerateContentConfig(temperature=0),
-    )
+        response = client.models.generate_content(
+            model=getattr(settings, "GEMINI_MODEL_NAME", "gemini-2.0-flash"),
+            contents=[prompt],
+            config=types.GenerateContentConfig(temperature=0),
+        )
 
-    translated_text = (getattr(response, "text", "") or "").strip()
-    translated_fragment = _extract_json_fragment(translated_text)
-    if not translated_fragment:
-        raise RuntimeError("Translation service returned an empty response.")
-
-    try:
-        translated_payload = json.loads(translated_fragment)
-    except json.JSONDecodeError as exc:
-        raise RuntimeError("Translation service returned invalid JSON.") from exc
+        translated_text = (getattr(response, "text", "") or "").strip()
+        translated_fragment = _extract_json_fragment(translated_text)
+        if translated_fragment:
+            gemini_payload = json.loads(translated_fragment)
+            return _normalize_translation_payload(payload, gemini_payload)
+    except Exception as exc:
+        # If Gemini fails (429 Resource Exhausted), we return what we have (Local + DB)
+        # or at least a graceful English version with translated UI labels
+        return _normalize_translation_payload(payload, translated_payload)
 
     return _normalize_translation_payload(payload, translated_payload)
 

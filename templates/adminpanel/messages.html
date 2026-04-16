@@ -14,13 +14,13 @@
     </div>
 
     <form method="get" class="admin-filter-bar">
-        <input type="text" name="q" value="{{ query }}" placeholder="Search subject, sender, email, or text" class="form-input">
-        <select name="status" class="form-input">
+        <input type="text" name="q" value="{{ query }}" placeholder="Search subject, sender, email, or text..." class="admin-input-small">
+        <select name="status">
             <option value="all" {% if status == 'all' %}selected{% endif %}>All messages</option>
-            <option value="open" {% if status == 'open' %}selected{% endif %}>Open only</option>
-            <option value="resolved" {% if status == 'resolved' %}selected{% endif %}>Resolved only</option>
+            <option value="open" {% if status == 'open' %}selected{% endif %}>Open messages</option>
+            <option value="resolved" {% if status == 'resolved' %}selected{% endif %}>Resolved messages</option>
         </select>
-        <button type="submit" class="admin-btn admin-btn-primary">Apply</button>
+        <button type="submit" class="admin-btn admin-btn-primary">Apply Filters</button>
     </form>
 
     <div class="admin-message-grid">
@@ -54,16 +54,16 @@
         {% endfor %}
     </div>
 
-    {% if page_obj.paginator.num_pages > 1 %}
-        <div class="admin-pagination">
-            {% if page_obj.has_previous %}
-                <a href="?q={{ query }}&status={{ status }}&page={{ page_obj.previous_page_number }}">Previous</a>
-            {% endif %}
-            <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-            {% if page_obj.has_next %}
-                <a href="?q={{ query }}&status={{ status }}&page={{ page_obj.next_page_number }}">Next</a>
-            {% endif %}
-        </div>
+    {% if page_obj.has_other_pages %}
+    <div class="admin-pagination mt-6">
+        {% if page_obj.has_previous %}
+            <a href="?q={{ query }}&status={{ status }}&page={{ page_obj.previous_page_number }}" class="admin-btn admin-btn-secondary">Previous</a>
+        {% endif %}
+        <span class="text-sm font-semibold">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+            <a href="?q={{ query }}&status={{ status }}&page={{ page_obj.next_page_number }}" class="admin-btn admin-btn-secondary">Next</a>
+        {% endif %}
+    </div>
     {% endif %}
 </section>
 {% endblock %}

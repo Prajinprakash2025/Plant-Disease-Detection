@@ -12,9 +12,10 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from account.models import ContactMessage
-from detection.models import LeafDiagnosis
+from detection.models import LeafDiagnosis, Crop, Disease
+from dashboard.models import AgriculturalDataset
 
-from .forms import AdminLoginForm
+from .forms import AdminLoginForm, CropForm, DiseaseForm
 
 
 def staff_required(view_func):
@@ -73,6 +74,16 @@ def dashboard_view(request):
     messages_qs = ContactMessage.objects.order_by("-created_at")
     diagnoses_qs = LeafDiagnosis.objects.order_by("-created_at")
 
+    # Chart Data: Last 7 days diagnosis counts
+    today = timezone.now().date()
+    chart_labels = []
+    chart_data = []
+    for i in range(6, -1, -1):
+        day = today - timedelta(days=i)
+        count = LeafDiagnosis.objects.filter(created_at__date=day).count()
+        chart_labels.append(day.strftime("%b %d"))
+        chart_data.append(count)
+
     context = {
         "total_users": users.count(),
         "active_users": users.filter(is_active=True).count(),
@@ -81,9 +92,14 @@ def dashboard_view(request):
         "new_users_this_week": users.filter(date_joined__gte=week_ago).count(),
         "unresolved_messages": messages_qs.filter(is_resolved=False).count(),
         "total_diagnoses": diagnoses_qs.count(),
+        "total_crops": Crop.objects.count(),
+        "total_diseases": Disease.objects.count(),
+        "total_datasets": AgriculturalDataset.objects.count(),
         "recent_users": users[:6],
         "recent_messages": messages_qs[:6],
         "recent_diagnoses": diagnoses_qs[:6],
+        "chart_labels": chart_labels,
+        "chart_data": chart_data,
     }
     return render(request, "adminpanel/dashboard.html", context)
 
@@ -233,3 +249,119 @@ def toggle_message_resolved_view(request, message_id):
     state = "resolved" if message_obj.is_resolved else "reopened"
     messages.success(request, f"Message '{message_obj.subject}' marked as {state}.")
     return redirect(_safe_redirect(request, "adminpanel:messages"))
+
+
+# Resource Management Views
+
+@staff_required
+def crops_view(request):
+    query = request.GET.get("q", "").strip()
+    crops = Crop.objects.all()
+    if query:
+        crops = crops.filter(name__icontains=query)
+    
+    paginator = Paginator(crops, 10)
+    page_obj = paginator.get_page(request.GET.get("page"))
+    
+    return render(request, "adminpanel/crops.html", {
+        "page_obj": page_obj,
+        "query": query,
+        "total_results": crops.count(),
+    })
+
+
+@staff_required
+def crop_upsert_view(request, crop_id=None):
+    crop_obj = get_object_or_404(Crop, pk=crop_id) if crop_id else None
+    if request.method == "POST":
+        form = CropForm(request.POST, instance=crop_obj)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Crop '{form.cleaned_data['name']}' saved successfully.")
+            return redirect("adminpanel:crops")
+    else:
+        form = CropForm(instance=crop_obj)
+    
+    return render(request, "adminpanel/resource_form.html", {
+        "form": form,
+        "title": "Edit Crop" if crop_id else "Add New Crop",
+        "description": "Manage plant category details for disease mapping.",
+        "back_url": "adminpanel:crops"
+    })
+
+
+@staff_required
+@require_POST
+def crop_delete_view(request, crop_id):
+    crop_obj = get_object_or_404(Crop, pk=crop_id)
+    name = crop_obj.name
+    crop_obj.delete()
+    messages.success(request, f"Crop '{name}' deleted.")
+    return redirect("adminpanel:crops")
+
+
+@staff_required
+def diseases_view(request):
+    query = request.GET.get("q", "").strip()
+    diseases = Disease.objects.select_related("crop").all()
+    if query:
+        diseases = diseases.filter(
+            Q(name__icontains=query) | Q(crop__name__icontains=query)
+        )
+    
+    paginator = Paginator(diseases, 10)
+    page_obj = paginator.get_page(request.GET.get("page"))
+    
+    return render(request, "adminpanel/diseases.html", {
+        "page_obj": page_obj,
+        "query": query,
+        "total_results": diseases.count(),
+    })
+
+
+@staff_required
+def disease_upsert_view(request, disease_id=None):
+    disease_obj = get_object_or_404(Disease, pk=disease_id) if disease_id else None
+    if request.method == "POST":
+        form = DiseaseForm(request.POST, instance=disease_obj)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Disease '{form.cleaned_data['name']}' saved successfully.")
+            return redirect("adminpanel:diseases")
+    else:
+        form = DiseaseForm(instance=disease_obj)
+    
+    return render(request, "adminpanel/resource_form.html", {
+        "form": form,
+        "title": "Edit Disease" if disease_id else "Add New Disease",
+        "description": "Define disease symptoms and treatment recommendations.",
+        "back_url": "adminpanel:diseases"
+    })
+
+
+@staff_required
+@require_POST
+def disease_delete_view(request, disease_id):
+    disease_obj = get_object_or_404(Disease, pk=disease_id)
+    name = disease_obj.name
+    disease_obj.delete()
+    messages.success(request, f"Disease '{name}' deleted.")
+    return redirect("adminpanel:diseases")
+
+
+@staff_required
+def datasets_view(request):
+    datasets = AgriculturalDataset.objects.select_related("uploaded_by").order_by("-uploaded_at")
+    paginator = Paginator(datasets, 10)
+    page_obj = paginator.get_page(request.GET.get("page"))
+    return render(request, "adminpanel/datasets.html", {"page_obj": page_obj})
+
+
+@staff_required
+@require_POST
+def dataset_delete_view(request, dataset_id):
+    dataset_obj = get_object_or_404(AgriculturalDataset, pk=dataset_id)
+    name = dataset_obj.name
+    dataset_obj.delete()
+    messages.success(request, f"Dataset '{name}' removed from archives.")
+    return redirect("adminpanel:datasets")

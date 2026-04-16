@@ -1,0 +1,62 @@
+<section class="grid gap-6 xl:grid-cols-[0.92fr_1.08fr]">
+    <article class="relative overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-br from-[#0f2614] via-[#14331b] to-[#1b3c24] p-6 text-white shadow-[0_20px_58px_rgba(12,38,21,0.22)] md:p-8">
+        <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_18%_18%,#00e87e,transparent_42%),radial-gradient(circle_at_82%_20%,#84cc16,transparent_34%)]"></div>
+        <div class="relative">
+            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-300">AI Insights Summary</p>
+            <h2 class="mt-2 text-3xl font-black text-white">Decision-ready reading of your current crop health pattern.</h2>
+            <p class="mt-5 max-w-2xl text-base leading-relaxed text-white/80">
+                {{ ai_insight }}
+            </p>
+            <div class="mt-6 flex flex-wrap gap-2">
+                <span class="rounded-full border border-white/12 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/90">Trend-aware</span>
+                <span class="rounded-full border border-white/12 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/90">Risk prioritization</span>
+                <span class="rounded-full border border-white/12 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/90">Action-focused</span>
+            </div>
+        </div>
+    </article>
+
+    <article class="card p-6 md:p-8">
+        <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Scan Activity Heatmap</p>
+                <h2 class="mt-2 text-2xl font-black text-gray-900">Daily monitoring intensity</h2>
+                <p class="mt-2 text-sm text-gray-600">
+                    A GitHub-style overview of the last 12 weeks. Darker green means heavier scan activity.
+                </p>
+            </div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-gray-500">
+                <span>Less</span>
+                <span class="dashboard-heatmap-cell"></span>
+                <span class="dashboard-heatmap-cell level-1"></span>
+                <span class="dashboard-heatmap-cell level-2"></span>
+                <span class="dashboard-heatmap-cell level-3"></span>
+                <span class="dashboard-heatmap-cell level-4"></span>
+                <span>More</span>
+            </div>
+        </div>
+
+        <div class="dashboard-heatmap-wrap">
+            <div class="dashboard-heatmap-days">
+                <span>Mon</span>
+                <span></span>
+                <span>Wed</span>
+                <span></span>
+                <span>Fri</span>
+                <span></span>
+                <span>Sun</span>
+            </div>
+            <div class="dashboard-heatmap-grid">
+                {% for week in heatmap_weeks %}
+                    <div class="dashboard-heatmap-week">
+                        {% for day in week %}
+                            <div
+                                class="dashboard-heatmap-cell level-{{ day.level }} {% if day.muted %}is-muted{% endif %}"
+                                title="{{ day.date }}: {{ day.count }} scans">
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </article>
+</section>

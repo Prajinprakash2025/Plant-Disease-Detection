@@ -1,91 +1,458 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Dashboard | PlantGuard{% endblock %}
+{% block extra_head %}
+<style>
+    .dashboard-chart-shell {
+        position: relative;
+        min-height: 320px;
+    }
+
+    .dashboard-chart-shell.is-compact {
+        min-height: 210px;
+    }
+
+    .dashboard-chart-shell canvas {
+        height: 100% !important;
+        width: 100% !important;
+    }
+
+    .dashboard-chart-placeholder {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 1.5rem;
+        border: 1px dashed rgba(16, 95, 54, 0.14);
+        background:
+            linear-gradient(120deg, rgba(255,255,255,0.92), rgba(238, 251, 242, 0.96)),
+            linear-gradient(135deg, rgba(0, 192, 98, 0.08), rgba(132, 204, 22, 0.06));
+        color: #6a7b6b;
+        font-size: 0.9rem;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        transition: opacity 0.25s ease, visibility 0.25s ease;
+    }
+
+    .dashboard-chart-placeholder.is-hidden {
+        opacity: 0;
+        visibility: hidden;
+    }
+
+    .dashboard-toggle[data-active="true"] {
+        color: #f5fff9;
+        background: linear-gradient(135deg, #00c062, #009650);
+        border-color: rgba(0, 150, 80, 0.55);
+        box-shadow: 0 10px 26px rgba(0, 192, 98, 0.18);
+    }
+
+    .dashboard-workspace {
+        display: grid;
+        gap: 1.5rem;
+        align-items: start;
+    }
+
+    .dashboard-main-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        min-width: 0;
+    }
+
+    .dashboard-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        min-width: 0;
+    }
+
+    .dashboard-side-card {
+        overflow: hidden;
+        border: 1px solid #e5ece5;
+        border-radius: 1.75rem;
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: 0 18px 48px rgba(13, 31, 15, 0.07);
+        backdrop-filter: blur(10px);
+        padding: 1.2rem;
+    }
+
+    .dashboard-side-nav {
+        display: grid;
+        gap: 0.65rem;
+    }
+
+    .dashboard-nav-link {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        border: 1px solid #e5ece5;
+        border-radius: 1rem;
+        background: #f7faf7;
+        color: #294230;
+        padding: 0.85rem 0.95rem;
+        transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+    }
+
+    .dashboard-nav-link:hover {
+        transform: translateY(-1px);
+        border-color: #b8dec3;
+        box-shadow: 0 10px 24px rgba(0, 140, 75, 0.1);
+    }
+
+    .dashboard-nav-link.is-active {
+        color: #f5fff9;
+        border-color: rgba(0, 150, 80, 0.65);
+        background: linear-gradient(135deg, #00c062, #009650);
+        box-shadow: 0 12px 30px rgba(0, 150, 80, 0.22);
+    }
+
+    .dashboard-nav-link-label {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        min-width: 0;
+    }
+
+    .dashboard-nav-link-title {
+        font-size: 0.92rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+
+    .dashboard-nav-link-caption {
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        opacity: 0.66;
+    }
+
+    .dashboard-side-table {
+        overflow: hidden;
+        border: 1px solid #edf1ed;
+        border-radius: 1.15rem;
+        background: linear-gradient(180deg, rgba(248, 251, 248, 0.96), rgba(241, 248, 242, 0.98));
+    }
+
+    .dashboard-side-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.9rem 1rem;
+        border-bottom: 1px solid #e8eee9;
+    }
+
+    .dashboard-side-row:last-child {
+        border-bottom: 0;
+    }
+
+    .dashboard-side-row-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #708171;
+    }
+
+    .dashboard-side-row-value {
+        text-align: right;
+        font-size: 0.88rem;
+        font-weight: 800;
+        color: #162516;
+    }
+
+    .dashboard-anchor-section {
+        scroll-margin-top: 7rem;
+    }
+
+    .dashboard-table-wrap {
+        overflow: hidden;
+        border: 1px solid #e7ede7;
+        border-radius: 1.5rem;
+        background: linear-gradient(180deg, rgba(249, 251, 249, 0.96), rgba(255, 255, 255, 0.98));
+    }
+
+    .dashboard-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .dashboard-table th,
+    .dashboard-table td {
+        padding: 1rem 1.1rem;
+        text-align: left;
+    }
+
+    .dashboard-table th {
+        border-bottom: 1px solid #e7ede7;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #708171;
+        background: rgba(244, 248, 244, 0.92);
+    }
+
+    .dashboard-table td {
+        border-bottom: 1px solid #edf1ed;
+        font-size: 0.9rem;
+        color: #223124;
+        vertical-align: top;
+    }
+
+    .dashboard-table tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+    .dashboard-table tbody tr:hover {
+        background: rgba(236, 248, 238, 0.8);
+    }
+
+    .dashboard-table-muted {
+        font-size: 0.78rem;
+        color: #7b8a7c;
+    }
+
+    @media (min-width: 1280px) {
+        .dashboard-workspace {
+            grid-template-columns: minmax(280px, 300px) minmax(0, 1fr);
+        }
+
+        .dashboard-sidebar {
+            position: sticky;
+            top: 6.5rem;
+        }
+    }
+
+    .dashboard-heatmap-wrap {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.85rem;
+        align-items: start;
+    }
+
+    .dashboard-heatmap-days {
+        display: grid;
+        grid-template-rows: repeat(7, 12px);
+        gap: 7px;
+        padding-top: 2px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #7a8b7b;
+    }
+
+    .dashboard-heatmap-grid {
+        display: flex;
+        gap: 7px;
+        overflow-x: auto;
+        padding-bottom: 0.25rem;
+    }
+
+    .dashboard-heatmap-week {
+        display: grid;
+        grid-template-rows: repeat(7, 12px);
+        gap: 7px;
+    }
+
+    .dashboard-heatmap-cell {
+        width: 12px;
+        height: 12px;
+        border-radius: 4px;
+        border: 1px solid rgba(8, 31, 14, 0.06);
+        background: #eef3ef;
+    }
+
+    .dashboard-heatmap-cell.level-1 { background: #d9f8e7; }
+    .dashboard-heatmap-cell.level-2 { background: #90e7b2; }
+    .dashboard-heatmap-cell.level-3 { background: #2ec772; }
+    .dashboard-heatmap-cell.level-4 { background: #0f7a43; }
+    .dashboard-heatmap-cell.is-muted { opacity: 0.28; }
+</style>
+{% endblock %}
+{% block extra_scripts %}
+<script src="{% static 'js/dashboard-workspace.js' %}?v=3"></script>
+{% endblock %}
 
 {% block content %}
 <div class="space-y-10">
-    <section class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0d1f0f] via-[#12311a] to-[#1a4725] text-white shadow-[0_28px_80px_rgba(6,45,24,0.32)]">
-        <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_15%_20%,#00e87e,transparent_40%),radial-gradient(circle_at_85%_10%,#84cc16,transparent_36%)]"></div>
-        <div class="relative grid lg:grid-cols-[1.15fr_0.85fr] gap-8 p-8 md:p-12">
-            <div class="space-y-6">
-                <div class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.3em]">
-                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                    Dashboard
-                </div>
-                <div class="space-y-3">
-                    <h1 class="font-serif text-4xl md:text-5xl leading-tight">
-                        {{ request.user.first_name|default:request.user.username }}, your crop health command center.
-                    </h1>
-                    <p class="max-w-2xl text-base leading-relaxed text-white/78">
-                        Track scan usage, review recent diagnoses, and move from upload to treatment faster. This dashboard brings your plant checks, membership status, and next actions into one place.
-                    </p>
-                </div>
-                <div class="flex flex-wrap gap-3">
-                    <a href="{% url 'detection:leaf_diagnosis' %}" class="btn btn-primary">Scan Leaf</a>
-                    <a href="{% url 'account:membership' %}" class="btn btn-secondary">Membership</a>
-                    <a href="{% url 'account:profile' %}" class="btn btn-secondary">Update profile</a>
-                    <a href="{% url 'account:home' %}" class="btn btn-ghost">Home</a>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                    <span class="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold">Quota tracking</span>
-                    <span class="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold">Recent diagnosis history</span>
-                    <span class="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold">Gemini verification status</span>
+    <div class="dashboard-workspace">
+        <aside class="dashboard-sidebar">
+            <div class="dashboard-side-card">
+                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Workspace Map</p>
+                <h2 class="mt-2 text-2xl font-black text-gray-900">Move around the dashboard faster.</h2>
+                <p class="mt-2 text-sm leading-relaxed text-gray-600">
+                    Click a workspace item and load only that section into the main panel.
+                </p>
+                <div class="dashboard-side-nav mt-5">
+                    <a href="{% url 'dashboard:home' %}?section=overview" class="dashboard-nav-link {% if active_section == 'overview' %}is-active{% endif %}" data-dashboard-nav data-section-key="overview" data-section-label="Overview" data-section-url="{% url 'dashboard:section' 'overview' %}">
+                        <span class="dashboard-nav-link-label">
+                            <i data-lucide="layout-dashboard" class="h-4 w-4"></i>
+                            <span>
+                                <span class="dashboard-nav-link-title block">Overview</span>
+                                <span class="dashboard-nav-link-caption block">Core KPIs</span>
+                            </span>
+                        </span>
+                        <i data-lucide="chevron-right" class="h-4 w-4 opacity-70"></i>
+                    </a>
+                    <a href="{% url 'dashboard:home' %}?section=analytics" class="dashboard-nav-link {% if active_section == 'analytics' %}is-active{% endif %}" data-dashboard-nav data-section-key="analytics" data-section-label="Analytics" data-section-url="{% url 'dashboard:section' 'analytics' %}">
+                        <span class="dashboard-nav-link-label">
+                            <i data-lucide="line-chart" class="h-4 w-4"></i>
+                            <span>
+                                <span class="dashboard-nav-link-title block">Analytics</span>
+                                <span class="dashboard-nav-link-caption block">Trends + breakdown</span>
+                            </span>
+                        </span>
+                        <i data-lucide="chevron-right" class="h-4 w-4 opacity-70"></i>
+                    </a>
+                    <a href="{% url 'dashboard:home' %}?section=risk" class="dashboard-nav-link {% if active_section == 'risk' %}is-active{% endif %}" data-dashboard-nav data-section-key="risk" data-section-label="Risk Board" data-section-url="{% url 'dashboard:section' 'risk' %}">
+                        <span class="dashboard-nav-link-label">
+                            <i data-lucide="shield-alert" class="h-4 w-4"></i>
+                            <span>
+                                <span class="dashboard-nav-link-title block">Risk Board</span>
+                                <span class="dashboard-nav-link-caption block">Issues + alerts</span>
+                            </span>
+                        </span>
+                        <i data-lucide="chevron-right" class="h-4 w-4 opacity-70"></i>
+                    </a>
+                    <a href="{% url 'dashboard:home' %}?section=insights" class="dashboard-nav-link {% if active_section == 'insights' %}is-active{% endif %}" data-dashboard-nav data-section-key="insights" data-section-label="Insights" data-section-url="{% url 'dashboard:section' 'insights' %}">
+                        <span class="dashboard-nav-link-label">
+                            <i data-lucide="sparkles" class="h-4 w-4"></i>
+                            <span>
+                                <span class="dashboard-nav-link-title block">Insights</span>
+                                <span class="dashboard-nav-link-caption block">AI + activity</span>
+                            </span>
+                        </span>
+                        <i data-lucide="chevron-right" class="h-4 w-4 opacity-70"></i>
+                    </a>
+                    <a href="{% url 'dashboard:home' %}?section=workflow" class="dashboard-nav-link {% if active_section == 'workflow' %}is-active{% endif %}" data-dashboard-nav data-section-key="workflow" data-section-label="Workflow" data-section-url="{% url 'dashboard:section' 'workflow' %}">
+                        <span class="dashboard-nav-link-label">
+                            <i data-lucide="route" class="h-4 w-4"></i>
+                            <span>
+                                <span class="dashboard-nav-link-title block">Workflow</span>
+                                <span class="dashboard-nav-link-caption block">Operations</span>
+                            </span>
+                        </span>
+                        <i data-lucide="chevron-right" class="h-4 w-4 opacity-70"></i>
+                    </a>
+                    <a href="{% url 'dashboard:home' %}?section=history" class="dashboard-nav-link {% if active_section == 'history' %}is-active{% endif %}" data-dashboard-nav data-section-key="history" data-section-label="Scan History" data-section-url="{% url 'dashboard:section' 'history' %}">
+                        <span class="dashboard-nav-link-label">
+                            <i data-lucide="history" class="h-4 w-4"></i>
+                            <span>
+                                <span class="dashboard-nav-link-title block">Scan History</span>
+                                <span class="dashboard-nav-link-caption block">Recent records</span>
+                            </span>
+                        </span>
+                        <i data-lucide="chevron-right" class="h-4 w-4 opacity-70"></i>
+                    </a>
+                    <a href="{% url 'dashboard:home' %}?section=weather" class="dashboard-nav-link {% if active_section == 'weather' %}is-active{% endif %}" data-dashboard-nav data-section-key="weather" data-section-label="Weather Alerts" data-section-url="{% url 'dashboard:section' 'weather' %}">
+                        <span class="dashboard-nav-link-label">
+                            <i data-lucide="cloud-lightning" class="h-4 w-4"></i>
+                            <span>
+                                <span class="dashboard-nav-link-title block">Weather Alerts</span>
+                                <span class="dashboard-nav-link-caption block">Risk forecasts</span>
+                            </span>
+                        </span>
+                        <i data-lucide="chevron-right" class="h-4 w-4 opacity-70"></i>
+                    </a>
+                    <a href="{% url 'dashboard:home' %}?section=datasets" class="dashboard-nav-link {% if active_section == 'datasets' %}is-active{% endif %}" data-dashboard-nav data-section-key="datasets" data-section-label="Historical Datasets" data-section-url="{% url 'dashboard:section' 'datasets' %}">
+                        <span class="dashboard-nav-link-label">
+                            <i data-lucide="database" class="h-4 w-4"></i>
+                            <span>
+                                <span class="dashboard-nav-link-title block">Historical Datasets</span>
+                                <span class="dashboard-nav-link-caption block">Agri records</span>
+                            </span>
+                        </span>
+                        <i data-lucide="chevron-right" class="h-4 w-4 opacity-70"></i>
+                    </a>
                 </div>
             </div>
 
-            <div class="relative">
-                <div class="rounded-3xl border border-white/10 bg-white/10 p-6 backdrop-blur-xl shadow-2xl">
-                    <div class="mb-4 flex items-center justify-between">
-                        <div>
-                            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-300">Membership snapshot</p>
-                            <h2 class="mt-1 text-2xl font-black text-white">{{ leaf_quota.plan_name }}</h2>
-                        </div>
-                        <span class="rounded-full px-3 py-1 text-xs font-semibold {% if leaf_quota.is_premium %}bg-emerald-500/20 text-emerald-100{% else %}bg-white/10 text-white/80{% endif %}">
-                            {% if leaf_quota.is_premium %}Unlimited{% else %}Free tier{% endif %}
+            <div class="dashboard-side-card">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Quick Table</p>
+                        <h3 class="mt-2 text-xl font-black text-gray-900">Dashboard status at a glance</h3>
+                    </div>
+                    <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">{{ smart_alerts|length }} alerts</span>
+                </div>
+                <div class="dashboard-side-table mt-4">
+                    <div class="dashboard-side-row">
+                        <span class="dashboard-side-row-label">Plan</span>
+                        <span class="dashboard-side-row-value">{{ leaf_quota.plan_name }}</span>
+                    </div>
+                    <div class="dashboard-side-row">
+                        <span class="dashboard-side-row-label">Remaining</span>
+                        <span class="dashboard-side-row-value">{{ leaf_quota.remaining_label }}</span>
+                    </div>
+                    <div class="dashboard-side-row">
+                        <span class="dashboard-side-row-label">Verified</span>
+                        <span class="dashboard-side-row-value">{{ dashboard_metrics.verified_count }}</span>
+                    </div>
+                    <div class="dashboard-side-row">
+                        <span class="dashboard-side-row-label">View</span>
+                        <span class="dashboard-side-row-value" id="dashboardActiveViewLabel">{{ active_section_label }}</span>
+                    </div>
+                    <div class="dashboard-side-row">
+                        <span class="dashboard-side-row-label">Top risk</span>
+                        <span class="dashboard-side-row-value">
+                            {% if analytics.plant_issues.0.issues %}
+                                {{ analytics.plant_issues.0.label }}
+                            {% else %}
+                                Stable baseline
+                            {% endif %}
                         </span>
                     </div>
-
-                    <div class="space-y-4">
-                        <div class="rounded-2xl border border-white/10 bg-black/10 p-4">
-                            <div class="mb-2 flex items-center justify-between text-sm text-white/75">
-                                <span>Usage</span>
-                                <span>{{ leaf_quota.usage_label }}</span>
-                            </div>
-                            <div class="h-2 rounded-full bg-white/10">
-                                <div class="h-2 rounded-full bg-gradient-to-r from-emerald-300 to-green-400" style="width: {{ leaf_quota.usage_percent }}%;"></div>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-3">
-                            <div class="rounded-2xl border border-white/10 bg-black/10 p-4">
-                                <p class="text-xs uppercase tracking-wide text-white/55">Remaining</p>
-                                <p class="mt-1 text-xl font-bold text-white">{{ leaf_quota.remaining_label }}</p>
-                            </div>
-                            <div class="rounded-2xl border border-white/10 bg-black/10 p-4">
-                                <p class="text-xs uppercase tracking-wide text-white/55">Verified scans</p>
-                                <p class="mt-1 text-xl font-bold text-white">{{ dashboard_metrics.verified_count }}</p>
-                            </div>
-                        </div>
-
-                        <div class="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4">
-                            {% if leaf_quota.limit_reached %}
-                                <p class="text-sm font-semibold text-emerald-100">Your free scans are finished. Upgrade membership to keep diagnosing without interruption.</p>
-                            {% elif leaf_quota.is_premium %}
-                                <p class="text-sm font-semibold text-emerald-100">Premium is active. Keep scanning leaves and validating low-confidence predictions with Gemini.</p>
+                    <div class="dashboard-side-row">
+                        <span class="dashboard-side-row-label">Last scan</span>
+                        <span class="dashboard-side-row-value">
+                            {% if recent_diagnoses.0 %}
+                                {{ recent_diagnoses.0.created_at|date:"M d, h:i A" }}
                             {% else %}
-                                <p class="text-sm font-semibold text-emerald-100">{{ leaf_quota.remaining }} scans left. This is a good time to use them on your highest-priority samples.</p>
+                                No scans yet
                             {% endif %}
-                        </div>
+                        </span>
                     </div>
                 </div>
-                <div class="absolute -top-4 -right-4 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 px-3 py-2 text-xs font-bold text-white shadow-lg">
-                    PlantGuard Live
+            </div>
+
+            <div class="dashboard-side-card bg-gradient-to-br from-[#0f2614] via-[#16341d] to-[#1f4629] text-white">
+                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-300">Quick Actions</p>
+                <h3 class="mt-2 text-2xl font-black text-white">Need to move fast?</h3>
+                <p class="mt-2 text-sm leading-relaxed text-white/75">
+                    Run a new diagnosis, adjust membership, or review profile details without leaving the workspace.
+                </p>
+                <div class="mt-5 space-y-3">
+                    <a href="{% url 'detection:leaf_diagnosis' %}" class="btn btn-primary w-full justify-center">Start new scan</a>
+                    <a href="{% url 'account:membership' %}" class="btn btn-secondary glass-panel !text-white w-full justify-center border-white/20">Open membership</a>
                 </div>
             </div>
-        </div>
-    </section>
+        </aside>
 
-    <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="dashboard-main-stack">
+            <div class="rounded-[1.85rem] border border-gray-200 bg-white/90 p-5 shadow-[0_22px_60px_rgba(13,31,15,0.08)] backdrop-blur md:p-7">
+                <div class="flex flex-col gap-3 border-b border-gray-200 pb-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Active Workspace</p>
+                        <h2 id="dashboardViewportTitle" class="mt-1 text-2xl font-black text-gray-900">{{ active_section_label }}</h2>
+                    </div>
+                    <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
+                        <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                        Sidebar loads one section at a time
+                    </div>
+                </div>
+
+                <div id="dashboardSectionViewport" data-dashboard-viewport data-active-section="{{ active_section }}" class="mt-5 min-h-[420px]">
+                    {% include section_template %}
+                </div>
+            </div>
+            {% comment %}
+    <section id="section-overview" data-dashboard-section class="dashboard-anchor-section grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <article class="card card-hover p-6">
             <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Total scans</p>
             <h2 class="mt-3 text-3xl font-black text-gray-900">{{ dashboard_metrics.diagnosis_count }}</h2>
@@ -114,8 +481,268 @@
         </article>
     </section>
 
+    <section id="section-analytics" data-dashboard-section data-analytics-dashboard class="dashboard-anchor-section space-y-6">
+        <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Decision Intelligence</p>
+                <h2 class="mt-2 text-3xl font-black text-gray-900">Analytics built for action, not just display.</h2>
+                <p class="mt-2 max-w-3xl text-sm text-gray-600">
+                    Visualize trend direction, disease mix, risk concentration, and scan behavior so the dashboard becomes a real crop-health control room.
+                </p>
+            </div>
+            <div class="inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
+                <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                {% if analytics.using_demo %}Preview analytics{% else %}Live account analytics{% endif %}
+            </div>
+        </div>
+
+        <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {% for card in weekly_cards %}
+                <article class="group relative overflow-hidden rounded-[1.75rem] border border-gray-200 bg-white p-5 shadow-[0_18px_44px_rgba(17,24,17,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_58px_rgba(17,24,17,0.11)]">
+                    <div class="absolute inset-x-0 top-0 h-1
+                        {% if card.tone == 'red' %}
+                            bg-gradient-to-r from-rose-500 via-red-400 to-amber-300
+                        {% elif card.tone == 'amber' %}
+                            bg-gradient-to-r from-amber-400 via-lime-400 to-emerald-400
+                        {% elif card.tone == 'slate' %}
+                            bg-gradient-to-r from-slate-300 via-slate-200 to-emerald-300
+                        {% else %}
+                            bg-gradient-to-r from-emerald-500 via-green-400 to-lime-300
+                        {% endif %}">
+                    </div>
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">{{ card.title }}</p>
+                            <h3 class="mt-3 text-3xl font-black text-gray-900">{{ card.value }}</h3>
+                        </div>
+                        <span class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold
+                            {% if card.tone == 'red' %}
+                                bg-red-50 text-red-600
+                            {% elif card.tone == 'amber' %}
+                                bg-amber-50 text-amber-700
+                            {% elif card.tone == 'slate' %}
+                                bg-slate-100 text-slate-600
+                            {% else %}
+                                bg-emerald-50 text-emerald-700
+                            {% endif %}">
+                            <i data-lucide="{% if card.trend == 'up' %}trending-up{% else %}trending-down{% endif %}" class="h-3.5 w-3.5"></i>
+                            {{ card.delta }}
+                        </span>
+                    </div>
+                    <div class="mt-5 dashboard-chart-shell is-compact">
+                        <div class="dashboard-chart-placeholder">Loading sparkline...</div>
+                        <canvas id="sparkline-{{ card.id }}" data-sparkline-key="{{ card.id }}"></canvas>
+                    </div>
+                </article>
+            {% endfor %}
+        </section>
+
+        <section class="grid gap-6 xl:grid-cols-[1.65fr_1fr]">
+            <article class="card p-6 md:p-8">
+                <div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Crop Health Trends</p>
+                        <h2 class="mt-2 text-2xl font-black text-gray-900">Scan results over time</h2>
+                        <p class="mt-2 max-w-2xl text-sm text-gray-600">
+                            Compare overall health score against disease-detected scan rate and switch between the last 7 and 30 days.
+                        </p>
+                    </div>
+                    <div class="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 p-1">
+                        <button type="button" id="trendToggle7" class="dashboard-toggle rounded-full border border-transparent px-4 py-2 text-xs font-bold text-gray-600 transition-all" data-range="7">Last 7 days</button>
+                        <button type="button" id="trendToggle30" class="dashboard-toggle rounded-full border border-transparent px-4 py-2 text-xs font-bold text-gray-600 transition-all" data-range="30" data-active="true">Last 30 days</button>
+                    </div>
+                </div>
+                <div class="dashboard-chart-shell h-[360px]">
+                    <div class="dashboard-chart-placeholder">Preparing crop health chart...</div>
+                    <canvas id="cropHealthTrendChart"></canvas>
+                </div>
+            </article>
+
+            <article class="card p-6 md:p-8">
+                <div class="mb-6">
+                    <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Disease Distribution</p>
+                    <h2 class="mt-2 text-2xl font-black text-gray-900">Health breakdown</h2>
+                    <p class="mt-2 text-sm text-gray-600">
+                        A quick read on which disease classes are dominating your recent scan outcomes.
+                    </p>
+                </div>
+                <div class="grid items-center gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+                    <div class="relative mx-auto h-[260px] w-full max-w-[260px]">
+                        <div class="dashboard-chart-placeholder rounded-full">Rendering donut...</div>
+                        <canvas id="diseaseDistributionChart"></canvas>
+                        <div class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
+                            <p class="text-[11px] font-bold uppercase tracking-[0.26em] text-emerald-700">Center</p>
+                            <p class="mt-1 text-lg font-black text-gray-900">Health Breakdown</p>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        {% for item in analytics.distribution %}
+                            <div class="flex items-center justify-between rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
+                                <div class="flex items-center gap-3">
+                                    <span class="h-3.5 w-3.5 rounded-full
+                                        {% if forloop.counter0 == 0 %}bg-emerald-500
+                                        {% elif forloop.counter0 == 1 %}bg-lime-500
+                                        {% elif forloop.counter0 == 2 %}bg-amber-400
+                                        {% elif forloop.counter0 == 3 %}bg-rose-400
+                                        {% elif forloop.counter0 == 4 %}bg-emerald-800
+                                        {% else %}bg-emerald-300{% endif %}"></span>
+                                    <div>
+                                        <p class="text-sm font-bold text-gray-900">{{ item.label }}</p>
+                                        <p class="text-xs text-gray-500">Detected cases</p>
+                                    </div>
+                                </div>
+                                <p class="text-sm font-bold text-gray-800">{{ item.value }}</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </article>
+        </section>
+    </section>
+
+    <section id="section-risk" data-dashboard-section class="dashboard-anchor-section grid gap-6 xl:grid-cols-[1.45fr_0.95fr]">
+            <article class="card p-6 md:p-8">
+                <div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Field / Plant-wise Analysis</p>
+                        <h2 class="mt-2 text-2xl font-black text-gray-900">Where problems are clustering</h2>
+                        <p class="mt-2 max-w-2xl text-sm text-gray-600">
+                            Rank your plants or field groups by issue count and keep the highest-risk area visually prominent.
+                        </p>
+                    </div>
+                    <label class="block">
+                        <span class="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Sort</span>
+                        <select id="fieldAnalysisSort" class="form-input min-w-[180px] bg-white">
+                            <option value="highest">Highest to lowest</option>
+                            <option value="alpha">A to Z</option>
+                        </select>
+                    </label>
+                </div>
+                <div class="dashboard-chart-shell h-[360px]">
+                    <div class="dashboard-chart-placeholder">Loading issue comparison...</div>
+                    <canvas id="fieldIssuesChart"></canvas>
+                </div>
+            </article>
+
+            <article class="relative overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-br from-[#f7fff9] via-white to-[#eefbf2] p-6 shadow-[0_18px_48px_rgba(13,31,15,0.08)] md:p-8">
+                <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-400 via-emerald-400 to-emerald-600"></div>
+                <div class="mb-6">
+                    <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Smart Alerts</p>
+                    <h2 class="mt-2 text-2xl font-black text-gray-900">Recommendations that need attention</h2>
+                    <p class="mt-2 text-sm text-gray-600">
+                        AI-style guidance for the areas that deserve faster review, better verification, or immediate treatment action.
+                    </p>
+                </div>
+                <div class="space-y-4">
+                    {% for alert in smart_alerts %}
+                        <article class="rounded-2xl border p-4 shadow-sm
+                            {% if alert.level == 'warning' %}
+                                border-amber-200 bg-amber-50/80
+                            {% elif alert.level == 'success' %}
+                                border-emerald-200 bg-emerald-50/80
+                            {% else %}
+                                border-sky-200 bg-sky-50/80
+                            {% endif %}">
+                            <div class="flex items-start gap-3">
+                                <div class="grid h-11 w-11 place-items-center rounded-2xl
+                                    {% if alert.level == 'warning' %}
+                                        bg-amber-100 text-amber-700
+                                    {% elif alert.level == 'success' %}
+                                        bg-emerald-100 text-emerald-700
+                                    {% else %}
+                                        bg-sky-100 text-sky-700
+                                    {% endif %}">
+                                    <i data-lucide="{{ alert.icon }}" class="h-5 w-5"></i>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex flex-wrap items-center justify-between gap-2">
+                                        <p class="text-sm font-bold text-gray-900">{{ alert.title }}</p>
+                                        <span class="rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em]
+                                            {% if alert.level == 'warning' %}
+                                                bg-amber-100 text-amber-700
+                                            {% elif alert.level == 'success' %}
+                                                bg-emerald-100 text-emerald-700
+                                            {% else %}
+                                                bg-sky-100 text-sky-700
+                                            {% endif %}">
+                                            {{ alert.label }}
+                                        </span>
+                                    </div>
+                                    <p class="mt-2 text-sm leading-relaxed text-gray-600">{{ alert.body }}</p>
+                                </div>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+                <a href="{% url 'detection:leaf_diagnosis' %}" class="btn btn-primary mt-6 w-full justify-center">View Details</a>
+            </article>
+        </section>
+
+    <section id="section-insights" data-dashboard-section class="dashboard-anchor-section grid gap-6 xl:grid-cols-[0.92fr_1.08fr]">
+            <article class="relative overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-br from-[#0f2614] via-[#14331b] to-[#1b3c24] p-6 text-white shadow-[0_20px_58px_rgba(12,38,21,0.22)] md:p-8">
+                <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_18%_18%,#00e87e,transparent_42%),radial-gradient(circle_at_82%_20%,#84cc16,transparent_34%)]"></div>
+                <div class="relative">
+                    <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-300">AI Insights Summary</p>
+                    <h2 class="mt-2 text-3xl font-black text-white">Decision-ready reading of your current crop health pattern.</h2>
+                    <p class="mt-5 max-w-2xl text-base leading-relaxed text-white/80">
+                        {{ ai_insight }}
+                    </p>
+                    <div class="mt-6 flex flex-wrap gap-2">
+                        <span class="rounded-full border border-white/12 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/90">Trend-aware</span>
+                        <span class="rounded-full border border-white/12 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/90">Risk prioritization</span>
+                        <span class="rounded-full border border-white/12 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/90">Action-focused</span>
+                    </div>
+                </div>
+            </article>
+
+            <article class="card p-6 md:p-8">
+                <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Scan Activity Heatmap</p>
+                        <h2 class="mt-2 text-2xl font-black text-gray-900">Daily monitoring intensity</h2>
+                        <p class="mt-2 text-sm text-gray-600">
+                            A GitHub-style overview of the last 12 weeks. Darker green means heavier scan activity.
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs font-semibold text-gray-500">
+                        <span>Less</span>
+                        <span class="dashboard-heatmap-cell"></span>
+                        <span class="dashboard-heatmap-cell level-1"></span>
+                        <span class="dashboard-heatmap-cell level-2"></span>
+                        <span class="dashboard-heatmap-cell level-3"></span>
+                        <span class="dashboard-heatmap-cell level-4"></span>
+                        <span>More</span>
+                    </div>
+                </div>
+
+                <div class="dashboard-heatmap-wrap">
+                    <div class="dashboard-heatmap-days">
+                        <span>Mon</span>
+                        <span></span>
+                        <span>Wed</span>
+                        <span></span>
+                        <span>Fri</span>
+                        <span></span>
+                        <span>Sun</span>
+                    </div>
+                    <div class="dashboard-heatmap-grid">
+                        {% for week in heatmap_weeks %}
+                            <div class="dashboard-heatmap-week">
+                                {% for day in week %}
+                                    <div
+                                        class="dashboard-heatmap-cell level-{{ day.level }} {% if day.muted %}is-muted{% endif %}"
+                                        title="{{ day.date }}: {{ day.count }} scans">
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </article>
+        </section>
+
     <section class="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-        <article class="card p-6 md:p-8">
+        <article id="section-workflow" data-dashboard-section class="dashboard-anchor-section card p-6 md:p-8">
             <div class="mb-6 flex items-start justify-between gap-4">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Operations</p>
@@ -162,7 +789,7 @@
             </div>
         </article>
 
-        <article class="card p-6 md:p-8">
+        <article id="section-history" data-dashboard-section class="dashboard-anchor-section card p-6 md:p-8">
             <div class="mb-6 flex items-start justify-between gap-4">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Recent scans</p>
@@ -214,7 +841,67 @@
                     </div>
                 {% endfor %}
             </div>
+
+            {% if recent_diagnoses %}
+                <div class="mt-6">
+                    <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Compact Table</p>
+                            <h3 class="mt-2 text-xl font-black text-gray-900">Recent scans in one quick grid</h3>
+                        </div>
+                        <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                            {{ recent_diagnoses|length }} latest record{{ recent_diagnoses|length|pluralize }}
+                        </span>
+                    </div>
+
+                    <div class="dashboard-table-wrap">
+                        <div class="overflow-x-auto">
+                            <table class="dashboard-table min-w-[720px]">
+                                <thead>
+                                    <tr>
+                                        <th>Result</th>
+                                        <th>Plant</th>
+                                        <th>Confidence</th>
+                                        <th>Source</th>
+                                        <th>Scanned</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in recent_diagnoses %}
+                                        <tr>
+                                            <td>
+                                                <p class="font-bold text-gray-900">{{ item.predicted_disease|default:"Pending diagnosis" }}</p>
+                                                <p class="dashboard-table-muted">{{ item.original_filename|default:"Unnamed upload" }}</p>
+                                            </td>
+                                            <td>{{ item.plant_name|default:"Unknown" }}</td>
+                                            <td>
+                                                {% if item.confidence or item.confidence == 0 %}
+                                                    {{ item.confidence }}%
+                                                {% else %}
+                                                    --
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold {% if item.source == 'gemini_api' %}bg-emerald-100 text-emerald-800{% else %}border border-gray-200 bg-white text-gray-700{% endif %}">
+                                                    {% if item.source == "gemini_api" %}Gemini verified{% else %}Local CNN{% endif %}
+                                                </span>
+                                            </td>
+                                            <td>{{ item.created_at|date:"M d, Y h:i A" }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
         </article>
     </section>
+
+            {% endcomment %}
+    {{ analytics|json_script:"dashboardAnalyticsPayload" }}
+    {{ weekly_cards|json_script:"dashboardWeeklyCardsPayload" }}
+        </div>
+    </div>
 </div>
 {% endblock %}

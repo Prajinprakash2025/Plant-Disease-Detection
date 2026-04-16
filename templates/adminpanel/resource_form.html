@@ -1,0 +1,51 @@
+{% extends "adminpanel/base.html" %}
+
+{% block title %}{{ title }} | Admin Console{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<section class="max-w-3xl">
+    <div class="mb-8">
+        <a href="{% url back_url %}" class="admin-text-link mb-2 inline-block">← Back to list</a>
+        <h2 class="text-3xl font-black text-gray-900">{{ title }}</h2>
+        <p class="mt-2 text-gray-600">{{ description }}</p>
+    </div>
+
+    <article class="admin-panel p-8">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            {% for field in form %}
+                <div class="admin-form-group">
+                    <label for="{{ field.id_for_label }}" class="admin-label">
+                        {{ field.label }}
+                        {% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+                    </label>
+                    {{ field }}
+                    {% if field.help_text %}
+                        <p class="admin-help-text">{{ field.help_text }}</p>
+                    {% endif %}
+                    {% if field.errors %}
+                        <div class="admin-field-errors mt-2">
+                            {% for error in field.errors %}
+                                <p class="text-sm font-bold text-red-600">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <div class="flex items-center gap-4 pt-4 border-t border-gray-100">
+                <button type="submit" class="admin-btn admin-btn-primary px-8">Save Resource</button>
+                <a href="{% url back_url %}" class="admin-text-link">Cancel and discard</a>
+            </div>
+        </form>
+    </article>
+</section>
+
+<style>
+    .admin-form-group textarea {
+        min-height: 120px;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends "adminpanel/base.html" %}
+
+{% block title %}Manage Crops | Admin Console{% endblock %}
+{% block page_title %}Crops Management{% endblock %}
+
+{% block content %}
+<section class="admin-panel mb-8">
+    <div class="admin-panel-head">
+        <div>
+            <span class="admin-kicker">Resource Library</span>
+            <h3>Registered plant categories</h3>
+        </div>
+        <div class="flex gap-4">
+            <form method="get" class="admin-search-form">
+                <input type="text" name="q" value="{{ query }}" placeholder="Search crops..." class="admin-input-small">
+            </form>
+            <a href="{% url 'adminpanel:crop_add' %}" class="admin-btn admin-btn-primary">+ Add Crop</a>
+        </div>
+    </div>
+
+    <div class="admin-table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Icon</th>
+                    <th>Crop Name</th>
+                    <th>Description</th>
+                    <th>Diseases Linked</th>
+                    <th class="text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for crop in page_obj %}
+                <tr>
+                    <td class="w-16">
+                        <div class="h-10 w-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                            {{ crop.name|slice:":1"|upper }}
+                        </div>
+                    </td>
+                    <td><strong class="text-gray-900">{{ crop.name }}</strong></td>
+                    <td><span class="text-sm text-gray-600 line-clamp-1">{{ crop.description|default:"No description" }}</span></td>
+                    <td><span class="admin-badge admin-badge-neutral">{{ crop.diseases.count }} linked</span></td>
+                    <td class="text-right">
+                        <div class="flex justify-end gap-2">
+                            <a href="{% url 'adminpanel:crop_edit' crop.id %}" class="admin-btn-icon" title="Edit">
+                                ✎
+                            </a>
+                            <form action="{% url 'adminpanel:crop_delete' crop.id %}" method="post" onsubmit="return confirm('Are you sure you want to delete this crop? All linked diseases will be deleted too!')">
+                                {% csrf_token %}
+                                <button type="submit" class="admin-btn-icon text-red-500" title="Delete">
+                                    🗑
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="admin-empty">No crops found. Create your first category to start mapping diseases.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="admin-pagination mt-6">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" class="admin-btn admin-btn-secondary">Previous</a>
+        {% endif %}
+        <span class="text-sm font-semibold">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}" class="admin-btn admin-btn-secondary">Next</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

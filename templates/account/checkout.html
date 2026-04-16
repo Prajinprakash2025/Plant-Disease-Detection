@@ -1,0 +1,98 @@
+{% extends "account/base.html" %}
+{% load static %}
+
+{% block title %}Checkout | PlantGuard Premium{% endblock %}
+
+{% block content %}
+<section class="py-16">
+    <div class="max-w-4xl mx-auto px-4">
+        <div class="mb-12 text-center">
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-4">Complete Your Upgrade</h1>
+            <p class="text-xl text-gray-600">Secure simulated checkout for Unlimited Testing Access.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 mb-8 p-8">
+                    <h2 class="text-2xl font-bold mb-6">Payment Method</h2>
+                    
+                    <form action="{% url 'account:confirm_payment' %}" method="post">
+                        {% csrf_token %}
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Cardholder Name</label>
+                                <input type="text" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-all" value="{{ request.user.get_full_name|default:request.user.username }}" required>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="col-span-2">
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Card Number</label>
+                                    <input type="text" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-all" placeholder="4242 4242 4242 4242" value="4242 4242 4242 4242" required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Expiry Date</label>
+                                    <input type="text" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-all" placeholder="MM/YY" value="12/28" required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">CVV</label>
+                                    <input type="text" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-all" placeholder="123" value="123" required>
+                                </div>
+                            </div>
+
+                            <div class="pt-6 border-t border-gray-50">
+                                <div class="flex items-center justify-between mb-4">
+                                    <span class="text-lg font-bold text-gray-800">Total Due Today</span>
+                                    <span class="text-2xl font-black text-green-700">$0.00 (Demo Mode)</span>
+                                </div>
+                                <button type="submit" class="w-full py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-lg transition-transform hover:-translate-y-1 active:translate-y-0">
+                                    Complete Simulated Payment
+                                </button>
+                                <p class="text-xs text-center text-gray-500 mt-4 italic">
+                                    This is a simulated transaction. No actual charges will be applied. 
+                                    Confirmation will send a request to the system administrator.
+                                </p>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="lg:col-span-1">
+                <div class="bg-gray-50 rounded-3xl p-6 border border-gray-100">
+                    <h3 class="text-lg font-bold mb-4">Order Summary</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-start">
+                            <div class="max-w-[150px]">
+                                <strong class="block text-gray-900">Premium Demo Plan</strong>
+                                <small class="text-gray-500">Unlimited plant scans & treatment guides</small>
+                            </div>
+                            <span class="font-bold">$0.00</span>
+                        </div>
+                        <div class="pt-4 border-t border-gray-200">
+                            <div class="flex justify-between font-black text-lg">
+                                <span>Total</span>
+                                <span>$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 space-y-4">
+                        <div class="flex gap-3 text-sm text-gray-600">
+                            <div class="w-5 h-5 rounded-full bg-green-100 flex-shrink-0 flex items-center justify-center">
+                                <svg class="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
+                            </div>
+                            <span>Unlimited scans instantly available upon approval.</span>
+                        </div>
+                        <div class="flex gap-3 text-sm text-gray-600">
+                            <div class="w-5 h-5 rounded-full bg-green-100 flex-shrink-0 flex items-center justify-center">
+                                <svg class="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
+                            </div>
+                            <span>Personalized dashboard for detailed analysis.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

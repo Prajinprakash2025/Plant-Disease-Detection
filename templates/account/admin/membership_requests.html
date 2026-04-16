@@ -1,0 +1,86 @@
+{% extends "account/admin/base.html" %}
+{% load static %}
+
+{% block title %}Membership Requests | Admin Dashboard{% endblock %}
+{% block page_title %}Membership Requests{% endblock %}
+
+{% block content %}
+<section class="admin-panel">
+    <div class="admin-panel-head">
+        <div>
+            <span class="admin-kicker">Manage Access</span>
+            <h3>Pending Premium Requests ({{ pending_count }})</h3>
+        </div>
+        <div class="admin-panel-filters">
+            <a href="?status=pending" class="admin-badge {% if status_filter == 'pending' %}admin-badge-warning{% else %}admin-badge-neutral{% endif %}">Pending</a>
+            <a href="?status=approved" class="admin-badge {% if status_filter == 'approved' %}admin-badge-success{% else %}admin-badge-neutral{% endif %}">Approved</a>
+            <a href="?status=denied" class="admin-badge {% if status_filter == 'denied' %}admin-badge-danger{% else %}admin-badge-neutral{% endif %}">Denied</a>
+        </div>
+    </div>
+
+    <div class="admin-table-container">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Requested At</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for membership in page_obj %}
+                    <tr>
+                        <td>
+                            <div class="admin-user-info">
+                                <strong>{{ membership.user.username }}</strong>
+                                <small>{{ membership.user.email }}</small>
+                            </div>
+                        </td>
+                        <td>{{ membership.requested_at|date:"M d, Y H:i" }}</td>
+                        <td>
+                            <span class="admin-badge {% if membership.request_status == 'pending' %}admin-badge-warning{% elif membership.request_status == 'approved' %}admin-badge-success{% else %}admin-badge-danger{% endif %}">
+                                {{ membership.get_request_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if membership.request_status == 'pending' %}
+                                <div class="admin-action-stack">
+                                    <form action="{% url 'account:handle_membership_request' membership.id %}" method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="approve">
+                                        <button type="submit" class="admin-btn admin-btn-success admin-btn-sm">Approve</button>
+                                    </form>
+                                    <form action="{% url 'account:handle_membership_request' membership.id %}" method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="deny">
+                                        <button type="submit" class="admin-btn admin-btn-danger admin-btn-sm">Deny</button>
+                                    </form>
+                                </div>
+                            {% else %}
+                                <span class="text-gray-400 text-sm">No action needed</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4" class="admin-empty">No {{ status_filter }} requests found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+        <div class="admin-pagination">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}&status={{ status_filter }}" class="admin-btn admin-btn-secondary">Previous</a>
+            {% endif %}
+            <span class="admin-page-info">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&status={{ status_filter }}" class="admin-btn admin-btn-secondary">Next</a>
+            {% endif %}
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

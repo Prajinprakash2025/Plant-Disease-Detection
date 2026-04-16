@@ -23,6 +23,7 @@
 
             <nav class="admin-nav">
                 <a href="{% url 'account:admin_dashboard' %}" class="{% if request.resolver_match.url_name == 'admin_dashboard' %}is-active{% endif %}">Overview</a>
+                <a href="{% url 'account:admin_membership_requests' %}" class="{% if request.resolver_match.url_name == 'admin_membership_requests' %}is-active{% endif %}">Membership Requests</a>
                 <a href="{% url 'account:admin_users' %}" class="{% if request.resolver_match.url_name == 'admin_users' %}is-active{% endif %}">Users</a>
                 <a href="{% url 'account:admin_messages' %}" class="{% if request.resolver_match.url_name == 'admin_messages' %}is-active{% endif %}">Messages</a>
                 <a href="{% url 'account:home' %}">Public Site</a>

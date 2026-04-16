@@ -1,0 +1,107 @@
+<article class="card p-6 md:p-8">
+    <div class="mb-6 flex items-start justify-between gap-4">
+        <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Recent scans</p>
+            <h2 class="mt-2 text-2xl font-black text-gray-900">Latest diagnosis activity</h2>
+            <p class="mt-2 text-sm text-gray-600">Open the newest scans quickly and keep an eye on model confidence and verification status.</p>
+        </div>
+        <a href="{% url 'detection:leaf_diagnosis' %}" class="btn btn-primary">New scan</a>
+    </div>
+
+    <div class="space-y-4">
+        {% for item in recent_diagnoses %}
+            <article class="rounded-2xl border border-gray-200 bg-gray-50 p-5">
+                <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                        <p class="text-sm font-bold text-gray-900">{{ item.predicted_disease|default:"Pending diagnosis" }}</p>
+                        <p class="text-xs text-gray-500">{{ item.created_at|date:"M d, Y h:i A" }}</p>
+                    </div>
+                    <span class="rounded-full px-3 py-1 text-xs font-semibold {% if item.source == 'gemini_api' %}bg-emerald-100 text-emerald-800{% else %}bg-white text-gray-700 border border-gray-200{% endif %}">
+                        {% if item.source == "gemini_api" %}Gemini verified{% else %}Local CNN{% endif %}
+                    </span>
+                </div>
+
+                <div class="grid gap-3 sm:grid-cols-3">
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-gray-500">Leaf file</p>
+                        <p class="mt-1 text-sm font-semibold text-gray-800">{{ item.original_filename|default:"Unnamed upload" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-gray-500">Plant</p>
+                        <p class="mt-1 text-sm font-semibold text-gray-800">{{ item.plant_name|default:"Unknown" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-gray-500">Confidence</p>
+                        <p class="mt-1 text-sm font-semibold text-gray-800">
+                            {% if item.confidence or item.confidence == 0 %}
+                                {{ item.confidence }}%
+                            {% else %}
+                                Not available
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </article>
+        {% empty %}
+            <div class="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
+                <p class="text-lg font-bold text-gray-900">No scans yet</p>
+                <p class="mt-2 text-sm text-gray-600">Start with your first leaf upload and this area will turn into a quick review board.</p>
+                <a href="{% url 'detection:leaf_diagnosis' %}" class="btn btn-primary mt-4">Run first scan</a>
+            </div>
+        {% endfor %}
+    </div>
+
+    {% if recent_diagnoses %}
+        <div class="mt-6">
+            <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Compact Table</p>
+                    <h3 class="mt-2 text-xl font-black text-gray-900">Recent scans in one quick grid</h3>
+                </div>
+                <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                    {{ recent_diagnoses|length }} latest record{{ recent_diagnoses|length|pluralize }}
+                </span>
+            </div>
+
+            <div class="dashboard-table-wrap">
+                <div class="overflow-x-auto">
+                    <table class="dashboard-table min-w-[720px]">
+                        <thead>
+                            <tr>
+                                <th>Result</th>
+                                <th>Plant</th>
+                                <th>Confidence</th>
+                                <th>Source</th>
+                                <th>Scanned</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in recent_diagnoses %}
+                                <tr>
+                                    <td>
+                                        <p class="font-bold text-gray-900">{{ item.predicted_disease|default:"Pending diagnosis" }}</p>
+                                        <p class="dashboard-table-muted">{{ item.original_filename|default:"Unnamed upload" }}</p>
+                                    </td>
+                                    <td>{{ item.plant_name|default:"Unknown" }}</td>
+                                    <td>
+                                        {% if item.confidence or item.confidence == 0 %}
+                                            {{ item.confidence }}%
+                                        {% else %}
+                                            --
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold {% if item.source == 'gemini_api' %}bg-emerald-100 text-emerald-800{% else %}border border-gray-200 bg-white text-gray-700{% endif %}">
+                                            {% if item.source == "gemini_api" %}Gemini verified{% else %}Local CNN{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>{{ item.created_at|date:"M d, Y h:i A" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</article>

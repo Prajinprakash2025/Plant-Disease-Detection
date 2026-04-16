@@ -53,13 +53,13 @@
     <link rel="stylesheet" href="{% static 'css/styles.css' %}?v=2">
     {% block extra_head %}{% endblock %}
 </head>
-<body class="bg-[#f8faf8] text-dark-900 font-sans antialiased">
+<body class="bg-[#f8faf8] text-dark-900 font-sans antialiased {% block body_class %}{% endblock %}">
 
 <!-- ═══════════════════════════════════════════════
      NAVBAR
 ═══════════════════════════════════════════════ -->
 <header class="navbar-root sticky top-0 z-50 bg-gradient-to-br from-dark-950/80 to-dark-900/60 backdrop-blur-xl border-b border-white/5 transition-all duration-500">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+    <div class="{% block header_shell_class %}max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 py-3{% endblock %}">
         <div class="navbar-shell flex items-center justify-between gap-4 w-full bg-transparent border-none shadow-none !p-0">
             <!-- Brand + status -->
             <div class="flex items-center gap-3 flex-shrink-0">
@@ -215,7 +215,7 @@
      FLASH MESSAGES
 ═══════════════════════════════════════════════ -->
 {% if messages %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 space-y-2">
+<div class="{% block flash_shell_class %}max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 pt-4 space-y-2{% endblock %}">
     {% for message in messages %}
     <div class="flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-semibold
         {% if 'success' in message.tags %}bg-brand-50 border-brand-200 text-brand-800
@@ -232,7 +232,7 @@
 <!-- ═══════════════════════════════════════════════
      MAIN CONTENT
 ═══════════════════════════════════════════════ -->
-<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[60vh]">
+<main class="{% block main_class %}max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[60vh]{% endblock %}">
     {% block content %}{% endblock %}
 </main>
 
@@ -240,7 +240,7 @@
      FOOTER
 ═══════════════════════════════════════════════ -->
 <footer class="mt-20 bg-dark-950 text-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="{% block footer_shell_class %}max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8{% endblock %}">
         <!-- Top footer -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-10 py-14 border-b border-white/8">
             <!-- Brand col -->

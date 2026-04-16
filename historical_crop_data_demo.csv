@@ -1,0 +1,8 @@
+Date,Crop,Yield_kg,Pesticide_Used,Rainfall_mm,Disease_Observed
+2023-01-15,Tomato,450,Fungicide_A,12.5,None
+2023-02-10,Tomato,420,None,5.0,Early Blight
+2023-03-05,Potato,800,Insecticide_B,20.0,None
+2023-04-12,Potato,750,None,45.0,Late Blight
+2023-05-20,Corn,1200,None,30.0,None
+2023-06-15,Corn,1100,Herbicide_C,15.0,Rust
+2023-07-01,Pepper,300,Fungicide_A,10.0,Leaf Spot

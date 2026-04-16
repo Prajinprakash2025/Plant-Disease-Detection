@@ -1,0 +1,77 @@
+<section class="grid gap-6 xl:grid-cols-[1.45fr_0.95fr]">
+    <article class="card p-6 md:p-8">
+        <div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Field / Plant-wise Analysis</p>
+                <h2 class="mt-2 text-2xl font-black text-gray-900">Where problems are clustering</h2>
+                <p class="mt-2 max-w-2xl text-sm text-gray-600">
+                    Rank your plants or field groups by issue count and keep the highest-risk area visually prominent.
+                </p>
+            </div>
+            <label class="block">
+                <span class="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Sort</span>
+                <select id="fieldAnalysisSort" class="form-input min-w-[180px] bg-white">
+                    <option value="highest">Highest to lowest</option>
+                    <option value="alpha">A to Z</option>
+                </select>
+            </label>
+        </div>
+        <div class="dashboard-chart-shell h-[360px]">
+            <div class="dashboard-chart-placeholder">Loading issue comparison...</div>
+            <canvas id="fieldIssuesChart"></canvas>
+        </div>
+    </article>
+
+    <article class="relative overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-br from-[#f7fff9] via-white to-[#eefbf2] p-6 shadow-[0_18px_48px_rgba(13,31,15,0.08)] md:p-8">
+        <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-400 via-emerald-400 to-emerald-600"></div>
+        <div class="mb-6">
+            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Smart Alerts</p>
+            <h2 class="mt-2 text-2xl font-black text-gray-900">Recommendations that need attention</h2>
+            <p class="mt-2 text-sm text-gray-600">
+                AI-style guidance for the areas that deserve faster review, better verification, or immediate treatment action.
+            </p>
+        </div>
+        <div class="space-y-4">
+            {% for alert in smart_alerts %}
+                <article class="rounded-2xl border p-4 shadow-sm
+                    {% if alert.level == 'warning' %}
+                        border-amber-200 bg-amber-50/80
+                    {% elif alert.level == 'success' %}
+                        border-emerald-200 bg-emerald-50/80
+                    {% else %}
+                        border-sky-200 bg-sky-50/80
+                    {% endif %}">
+                    <div class="flex items-start gap-3">
+                        <div class="grid h-11 w-11 place-items-center rounded-2xl
+                            {% if alert.level == 'warning' %}
+                                bg-amber-100 text-amber-700
+                            {% elif alert.level == 'success' %}
+                                bg-emerald-100 text-emerald-700
+                            {% else %}
+                                bg-sky-100 text-sky-700
+                            {% endif %}">
+                            <i data-lucide="{{ alert.icon }}" class="h-5 w-5"></i>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                <p class="text-sm font-bold text-gray-900">{{ alert.title }}</p>
+                                <span class="rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em]
+                                    {% if alert.level == 'warning' %}
+                                        bg-amber-100 text-amber-700
+                                    {% elif alert.level == 'success' %}
+                                        bg-emerald-100 text-emerald-700
+                                    {% else %}
+                                        bg-sky-100 text-sky-700
+                                    {% endif %}">
+                                    {{ alert.label }}
+                                </span>
+                            </div>
+                            <p class="mt-2 text-sm leading-relaxed text-gray-600">{{ alert.body }}</p>
+                        </div>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+        <a href="{% url 'detection:leaf_diagnosis' %}" class="btn btn-primary mt-6 w-full justify-center">View Details</a>
+    </article>
+</section>

@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 
 from account.forms import StyledFieldsMixin
+from detection.models import Crop, Disease
 
 
 class AdminLoginForm(StyledFieldsMixin, AuthenticationForm):
@@ -31,3 +32,23 @@ class AdminLoginForm(StyledFieldsMixin, AuthenticationForm):
                 code="not_staff",
             )
         return cleaned_data
+
+
+class CropForm(StyledFieldsMixin, forms.ModelForm):
+    class Meta:
+        model = Crop
+        fields = ["name", "description"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.style_fields()
+
+
+class DiseaseForm(StyledFieldsMixin, forms.ModelForm):
+    class Meta:
+        model = Disease
+        fields = ["name", "crop", "symptoms", "treatment_recommendations", "preventive_measures"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.style_fields()

@@ -1,0 +1,118 @@
+<section data-analytics-dashboard class="space-y-6">
+    <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Decision Intelligence</p>
+            <h2 class="mt-2 text-3xl font-black text-gray-900">Analytics built for action, not just display.</h2>
+            <p class="mt-2 max-w-3xl text-sm text-gray-600">
+                Visualize trend direction, disease mix, risk concentration, and scan behavior so the dashboard becomes a real crop-health control room.
+            </p>
+        </div>
+        <div class="inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
+            <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+            {% if analytics.using_demo %}Preview analytics{% else %}Live account analytics{% endif %}
+        </div>
+    </div>
+
+    <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {% for card in weekly_cards %}
+            <article class="group relative overflow-hidden rounded-[1.75rem] border border-gray-200 bg-white p-5 shadow-[0_18px_44px_rgba(17,24,17,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_58px_rgba(17,24,17,0.11)]">
+                <div class="absolute inset-x-0 top-0 h-1
+                    {% if card.tone == 'red' %}
+                        bg-gradient-to-r from-rose-500 via-red-400 to-amber-300
+                    {% elif card.tone == 'amber' %}
+                        bg-gradient-to-r from-amber-400 via-lime-400 to-emerald-400
+                    {% elif card.tone == 'slate' %}
+                        bg-gradient-to-r from-slate-300 via-slate-200 to-emerald-300
+                    {% else %}
+                        bg-gradient-to-r from-emerald-500 via-green-400 to-lime-300
+                    {% endif %}">
+                </div>
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">{{ card.title }}</p>
+                        <h3 class="mt-3 text-3xl font-black text-gray-900">{{ card.value }}</h3>
+                    </div>
+                    <span class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold
+                        {% if card.tone == 'red' %}
+                            bg-red-50 text-red-600
+                        {% elif card.tone == 'amber' %}
+                            bg-amber-50 text-amber-700
+                        {% elif card.tone == 'slate' %}
+                            bg-slate-100 text-slate-600
+                        {% else %}
+                            bg-emerald-50 text-emerald-700
+                        {% endif %}">
+                        <i data-lucide="{% if card.trend == 'up' %}trending-up{% else %}trending-down{% endif %}" class="h-3.5 w-3.5"></i>
+                        {{ card.delta }}
+                    </span>
+                </div>
+                <div class="mt-5 dashboard-chart-shell is-compact">
+                    <div class="dashboard-chart-placeholder">Loading sparkline...</div>
+                    <canvas id="sparkline-{{ card.id }}" data-sparkline-key="{{ card.id }}"></canvas>
+                </div>
+            </article>
+        {% endfor %}
+    </section>
+
+    <section class="grid gap-6 xl:grid-cols-[1.65fr_1fr]">
+        <article class="card p-6 md:p-8">
+            <div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Crop Health Trends</p>
+                    <h2 class="mt-2 text-2xl font-black text-gray-900">Scan results over time</h2>
+                    <p class="mt-2 max-w-2xl text-sm text-gray-600">
+                        Compare overall health score against disease-detected scan rate and switch between the last 7 and 30 days.
+                    </p>
+                </div>
+                <div class="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 p-1">
+                    <button type="button" id="trendToggle7" class="dashboard-toggle rounded-full border border-transparent px-4 py-2 text-xs font-bold text-gray-600 transition-all" data-range="7">Last 7 days</button>
+                    <button type="button" id="trendToggle30" class="dashboard-toggle rounded-full border border-transparent px-4 py-2 text-xs font-bold text-gray-600 transition-all" data-range="30" data-active="true">Last 30 days</button>
+                </div>
+            </div>
+            <div class="dashboard-chart-shell h-[360px]">
+                <div class="dashboard-chart-placeholder">Preparing crop health chart...</div>
+                <canvas id="cropHealthTrendChart"></canvas>
+            </div>
+        </article>
+
+        <article class="card p-6 md:p-8">
+            <div class="mb-6">
+                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Disease Distribution</p>
+                <h2 class="mt-2 text-2xl font-black text-gray-900">Health breakdown</h2>
+                <p class="mt-2 text-sm text-gray-600">
+                    A quick read on which disease classes are dominating your recent scan outcomes.
+                </p>
+            </div>
+            <div class="grid items-center gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+                <div class="relative mx-auto h-[260px] w-full max-w-[260px]">
+                    <div class="dashboard-chart-placeholder rounded-full">Rendering donut...</div>
+                    <canvas id="diseaseDistributionChart"></canvas>
+                    <div class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
+                        <p class="text-[11px] font-bold uppercase tracking-[0.26em] text-emerald-700">Center</p>
+                        <p class="mt-1 text-lg font-black text-gray-900">Health Breakdown</p>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    {% for item in analytics.distribution %}
+                        <div class="flex items-center justify-between rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
+                            <div class="flex items-center gap-3">
+                                <span class="h-3.5 w-3.5 rounded-full
+                                    {% if forloop.counter0 == 0 %}bg-emerald-500
+                                    {% elif forloop.counter0 == 1 %}bg-lime-500
+                                    {% elif forloop.counter0 == 2 %}bg-amber-400
+                                    {% elif forloop.counter0 == 3 %}bg-rose-400
+                                    {% elif forloop.counter0 == 4 %}bg-emerald-800
+                                    {% else %}bg-emerald-300{% endif %}"></span>
+                                <div>
+                                    <p class="text-sm font-bold text-gray-900">{{ item.label }}</p>
+                                    <p class="text-xs text-gray-500">Detected cases</p>
+                                </div>
+                            </div>
+                            <p class="text-sm font-bold text-gray-800">{{ item.value }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </article>
+    </section>
+</section>
