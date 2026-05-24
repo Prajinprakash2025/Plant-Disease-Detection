@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
 
 
@@ -20,63 +20,74 @@ class StyledFieldsMixin:
                 field.widget.attrs["autocomplete"] = self.autocomplete_map[field_name]
 
 
-class SignUpForm(StyledFieldsMixin, UserCreationForm):
+class SignUpForm(StyledFieldsMixin, forms.Form):
+    """Step 1: Collect name + email for signup."""
     first_name = forms.CharField(max_length=150)
     last_name = forms.CharField(max_length=150)
     email = forms.EmailField()
 
     placeholders = {
-        "first_name": "Aarav",
-        "last_name": "Sharma",
-        "username": "farmer_aarav",
-        "email": "name@example.com",
-        "password1": "Create a password",
-        "password2": "Confirm your password",
+        "first_name": "First name",
+        "last_name": "Last name",
+        "email": "you@example.com",
     }
     autocomplete_map = {
         "first_name": "given-name",
         "last_name": "family-name",
-        "username": "username",
         "email": "email",
-        "password1": "new-password",
-        "password2": "new-password",
     }
-
-    class Meta(UserCreationForm.Meta):
-        model = User
-        fields = (
-            "first_name",
-            "last_name",
-            "username",
-            "email",
-            "password1",
-            "password2",
-        )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.style_fields()
-        self.fields["username"].help_text = "Use letters, numbers, and @/./+/-/_ only."
-        self.fields["password1"].help_text = (
-            "Use at least 8 characters and avoid common passwords."
-        )
-        self.fields["password2"].help_text = "Enter the same password again for verification."
 
     def clean_email(self):
         email = self.cleaned_data["email"].strip().lower()
         if User.objects.filter(email__iexact=email).exists():
-            raise forms.ValidationError("An account with this email already exists.")
+            raise forms.ValidationError("An account with this email already exists. Please login instead.")
         return email
 
-    def save(self, commit=True):
-        user = super().save(commit=False)
-        user.email = self.cleaned_data["email"].strip().lower()
-        if commit:
-            user.save()
-        return user
+
+class OTPVerifyForm(StyledFieldsMixin, forms.Form):
+    """Step 2: Enter OTP code."""
+    otp = forms.CharField(max_length=6, min_length=6, label="OTP Code")
+
+    placeholders = {"otp": "Enter 6-digit code"}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.style_fields()
+        self.fields["otp"].widget.attrs.update({
+            "inputmode": "numeric",
+            "pattern": "[0-9]*",
+            "autofocus": "autofocus",
+            "style": "text-align:center; font-size:1.5rem; letter-spacing:0.5em; font-weight:800",
+        })
 
 
-class LoginForm(StyledFieldsMixin, AuthenticationForm):
+class LoginEmailForm(StyledFieldsMixin, forms.Form):
+    """Step 1: Enter email for login."""
+    email = forms.EmailField()
+
+    placeholders = {"email": "you@example.com"}
+    autocomplete_map = {"email": "email"}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.style_fields()
+
+    def clean_email(self):
+        email = self.cleaned_data["email"].strip().lower()
+        if not User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("No account found with this email. Please sign up first.")
+        return email
+
+
+class LoginForm(StyledFieldsMixin, forms.Form):
+    """Kept for admin login compatibility. Regular login uses LoginEmailForm."""
+    username = forms.CharField()
+    password = forms.CharField(widget=forms.PasswordInput)
+
     placeholders = {
         "username": "Enter your username",
         "password": "Enter your password",
@@ -87,6 +98,10 @@ class LoginForm(StyledFieldsMixin, AuthenticationForm):
     }
 
     def __init__(self, *args, **kwargs):
+        # Accept request arg for compatibility but ignore it
+        kwargs.pop('request', None)
+        if args:
+            args = args[1:]  # skip request positional arg
         super().__init__(*args, **kwargs)
         self.style_fields()
 

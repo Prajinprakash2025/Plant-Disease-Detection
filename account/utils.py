@@ -1,6 +1,56 @@
+import random
+import string
+
 from django.conf import settings
 
-from .models import MembershipProfile
+from .models import EmailOTP, MembershipProfile
+
+
+def generate_otp(email, first_name="", last_name="", purpose="login"):
+    """Generate a 6-digit OTP and print to terminal."""
+    otp = ''.join(random.choices(string.digits, k=6))
+
+    # Invalidate old unused OTPs for this email+purpose
+    EmailOTP.objects.filter(email=email, purpose=purpose, is_used=False).update(is_used=True)
+
+    # Create new OTP
+    EmailOTP.objects.create(
+        email=email,
+        otp=otp,
+        first_name=first_name,
+        last_name=last_name,
+        purpose=purpose,
+    )
+
+    # Print OTP to terminal (for development)
+    print("\n" + "=" * 50)
+    print(f"  🔐 OTP for {email}")
+    print(f"  Purpose: {purpose.upper()}")
+    print(f"  Code:    {otp}")
+    print(f"  Expires: 5 minutes")
+    print("=" * 50 + "\n")
+
+    return otp
+
+
+def verify_otp(email, otp_code, purpose="login"):
+    """Verify OTP. Returns the OTP object if valid, None otherwise."""
+    try:
+        otp_obj = EmailOTP.objects.filter(
+            email=email,
+            otp=otp_code,
+            purpose=purpose,
+            is_used=False,
+        ).latest('created_at')
+    except EmailOTP.DoesNotExist:
+        return None
+
+    if otp_obj.is_expired:
+        return None
+
+    otp_obj.is_used = True
+    otp_obj.save(update_fields=['is_used'])
+    return otp_obj
 
 
 def get_or_create_membership(user):

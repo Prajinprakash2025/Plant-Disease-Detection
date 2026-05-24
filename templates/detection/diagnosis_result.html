@@ -1,0 +1,866 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Diagnosis Result | PlantGuard{% endblock %}
+
+{% block main_class %}max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 min-h-[85vh]{% endblock %}
+
+{% block content %}
+<div class="space-y-10 animate-fade-in-up">
+    <!-- Header Summary -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-gray-200 pb-5">
+        <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Diagnosis Report</p>
+            <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Leaf Diagnosis Complete</h1>
+            <p class="text-sm text-gray-500 mt-1">Review the AI prediction results, listen to audio recommendations, or run high-accuracy Gemini validation.</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="{% url 'detection:leaf_diagnosis' %}" class="btn btn-secondary py-2.5">
+                <i data-lucide="scan-line" class="w-4 h-4"></i> Scan Another
+            </a>
+            <a href="{% url 'dashboard:home' %}" class="btn btn-ghost py-2.5">
+                <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid items-start gap-8 lg:grid-cols-2">
+        
+        <!-- Left Column: Image Preview & Scan Metadata -->
+        <div class="space-y-6">
+            <!-- Image Card -->
+            <article class="card p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <strong class="text-gray-900 text-base">Analyzed Leaf Sample</strong>
+                    <span class="rounded-full px-3 py-1 text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100 flex items-center gap-1">
+                        <i data-lucide="image" class="w-3.5 h-3.5"></i> High-Res Image
+                    </span>
+                </div>
+                <div class="overflow-hidden rounded-2xl border border-gray-100 bg-[radial-gradient(circle_at_top,#f7fbf8,#f2f5f3_55%,#edf2ef)] shadow-sm max-h-[460px]">
+                    <img id="leafPreview" class="h-full w-full object-contain" src="{{ diagnosis_log.image.url }}" alt="Analyzed Leaf scan">
+                </div>
+            </article>
+
+            <!-- Metadata Info list -->
+            <article class="card p-6 space-y-4">
+                <h3 class="text-sm font-bold text-gray-900 uppercase tracking-widest border-b border-gray-100 pb-2">Scan Details</h3>
+                <dl class="grid grid-cols-2 gap-y-4 gap-x-2 text-sm">
+                    <dt class="text-gray-500 font-medium">Scan ID</dt>
+                    <dd class="text-gray-900 font-bold text-right">#{{ diagnosis_log.pk }}</dd>
+
+                    <dt class="text-gray-500 font-medium">Uploaded File</dt>
+                    <dd class="text-gray-900 font-semibold truncate text-right" title="{{ diagnosis_log.original_filename }}">
+                        {{ diagnosis_log.original_filename|default:"sample.jpg" }}
+                    </dd>
+
+                    <dt class="text-gray-500 font-medium">Timestamp</dt>
+                    <dd class="text-gray-900 font-medium text-right">{{ diagnosis_log.created_at|date:"M d, Y h:i A" }}</dd>
+
+                    <dt class="text-gray-500 font-medium">Analysis Model</dt>
+                    <dd class="text-gray-900 font-medium text-right" id="resultSourceMetadata">
+                        {% if diagnosis_log.source == "gemini_api" %}Gemini API{% else %}Local CNN Model{% endif %}
+                    </dd>
+                </dl>
+            </article>
+        </div>
+
+        <!-- Right Column: Prediction Results, TTS, and Treatment Plan -->
+        <div class="space-y-6">
+            <!-- Detections & Confidence Card -->
+            <article class="card p-6 space-y-5">
+                <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">AI Detections</p>
+                        <h2 class="text-xl font-bold text-gray-900 mt-0.5">Prediction Result</h2>
+                    </div>
+                    <span id="resultSourceChip" class="rounded-full px-3 py-1 text-xs font-bold {% if diagnosis_result.source == 'gemini_api' %}bg-emerald-50 text-emerald-700 border border-emerald-100{% else %}bg-gray-100 text-gray-700 border border-gray-200{% endif %}">
+                        {% if diagnosis_result.source == "gemini_api" %}Gemini Verified{% else %}Local CNN Result{% endif %}
+                    </span>
+                </div>
+
+                <!-- Detected Title -->
+                <div class="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50/50 via-white to-lime-50/30 p-5 space-y-3 shadow-sm">
+                    <p class="text-xs uppercase tracking-wide text-gray-400 font-bold">Detected Condition</p>
+                    <h3 id="resultHeadlineDisease" class="text-2xl font-black text-emerald-950 leading-tight">
+                        {{ diagnosis_result.disease }}
+                    </h3>
+                </div>
+
+                <!-- Confidence bar -->
+                {% if diagnosis_result.confidence or diagnosis_result.confidence == 0 %}
+                    <div class="space-y-2.5">
+                        <div class="flex items-center justify-between text-sm font-bold text-gray-800">
+                            <span id="resultConfidenceLabel">Confidence</span>
+                            <span id="resultConfidenceValue">{{ diagnosis_result.confidence }}%</span>
+                        </div>
+                        <div class="h-3 w-full rounded-full bg-gray-100 overflow-hidden">
+                            <span id="resultConfidenceProgress" class="block h-3 rounded-full bg-gradient-to-r from-emerald-500 to-green-400 transition-all duration-1000" style="width: {{ diagnosis_result.confidence }}%;"></span>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Detailed Tags grid -->
+                <div class="grid grid-cols-2 gap-3.5 text-sm pt-2">
+                    <div class="rounded-xl border border-gray-100 p-4 bg-gray-50/50 hover:bg-gray-50 transition-colors">
+                        <p id="resultPlantLabel" class="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Target Crop</p>
+                        <p id="resultPlantName" class="font-extrabold text-gray-900 text-base">{{ diagnosis_result.plant_name|default:"Unknown plant" }}</p>
+                    </div>
+                    <div class="rounded-xl border border-gray-100 p-4 bg-gray-50/50 hover:bg-gray-50 transition-colors">
+                        <p id="resultDiseaseLabel" class="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Infection</p>
+                        <p id="resultDisease" class="font-extrabold text-gray-900 text-base">{{ diagnosis_result.disease|default:"No disease detected" }}</p>
+                    </div>
+                </div>
+
+                <!-- Gemini validation & action trigger -->
+                <div class="pt-2 space-y-3">
+                    <div class="flex items-center gap-3 flex-wrap">
+                        {% if diagnosis_result.source != "gemini_api" %}
+                            <button id="geminiVerifyBtn" class="btn btn-primary px-5 py-3 shadow-md flex-1 md:flex-initial" type="button" data-diagnosis-id="{{ diagnosis_log.pk }}">
+                                <i data-lucide="sparkles" class="w-4 h-4"></i> Verify with Gemini AI
+                            </button>
+                        {% else %}
+                            <button id="geminiVerifyBtn" class="btn btn-primary px-5 py-3 shadow-md flex-1 md:flex-initial opacity-60 cursor-not-allowed" type="button" disabled data-diagnosis-id="{{ diagnosis_log.pk }}">
+                                <i data-lucide="check-circle" class="w-4 h-4"></i> Verified by Gemini AI
+                            </button>
+                        {% endif %}
+                    </div>
+                    <p id="geminiVerifyStatus" class="text-xs text-gray-500 font-medium italic"></p>
+                </div>
+            </article>
+
+            <!-- Text-to-Speech & Translations Card -->
+            <article class="card p-6 space-y-4">
+                <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Audio Guide</p>
+                        <h2 class="text-xl font-bold text-gray-900 mt-0.5">Listen to Results</h2>
+                    </div>
+                    <span class="rounded-full px-3 py-1 text-xs font-bold bg-emerald-500/10 text-emerald-700 border border-emerald-500/15 flex items-center gap-1">
+                        <i data-lucide="volume-2" class="w-3.5 h-3.5"></i> Multilingual
+                    </span>
+                </div>
+                <p class="text-sm text-gray-600">Select your preferred language to translate the diagnosis and read the treatment guidelines aloud.</p>
+
+                <!-- Language Selector -->
+                <div class="flex flex-wrap gap-2 py-2" id="ttsLangSelector">
+                    <button type="button" data-lang="en-US" data-code="en" data-label="English"
+                        class="tts-lang-btn px-4 py-2 rounded-full text-xs font-bold border transition-all">English</button>
+                    <button type="button" data-lang="ml-IN" data-code="ml" data-label="Malayalam"
+                        class="tts-lang-btn px-4 py-2 rounded-full text-xs font-bold border transition-all">മലയാളം</button>
+                    <button type="button" data-lang="hi-IN" data-code="hi" data-label="Hindi"
+                        class="tts-lang-btn px-4 py-2 rounded-full text-xs font-bold border transition-all">हिन्दी</button>
+                    <button type="button" data-lang="ta-IN" data-code="ta" data-label="Tamil"
+                        class="tts-lang-btn px-4 py-2 rounded-full text-xs font-bold border transition-all">தமிழ்</button>
+                    <button type="button" data-lang="te-IN" data-code="te" data-label="Telugu"
+                        class="tts-lang-btn px-4 py-2 rounded-full text-xs font-bold border transition-all">తెలుగు</button>
+                    <button type="button" data-lang="kn-IN" data-code="kn" data-label="Kannada"
+                        class="tts-lang-btn px-4 py-2 rounded-full text-xs font-bold border transition-all">ಕನ್ನಡ</button>
+                    <button type="button" data-lang="ar-SA" data-code="ar" data-label="Arabic"
+                        class="tts-lang-btn px-4 py-2 rounded-full text-xs font-bold border transition-all">العربية</button>
+                </div>
+
+                <!-- TTS Audio triggers -->
+                <div class="flex items-center gap-3 pt-2">
+                    <button id="ttsPlayBtn" type="button"
+                        class="flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm transition-all"
+                        style="background:linear-gradient(135deg,#00c062,#009650);color:#fff;box-shadow:0 4px 15px rgba(0,192,98,0.25)">
+                        <i data-lucide="play" class="w-4 h-4" id="ttsIcon"></i>
+                        <span id="ttsBtnText">Listen Now</span>
+                    </button>
+                    <button id="ttsStopBtn" type="button"
+                        class="hidden flex items-center gap-2 px-4 py-3 rounded-xl font-bold text-sm bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-all">
+                        <i data-lucide="square" class="w-4 h-4"></i> Stop
+                    </button>
+                    <div class="leading-tight">
+                        <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Active Language</p>
+                        <p id="ttsLangLabel" class="text-sm font-bold text-emerald-800">English</p>
+                    </div>
+                </div>
+                <p id="ttsStatus" class="text-xs font-semibold mt-1"></p>
+            </article>
+
+            <!-- Detailed Treatment plan card -->
+            <article class="card p-6 space-y-4">
+                <div class="border-b border-gray-100 pb-3 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Guidance & Recovery</p>
+                        <h2 id="treatmentTitle" class="text-xl font-bold text-gray-900 mt-0.5">Treatment Plan</h2>
+                    </div>
+                    <span class="rounded-full px-3 py-1 text-xs font-bold bg-lime-500/10 text-emerald-800 border border-lime-500/15 flex items-center gap-1">
+                        <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i> Recovery Guide
+                    </span>
+                </div>
+
+                <div class="space-y-4 text-sm text-gray-800 bg-gray-50/50 p-5 rounded-2xl border border-gray-100" id="treatmentPlan">
+                    {% for line in diagnosis_result.treatment_lines %}
+                        {% if line == "Plant:" or line == "Disease:" or line == "Severity:" or line == "Symptoms:" or line == "Possible Causes:" or line == "Treatment:" or line == "Prevention:" or line == "Suggested Action:" %}
+                            <p data-kind="heading" class="font-extrabold text-gray-900 text-sm uppercase tracking-wider pt-2 flex items-center gap-1.5 border-t border-gray-200/60 first:border-0 first:pt-0">
+                                <i data-lucide="chevron-right" class="w-4 h-4 text-brand-500"></i> {{ line }}
+                            </p>
+                        {% elif line|slice:":2" == "- " %}
+                            <p data-kind="bullet" class="pl-4 text-gray-700 leading-relaxed flex items-start gap-1">
+                                <span class="text-emerald-500">•</span> <span>{{ line|slice:"2:" }}</span>
+                            </p>
+                        {% else %}
+                            <p data-kind="text" class="text-gray-600 leading-relaxed">{{ line }}</p>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </article>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const csrfToken = "{{ csrf_token }}";
+    const geminiBtn = document.getElementById("geminiVerifyBtn");
+    const geminiStatus = document.getElementById("geminiVerifyStatus");
+    const treatmentPlan = document.getElementById("treatmentPlan");
+    const treatmentTitle = document.getElementById("treatmentTitle");
+
+    const ttsPlayBtn = document.getElementById("ttsPlayBtn");
+    const ttsStopBtn = document.getElementById("ttsStopBtn");
+    const ttsBtnText = document.getElementById("ttsBtnText");
+    const ttsIcon = document.getElementById("ttsIcon");
+    const ttsLangLabel = document.getElementById("ttsLangLabel");
+    const ttsStatus = document.getElementById("ttsStatus");
+    const langBtns = Array.from(document.querySelectorAll(".tts-lang-btn"));
+
+    const TREATMENT_HEADERS = new Set([
+        "Plant:",
+        "Disease:",
+        "Severity:",
+        "Symptoms:",
+        "Possible Causes:",
+        "Treatment:",
+        "Prevention:",
+        "Suggested Action:",
+    ]);
+    const ACTIVE_CLS = ["bg-emerald-600", "text-white", "border-emerald-600"];
+    const INACTIVE_CLS = ["bg-white", "text-gray-700", "border-gray-200", "hover:border-emerald-400", "hover:text-emerald-700"];
+
+    let ttsLang = "en-US";
+    let ttsLangCode = "en";
+    let currentDiagnosisLangCode = "en";
+    let diagnosisPayloadCache = {};
+    let translationRequestId = 0;
+    let currentAudio = null;
+
+    function refreshIcons() {
+        if (window.lucide && typeof window.lucide.createIcons === "function") {
+            window.lucide.createIcons();
+        }
+    }
+
+    function setTtsStatus(message = "", tone = "normal") {
+        if (!ttsStatus) return;
+        ttsStatus.textContent = message;
+        ttsStatus.classList.remove("text-emerald-700", "text-red-600");
+        ttsStatus.classList.add(tone === "error" ? "text-red-600" : "text-emerald-700");
+    }
+
+    function setLanguageButtonsDisabled(disabled) {
+        langBtns.forEach((btn) => {
+            btn.disabled = disabled;
+            btn.classList.toggle("opacity-60", disabled);
+            btn.classList.toggle("cursor-not-allowed", disabled);
+        });
+    }
+
+    function getLangButtonByCode(langCode) {
+        return langBtns.find((btn) => btn.dataset.code === langCode) || null;
+    }
+
+    function setActiveLang(btn) {
+        if (!btn) return;
+        langBtns.forEach((button) => {
+            button.classList.remove(...ACTIVE_CLS);
+            button.classList.add(...INACTIVE_CLS);
+        });
+        btn.classList.remove(...INACTIVE_CLS);
+        btn.classList.add(...ACTIVE_CLS);
+        ttsLang = btn.dataset.lang || "en-US";
+        ttsLangCode = btn.dataset.code || "en";
+        if (ttsLangLabel) {
+            ttsLangLabel.textContent = btn.dataset.label || "English";
+        }
+    }
+
+    function getText(id) {
+        return document.getElementById(id)?.textContent?.trim() || "";
+    }
+
+    function setText(id, value) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = value;
+        }
+    }
+
+    function escapeHtml(value) {
+        return String(value || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    function normalizeBulletText(text) {
+        return String(text || "").replace(/^\s*[-*•]\s*/, "").trim();
+    }
+
+    function renderTreatmentItems(items) {
+        if (!treatmentPlan) return;
+        if (!items || !items.length) {
+            treatmentPlan.innerHTML = '<p class="text-sm text-gray-600">Guidance will appear once a diagnosis is ready.</p>';
+            return;
+        }
+
+        treatmentPlan.innerHTML = items.map((item) => {
+            const kind = item.kind || "text";
+            const text = String(item.text || "").trim();
+            if (!text) return "";
+            if (kind === "heading") {
+                return `<p data-kind="heading" class="font-extrabold text-gray-900 text-sm uppercase tracking-wider pt-2 flex items-center gap-1.5 border-t border-gray-200/60 first:border-0 first:pt-0"><i data-lucide="chevron-right" class="w-4 h-4 text-brand-500"></i> ${escapeHtml(text)}</p>`;
+            }
+            if (kind === "bullet") {
+                return `<p data-kind="bullet" class="pl-4 text-gray-700 leading-relaxed flex items-start gap-1"><span class="text-emerald-500">•</span> <span>${escapeHtml(normalizeBulletText(text))}</span></p>`;
+            }
+            return `<p data-kind="text" class="text-gray-600 leading-relaxed">${escapeHtml(text)}</p>`;
+        }).join("");
+        refreshIcons();
+    }
+
+    function treatmentLinesToItems(lines) {
+        return (lines || []).map((line) => {
+            const text = String(line || "").trim();
+            if (!text) {
+                return null;
+            }
+            if (TREATMENT_HEADERS.has(text)) {
+                return { text, kind: "heading" };
+            }
+            if (text.startsWith("- ")) {
+                return { text: text.slice(2), kind: "bullet" };
+            }
+            return { text, kind: "text" };
+        }).filter(Boolean);
+    }
+
+    function collectDiagnosisPayloadFromDom() {
+        if (!document.getElementById("resultDisease") && !treatmentPlan) {
+            return null;
+        }
+
+        return {
+            result_labels: {
+                plant: getText("resultPlantLabel") || "Plant",
+                disease: getText("resultDiseaseLabel") || "Disease",
+                confidence: getText("resultConfidenceLabel") || "Confidence",
+                source: getText("resultSourceLabel") || "Source",
+            },
+            result_values: {
+                plant: getText("resultPlantName") || "Unknown plant",
+                disease: getText("resultDisease") || "No disease detected",
+                confidence: getText("resultConfidenceValue") || "N/A",
+                source: getText("resultSource") || "Local CNN model",
+            },
+            treatment_title: getText("treatmentTitle") || "Treatment plan",
+            treatment_items: treatmentPlan
+                ? Array.from(treatmentPlan.querySelectorAll("p")).map((item) => ({
+                    text: item.textContent.trim(),
+                    kind: item.dataset.kind || "text",
+                })).filter((item) => item.text)
+                : [],
+        };
+    }
+
+    function storeEnglishDiagnosisPayload() {
+        const payload = collectDiagnosisPayloadFromDom();
+        if (!payload) {
+            diagnosisPayloadCache = {};
+            return null;
+        }
+        diagnosisPayloadCache = { en: payload };
+        return payload;
+    }
+
+    function applyDiagnosisPayload(payload) {
+        if (!payload) return;
+
+        const labels = payload.result_labels || {};
+        const values = payload.result_values || {};
+
+        setText("resultPlantLabel", labels.plant || "Plant");
+        setText("resultDiseaseLabel", labels.disease || "Disease");
+        setText("resultConfidenceLabel", labels.confidence || "Confidence");
+        setText("resultSourceLabel", labels.source || "Source");
+
+        setText("resultPlantName", values.plant || "Unknown plant");
+        setText("resultDisease", values.disease || "No disease detected");
+        setText("resultHeadlineDisease", values.disease || "No disease detected");
+        setText("resultConfidenceValue", values.confidence || "N/A");
+        setText("resultSource", values.source || "Local CNN model");
+        setText("treatmentTitle", payload.treatment_title || "Treatment plan");
+
+        const plantChip = document.getElementById("resultPlantChip");
+        if (plantChip) {
+            plantChip.textContent = `${labels.plant || "Plant"}: ${values.plant || "Unknown plant"}`;
+        }
+
+        const sourceChip = document.getElementById("resultSourceChip");
+        const sourceMetadata = document.getElementById("resultSourceMetadata");
+        if (sourceChip) {
+            sourceChip.textContent = values.source || "Local CNN model";
+            sourceChip.classList.toggle("bg-emerald-50", values.source.toLowerCase().includes("gemini"));
+            sourceChip.classList.toggle("text-emerald-700", values.source.toLowerCase().includes("gemini"));
+            sourceChip.classList.toggle("border-emerald-100", values.source.toLowerCase().includes("gemini"));
+        }
+        if (sourceMetadata) {
+            sourceMetadata.textContent = values.source || "Local CNN model";
+        }
+
+        renderTreatmentItems(payload.treatment_items || []);
+    }
+
+    async function switchDiagnosisLanguage(langCode, options = {}) {
+        const force = Boolean(options.force);
+        const languageLabel = options.label || getLangButtonByCode(langCode)?.dataset.label || "English";
+        const englishPayload = diagnosisPayloadCache.en || storeEnglishDiagnosisPayload();
+        if (!englishPayload) {
+            return true;
+        }
+
+        currentDiagnosisLangCode = langCode;
+        if (langCode === "en") {
+            applyDiagnosisPayload(englishPayload);
+            setTtsStatus("");
+            return true;
+        }
+
+        if (!force && diagnosisPayloadCache[langCode]) {
+            applyDiagnosisPayload(diagnosisPayloadCache[langCode]);
+            setTtsStatus("");
+            return true;
+        }
+
+        const requestId = ++translationRequestId;
+        setLanguageButtonsDisabled(true);
+        if (ttsPlayBtn) {
+            ttsPlayBtn.disabled = true;
+        }
+        setTtsStatus(`Translating result to ${languageLabel}...`);
+
+        try {
+            const response = await fetch("{% url 'detection:translate_diagnosis' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken,
+                },
+                body: JSON.stringify({
+                    target_lang: langCode,
+                    payload: englishPayload,
+                    diagnosis_id: "{{ diagnosis_log.pk }}",
+                }),
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || "Translation failed.");
+            }
+            if (requestId !== translationRequestId) {
+                return false;
+            }
+
+            diagnosisPayloadCache[langCode] = data.payload;
+            if (currentDiagnosisLangCode === langCode) {
+                applyDiagnosisPayload(data.payload);
+            }
+            setTtsStatus("");
+            return true;
+        } catch (error) {
+            if (requestId === translationRequestId) {
+                applyDiagnosisPayload(englishPayload);
+                currentDiagnosisLangCode = "en";
+                setTtsStatus(error.message || "Translation failed. Showing English instead.", "error");
+            }
+            return false;
+        } finally {
+            if (requestId === translationRequestId) {
+                setLanguageButtonsDisabled(false);
+                if (ttsPlayBtn) {
+                    ttsPlayBtn.disabled = false;
+                }
+            }
+        }
+    }
+
+    function buildSpeechTextFromDisplayedContent() {
+        if (!treatmentPlan || !diagnosisPayloadCache.en) return "";
+        
+        const paragraphs = Array.from(treatmentPlan.querySelectorAll("p"));
+        const englishItems = diagnosisPayloadCache.en.treatment_items || [];
+        const parts = [];
+        
+        const treatmentHeading = getText("treatmentTitle");
+        if (treatmentHeading) {
+            parts.push(treatmentHeading + ".");
+        }
+        
+        let skipNextValue = false;
+        
+        paragraphs.forEach((p, idx) => {
+            const text = p.textContent.trim();
+            const englishItem = englishItems[idx];
+            if (!englishItem) return;
+            
+            const englishText = (englishItem.text || "").trim();
+            const englishKind = englishItem.kind;
+            
+            if (englishKind === "heading" || englishKind === "label") {
+                const textLower = englishText.toLowerCase();
+                if (textLower.includes("plant") || textLower.includes("disease") || textLower.includes("severity")) {
+                    skipNextValue = true;
+                    return;
+                }
+            }
+            
+            if (skipNextValue) {
+                if (englishKind === "text" || englishKind === "value" || !englishKind) {
+                    skipNextValue = false;
+                    return;
+                }
+                skipNextValue = false;
+            }
+            
+            if (text) {
+                parts.push(text);
+            }
+        });
+        
+        return parts.join(" ").replace(/•/g, "").replace(/\s+/g, " ").trim();
+    }
+
+    function pickVoice(lang) {
+        const voices = window.speechSynthesis.getVoices();
+        const langLower = String(lang || "").toLowerCase();
+        const langPrefix = langLower.split("-")[0];
+        
+        return voices.find((voice) => String(voice.lang).toLowerCase() === langLower)
+            || voices.find((voice) => String(voice.lang).toLowerCase().startsWith(langPrefix))
+            || null;
+    }
+
+    function resetTtsBtn() {
+        if (ttsPlayBtn) {
+            ttsPlayBtn.classList.remove("hidden");
+            ttsPlayBtn.disabled = false;
+        }
+        if (ttsStopBtn) {
+            ttsStopBtn.classList.add("hidden");
+        }
+        if (ttsBtnText) {
+            ttsBtnText.textContent = "Listen Now";
+        }
+        if (ttsIcon) {
+            ttsIcon.setAttribute("data-lucide", "play");
+            refreshIcons();
+        }
+    }
+
+    function stopCurrentPlayback() {
+        if (window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+        }
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio = null;
+        }
+        resetTtsBtn();
+    }
+
+    function playNativeTts(text) {
+        if (!("speechSynthesis" in window)) {
+            setTtsStatus("Browser does not support TTS.", "error");
+            resetTtsBtn();
+            return;
+        }
+        
+        if (ttsBtnText) {
+            ttsBtnText.textContent = "Playing...";
+        }
+        if (ttsIcon) {
+            ttsIcon.setAttribute("data-lucide", "loader-2");
+            refreshIcons();
+        }
+        if (ttsStopBtn) {
+            ttsStopBtn.classList.remove("hidden");
+        }
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = ttsLang;
+        utterance.rate = 0.88;
+        utterance.pitch = 1.0;
+        
+        const voice = pickVoice(ttsLang);
+        if (voice) {
+            utterance.voice = voice;
+        }
+        
+        utterance.onstart = () => {
+            if (ttsStopBtn) {
+                ttsStopBtn.classList.remove("hidden");
+            }
+        };
+        utterance.onend = resetTtsBtn;
+        utterance.onerror = (e) => {
+            console.error("Native TTS error:", e);
+            setTtsStatus("Audio playback failed.", "error");
+            resetTtsBtn();
+        };
+        
+        window.speechSynthesis.cancel();
+        setTimeout(() => {
+            window.speechSynthesis.speak(utterance);
+        }, 150);
+    }
+
+    function playGoogleTts(text, langCode) {
+        stopCurrentPlayback();
+        
+        const chunks = [];
+        const sentences = text.split(/[।\.!\?\n;,]+/);
+        
+        let currentChunk = "";
+        sentences.forEach((sentence) => {
+            const cleanSentence = sentence.trim();
+            if (!cleanSentence) return;
+            
+            if ((currentChunk + " " + cleanSentence).length < 180) {
+                currentChunk = currentChunk ? (currentChunk + " " + cleanSentence) : cleanSentence;
+            } else {
+                if (currentChunk) chunks.push(currentChunk);
+                currentChunk = cleanSentence;
+            }
+        });
+        if (currentChunk) chunks.push(currentChunk);
+        
+        if (chunks.length === 0) {
+            resetTtsBtn();
+            return;
+        }
+        
+        if (ttsBtnText) {
+            ttsBtnText.textContent = "Playing...";
+        }
+        if (ttsIcon) {
+            ttsIcon.setAttribute("data-lucide", "loader-2");
+            refreshIcons();
+        }
+        if (ttsStopBtn) {
+            ttsStopBtn.classList.remove("hidden");
+        }
+        
+        let chunkIndex = 0;
+        
+        function playNextChunk() {
+            if (chunkIndex >= chunks.length) {
+                stopCurrentPlayback();
+                return;
+            }
+            
+            const chunkText = chunks[chunkIndex];
+            const url = "{% url 'detection:tts_proxy' %}?tl=" + langCode + "&q=" + encodeURIComponent(chunkText);
+            
+            const audio = new Audio(url);
+            currentAudio = audio;
+            
+            audio.onended = () => {
+                chunkIndex++;
+                playNextChunk();
+            };
+            
+            audio.onerror = (err) => {
+                console.error("Proxy TTS chunk failed, falling back to native:", err);
+                playNativeTts(text);
+            };
+            
+            audio.play().catch((err) => {
+                console.error("Audio playback caught an error, falling back to native:", err);
+                playNativeTts(text);
+            });
+        }
+        
+        playNextChunk();
+    }
+
+    if (langBtns.length) {
+        langBtns.forEach((btn) => {
+            btn.classList.add(...INACTIVE_CLS);
+        });
+        setActiveLang(getLangButtonByCode("en") || langBtns[0]);
+        langBtns.forEach((btn) => {
+            btn.addEventListener("click", async () => {
+                stopCurrentPlayback();
+
+                const previousLangCode = currentDiagnosisLangCode;
+                const previousButton = getLangButtonByCode(previousLangCode);
+                setActiveLang(btn);
+                const translated = await switchDiagnosisLanguage(btn.dataset.code || "en", {
+                    label: btn.dataset.label || "English",
+                });
+                if (!translated) {
+                    if (previousLangCode !== "en" && diagnosisPayloadCache[previousLangCode]) {
+                        applyDiagnosisPayload(diagnosisPayloadCache[previousLangCode]);
+                        setActiveLang(previousButton || getLangButtonByCode("en") || langBtns[0]);
+                        currentDiagnosisLangCode = previousLangCode;
+                    } else {
+                        applyDiagnosisPayload(diagnosisPayloadCache.en || storeEnglishDiagnosisPayload());
+                        setActiveLang(getLangButtonByCode("en") || langBtns[0]);
+                        currentDiagnosisLangCode = "en";
+                    }
+                }
+            });
+        });
+    }
+
+    if (ttsPlayBtn) {
+        ttsPlayBtn.addEventListener("click", () => {
+            if (window.speechSynthesis.speaking || currentAudio) {
+                stopCurrentPlayback();
+                return;
+            }
+
+            const speechText = buildSpeechTextFromDisplayedContent();
+            if (!speechText) {
+                setTtsStatus("No diagnosis text is available to read yet.", "error");
+                return;
+            }
+
+            setTtsStatus("");
+            
+            if (ttsLangCode === "en") {
+                playNativeTts(speechText);
+            } else {
+                playGoogleTts(speechText, ttsLangCode);
+            }
+        });
+    }
+
+    if (ttsStopBtn) {
+        ttsStopBtn.addEventListener("click", () => {
+            stopCurrentPlayback();
+        });
+    }
+
+    if ("speechSynthesis" in window) {
+        window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+    }
+
+    if (geminiBtn) {
+        geminiBtn.addEventListener("click", async () => {
+            const diagnosisId = geminiBtn.dataset.diagnosisId;
+            if (!diagnosisId) {
+                if (geminiStatus) {
+                    geminiStatus.textContent = "No diagnosis found.";
+                }
+                return;
+            }
+
+            geminiBtn.disabled = true;
+            geminiBtn.textContent = "Asking Gemini...";
+            if (geminiStatus) {
+                geminiStatus.textContent = "Sending leaf image to Gemini AI, please wait...";
+            }
+
+            const formData = new FormData();
+            formData.append("diagnosis_id", diagnosisId);
+            formData.append("csrfmiddlewaretoken", csrfToken);
+
+            try {
+                const response = await fetch("{% url 'detection:gemini_verify' %}", {
+                    method: "POST",
+                    body: formData,
+                });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    if (geminiStatus) {
+                        geminiStatus.textContent = "Gemini error: " + (data.error || "Unknown error.");
+                    }
+                    geminiBtn.disabled = false;
+                    geminiBtn.textContent = "Verify with Gemini AI";
+                    return;
+                }
+
+                setText("resultPlantName", data.plant_name || "Unknown");
+                setText("resultDisease", data.disease || "Unknown");
+                setText("resultHeadlineDisease", data.disease || "Unknown");
+                setText("resultSource", "Gemini validation");
+
+                const plantChip = document.getElementById("resultPlantChip");
+                if (plantChip) {
+                    plantChip.textContent = `${getText("resultPlantLabel") || "Plant"}: ${data.plant_name || "Unknown"}`;
+                }
+
+                const sourceChip = document.getElementById("resultSourceChip");
+                const sourceMetadata = document.getElementById("resultSourceMetadata");
+                if (sourceChip) {
+                    sourceChip.textContent = "Gemini validation";
+                    sourceChip.classList.add("bg-emerald-50", "text-emerald-700", "border-emerald-100");
+                }
+                if (sourceMetadata) {
+                    sourceMetadata.textContent = "Gemini validation";
+                }
+
+                // Hide progress bar if Gemini is 100% confidence or hide it
+                const progressWrap = document.getElementById("resultConfidenceProgress");
+                if (progressWrap) {
+                    progressWrap.style.width = "100%";
+                }
+                setText("resultConfidenceValue", "100% (Gemini Verified)");
+
+                if (treatmentPlan && data.treatment_lines && data.treatment_lines.length) {
+                    renderTreatmentItems(treatmentLinesToItems(data.treatment_lines));
+                }
+
+                storeEnglishDiagnosisPayload();
+                const selectedLangCode = currentDiagnosisLangCode;
+                if (selectedLangCode !== "en") {
+                    const englishPayload = diagnosisPayloadCache.en;
+                    diagnosisPayloadCache = { en: englishPayload };
+                    const translated = await switchDiagnosisLanguage(selectedLangCode, {
+                        force: true,
+                        label: getLangButtonByCode(selectedLangCode)?.dataset.label || "English",
+                    });
+                    if (!translated) {
+                        setActiveLang(getLangButtonByCode("en") || langBtns[0]);
+                        currentDiagnosisLangCode = "en";
+                    }
+                }
+
+                if (geminiStatus) {
+                    geminiStatus.textContent = "Gemini verification complete.";
+                }
+                geminiBtn.textContent = "Verified by Gemini AI";
+                geminiBtn.classList.add("opacity-60", "cursor-not-allowed");
+            } catch (error) {
+                if (geminiStatus) {
+                    geminiStatus.textContent = "Network error. Please try again.";
+                }
+                geminiBtn.disabled = false;
+                geminiBtn.textContent = "Verify with Gemini AI";
+            }
+        });
+    }
+
+    if (document.getElementById("resultHeadlineDisease")) {
+        storeEnglishDiagnosisPayload();
+    }
+</script>
+{% endblock %}

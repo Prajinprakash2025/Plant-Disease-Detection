@@ -513,3 +513,74 @@ a:hover .brand-logo {
 ═══════════════════════════════════════════════ */
 .admin-body .navbar-root { display: none; }
 .admin-body footer { display: none; }
+
+/* ═══════════════════════════════════════════════
+   AUTH PAGES GLASSMORPHISM
+   ═══════════════════════════════════════════════ */
+.auth-body {
+    background-image: linear-gradient(rgba(11, 24, 13, 0.76), rgba(11, 24, 13, 0.84)), url('/static/images/smart_farm_bg.png') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-attachment: fixed !important;
+    min-height: 100vh;
+}
+
+/* Glass card layout */
+.auth-glass-card {
+    background: rgba(17, 32, 20, 0.62) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+    border-radius: 2rem !important;
+    padding: 2.5rem !important;
+}
+
+@media (min-width: 768px) {
+    .auth-glass-card {
+        padding: 3rem !important;
+    }
+}
+
+/* Auth inputs override */
+.auth-body .form-input {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.12) !important;
+    color: #fff !important;
+    backdrop-filter: blur(4px) !important;
+    transition: all 0.22s ease-in-out !important;
+    height: 48px !important;
+    border-radius: 0.75rem !important;
+}
+.auth-body .form-input:focus {
+    border-color: #00e87e !important;
+    box-shadow: 0 0 16px rgba(0, 232, 126, 0.3) !important;
+    background: rgba(255, 255, 255, 0.09) !important;
+}
+.auth-body .form-input::placeholder {
+    color: rgba(255, 255, 255, 0.35) !important;
+}
+
+/* Typography styles for auth page text elements */
+.auth-title {
+    color: #ffffff !important;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-weight: 800;
+}
+.auth-text {
+    color: rgba(255, 255, 255, 0.85) !important;
+}
+.auth-muted {
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+.auth-label {
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-weight: 600;
+}
+.auth-info-box {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 0.75rem !important;
+}
+

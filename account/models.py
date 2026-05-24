@@ -17,6 +17,33 @@ class ContactMessage(models.Model):
         return f"{self.subject} - {self.name}"
 
 
+class EmailOTP(models.Model):
+    """Stores OTP for email-based authentication."""
+    email = models.EmailField()
+    otp = models.CharField(max_length=6)
+    first_name = models.CharField(max_length=150, blank=True, default="")
+    last_name = models.CharField(max_length=150, blank=True, default="")
+    purpose = models.CharField(
+        max_length=10,
+        choices=(("signup", "Sign Up"), ("login", "Login")),
+        default="login",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_used = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.email} - {self.otp} ({self.purpose})"
+
+    @property
+    def is_expired(self):
+        from django.utils import timezone
+        from datetime import timedelta
+        return timezone.now() > self.created_at + timedelta(minutes=5)
+
+
 class MembershipProfile(models.Model):
     PLAN_FREE = "free"
     PLAN_PREMIUM = "premium"
