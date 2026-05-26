@@ -144,6 +144,11 @@ LOGIN_URL = 'account:login'
 LOGIN_REDIRECT_URL = 'dashboard:home'
 LOGOUT_REDIRECT_URL = 'account:home'
 
+# Allow login without password (OTP-based auth)
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
+
 PLANT_DISEASE_MODEL_PATH = BASE_DIR / 'ml_testing' / 'trained_models' / 'plant_disease_mobilenetv2.keras'
 PLANT_DISEASE_CLASS_NAMES_PATH = BASE_DIR / 'ml_testing' / 'trained_models' / 'plant_disease_mobilenetv2_class_names.json'
 PLANT_DISEASE_IMAGE_SIZE = (224, 224)

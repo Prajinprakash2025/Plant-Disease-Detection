@@ -30,6 +30,26 @@
         </button>
     </div>
     {% else %}
+        <!-- Current Location Banner -->
+        <div class="rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-white p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="h-12 w-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="map-pin" class="h-6 w-6"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-widest text-emerald-600">Current Farm Location</p>
+                    <p class="text-lg font-black text-gray-900 mt-0.5">{{ farm_location.city_name|default:"Unnamed Location" }}</p>
+                    <p class="text-xs text-gray-500 mt-0.5">
+                        <i data-lucide="navigation" class="h-3 w-3 inline -mt-0.5 mr-0.5"></i>
+                        {{ farm_location.latitude|floatformat:4 }}° N, {{ farm_location.longitude|floatformat:4 }}° E
+                    </p>
+                </div>
+            </div>
+            <button onclick="openLocationModal()" class="btn btn-secondary flex items-center gap-2 text-sm">
+                <i data-lucide="edit-3" class="h-4 w-4"></i> Change Location
+            </button>
+        </div>
+
         {% if weather_data.current %}
         <div class="grid gap-6 xl:grid-cols-[1fr_2fr]">
             <!-- Current Weather Card -->
@@ -241,15 +261,50 @@
     }
 
     function useCurrentLocation() {
-        if ("geolocation" in navigator) {
-            navigator.geolocation.getCurrentPosition(function(position) {
-                setCoordinates(position.coords.latitude, position.coords.longitude);
-                locationMap.setView([position.coords.latitude, position.coords.longitude], 14);
-            }, function(error) {
-                alert("Could not get your location. Please check browser permissions.");
-            });
-        } else {
+        const btn = event.currentTarget || event.target;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i data-lucide="loader-2" class="h-3 w-3 animate-spin"></i> Detecting...';
+        btn.disabled = true;
+
+        if (!navigator.geolocation) {
             alert("Geolocation is not supported by your browser.");
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            return;
         }
+
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                setCoordinates(lat, lng);
+                locationMap.setView([lat, lng], 14);
+                btn.innerHTML = '<i data-lucide="check" class="h-3 w-3"></i> Location Set!';
+                btn.disabled = false;
+                lucide.createIcons();
+
+                // Try reverse geocoding for city name
+                fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`)
+                    .then(r => r.json())
+                    .then(data => {
+                        const city = data.address?.city || data.address?.town || data.address?.village || data.address?.county || '';
+                        if (city) document.getElementById('cityNameInput').value = city;
+                    })
+                    .catch(() => {});
+
+                setTimeout(() => { btn.innerHTML = originalText; lucide.createIcons(); }, 2000);
+            },
+            function(error) {
+                let msg = "Could not get your location.";
+                if (error.code === 1) msg = "Location permission denied. Please allow location access in your browser settings.";
+                else if (error.code === 2) msg = "Location unavailable. Check your device GPS/network.";
+                else if (error.code === 3) msg = "Location request timed out. Try again.";
+                alert(msg);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                lucide.createIcons();
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
     }
 </script>

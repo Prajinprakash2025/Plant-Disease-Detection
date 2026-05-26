@@ -526,7 +526,7 @@ def _build_dashboard_context(user, active_section="overview"):
         weather_data = get_weather_forecast_and_alerts(farm_location.latitude, farm_location.longitude)
 
     # Load Agricultural Datasets
-    datasets = AgriculturalDataset.objects.all()
+    datasets = AgriculturalDataset.objects.order_by("-uploaded_at")
 
     return {
         "leaf_quota": leaf_quota,

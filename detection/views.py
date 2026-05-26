@@ -396,6 +396,108 @@ def _normalize_translation_payload(original_payload, translated_payload):
     return safe_payload
 
 
+def _translate_text_free(text, target_lang):
+    import urllib.request
+    import urllib.parse
+    import json
+    if not text or not isinstance(text, str):
+        return text
+    text_stripped = text.strip()
+    if not text_stripped:
+        return text
+    if text_stripped.replace(".", "").replace("%", "").replace("-", "").strip().isdigit():
+        return text
+        
+    # Preserve bullet prefix
+    bullet_prefix = ""
+    if text_stripped.startswith("- "):
+        bullet_prefix = "- "
+        query_text = text_stripped[2:]
+    elif text_stripped.startswith("* "):
+        bullet_prefix = "* "
+        query_text = text_stripped[2:]
+    else:
+        query_text = text_stripped
+        
+    query_text = query_text.strip()
+    
+    # Preserve trailing colon
+    has_colon = query_text.endswith(":")
+    if has_colon:
+        query_text = query_text[:-1].strip()
+        
+    if not query_text:
+        return text
+        
+    try:
+        url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=" + target_lang + "&dt=t&q=" + urllib.parse.quote(query_text)
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=5) as response:
+            data = json.loads(response.read().decode('utf-8'))
+            translated = "".join([sentence[0] for sentence in data[0] if sentence[0]])
+            translated = translated.strip()
+            
+            if has_colon:
+                translated += ":"
+            return bullet_prefix + translated
+    except Exception:
+        return text
+
+
+def _translate_payload_free(payload, target_lang, local_translated=None):
+    if not local_translated:
+        local_translated = {}
+        
+    translated_labels = {}
+    local_labels = local_translated.get("result_labels", {})
+    for k, v in payload.get("result_labels", {}).items():
+        if k in local_labels and local_labels[k] and local_labels[k] != v:
+            translated_labels[k] = local_labels[k]
+        else:
+            translated_labels[k] = _translate_text_free(v, target_lang)
+
+    translated_values = {}
+    local_values = local_translated.get("result_values", {})
+    for k, v in payload.get("result_values", {}).items():
+        if k in local_values and local_values[k] and local_values[k] != v:
+            translated_values[k] = local_values[k]
+        elif k in ["plant", "disease", "source"]:
+            translated_values[k] = _translate_text_free(v, target_lang)
+        else:
+            translated_values[k] = v
+
+    local_title = local_translated.get("treatment_title")
+    if local_title and local_title != payload.get("treatment_title"):
+        translated_title = local_title
+    else:
+        translated_title = _translate_text_free(payload.get("treatment_title", "Treatment plan"), target_lang)
+
+    translated_items = []
+    local_items = local_translated.get("treatment_items", [])
+    for idx, item in enumerate(payload.get("treatment_items", [])):
+        text = item.get("text", "")
+        kind = item.get("kind", "text")
+        
+        if (idx < len(local_items) and 
+            local_items[idx] and 
+            local_items[idx].get("text") and 
+            local_items[idx].get("text") != text and 
+            local_items[idx].get("kind") == kind):
+            translated_items.append(local_items[idx])
+        else:
+            translated_items.append({
+                "text": _translate_text_free(text, target_lang),
+                "kind": kind
+            })
+
+    return {
+        "result_labels": translated_labels,
+        "result_values": translated_values,
+        "treatment_title": translated_title,
+        "treatment_items": translated_items
+    }
+
+
 def _translate_diagnosis_payload(payload, target_lang):
     if target_lang == "en":
         return _normalize_translation_payload(payload, payload)
@@ -480,11 +582,10 @@ def _translate_diagnosis_payload(payload, target_lang):
             gemini_payload = json.loads(translated_fragment)
             return _normalize_translation_payload(payload, gemini_payload)
     except Exception as exc:
-        # If Gemini fails (429 Resource Exhausted), we return what we have (Local + DB)
-        # or at least a graceful English version with translated UI labels
-        return _normalize_translation_payload(payload, translated_payload)
+        # If Gemini fails (429 Resource Exhausted / mock key), we return the free keyless translation
+        return _translate_payload_free(payload, target_lang, local_translated=translated_payload)
 
-    return _normalize_translation_payload(payload, translated_payload)
+    return _translate_payload_free(payload, target_lang, local_translated=translated_payload)
 
 
 def _build_prediction_error(local_error=None, gemini_error=None):
@@ -906,12 +1007,24 @@ def translate_diagnosis_content(request):
     if not isinstance(ui_payload, dict):
         return JsonResponse({"error": "Missing diagnosis payload."}, status=400)
 
-    try:
-        translated_payload = _translate_diagnosis_payload(ui_payload, target_lang)
-    except ValueError as exc:
-        return JsonResponse({"error": str(exc)}, status=400)
-    except Exception as exc:
-        return JsonResponse({"error": str(exc)}, status=503)
+    from django.core.cache import cache
+    diagnosis_id = request_payload.get("diagnosis_id")
+    translated_payload = None
+    cache_key = None
+
+    if diagnosis_id:
+        cache_key = f"translation_cache_{diagnosis_id}_{target_lang}"
+        translated_payload = cache.get(cache_key)
+
+    if not translated_payload:
+        try:
+            translated_payload = _translate_diagnosis_payload(ui_payload, target_lang)
+            if cache_key:
+                cache.set(cache_key, translated_payload, timeout=86400 * 30)  # Cache for 30 days
+        except ValueError as exc:
+            return JsonResponse({"error": str(exc)}, status=400)
+        except Exception as exc:
+            return JsonResponse({"error": str(exc)}, status=503)
 
     return JsonResponse(
         {
@@ -919,6 +1032,31 @@ def translate_diagnosis_content(request):
             "payload": translated_payload,
         }
     )
+
+
+@login_required
+def tts_proxy(request):
+    text = request.GET.get("q", "").strip()
+    lang = request.GET.get("tl", "ml").strip()
+    if not text:
+        from django.http import HttpResponse
+        return HttpResponse(status=400)
+        
+    import urllib.request
+    import urllib.parse
+    from django.http import HttpResponse
+    
+    url = "https://translate.google.com/translate_tts?ie=UTF-8&tl=" + lang + "&client=tw-ob&q=" + urllib.parse.quote(text)
+    
+    try:
+        req = urllib.request.Request(url, headers={
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.0.0 Safari/537.36'
+        })
+        with urllib.request.urlopen(req, timeout=10) as response:
+            mp3_data = response.read()
+            return HttpResponse(mp3_data, content_type="audio/mpeg")
+    except Exception as e:
+        return HttpResponse(str(e), status=500)
 
 
 @login_required
@@ -995,8 +1133,6 @@ def upload_scan(request):
 @login_required
 def leaf_diagnosis_view(request):
     form = LeafDiagnosisForm()
-    diagnosis_log = None
-    diagnosis_result = None
     leaf_quota = get_leaf_quota_summary(request.user)
 
     if request.method == "POST":
@@ -1018,19 +1154,16 @@ def leaf_diagnosis_view(request):
                 except ValueError as exc:
                     diagnosis_log.image.delete(save=False)
                     diagnosis_log.delete()
-                    diagnosis_log = None
                     form.add_error("image", str(exc))
                     messages.error(request, str(exc))
                 except RuntimeError as exc:
                     diagnosis_log.image.delete(save=False)
                     diagnosis_log.delete()
-                    diagnosis_log = None
                     form.add_error("image", str(exc))
                     messages.error(request, str(exc))
                 except Exception:
                     diagnosis_log.image.delete(save=False)
                     diagnosis_log.delete()
-                    diagnosis_log = None
                     messages.error(
                         request,
                         "We could not analyze this image because the prediction service failed unexpectedly.",
@@ -1050,10 +1183,10 @@ def leaf_diagnosis_view(request):
                             "treatment_guidance",
                         ]
                     )
-                    leaf_quota = get_leaf_quota_summary(request.user)
                     messages.success(request, "Leaf analysis completed successfully.")
                     if diagnosis_result.get("warning"):
                         messages.warning(request, diagnosis_result["warning"])
+                    return redirect("detection:leaf_diagnosis_result", diagnosis_id=diagnosis_log.pk)
 
     recent_diagnoses = LeafDiagnosis.objects.filter(user=request.user)[:5]
 
@@ -1062,10 +1195,35 @@ def leaf_diagnosis_view(request):
         "detection/diagnosis.html",
         {
             "form": form,
-            "diagnosis_log": diagnosis_log,
-            "diagnosis_result": diagnosis_result,
             "recent_diagnoses": recent_diagnoses,
             "leaf_quota": leaf_quota,
+        },
+    )
+
+
+@login_required
+def leaf_diagnosis_result_view(request, diagnosis_id):
+    diagnosis_log = get_object_or_404(
+        LeafDiagnosis,
+        pk=diagnosis_id,
+        user=request.user,
+    )
+    
+    diagnosis_result = {
+        "plant_name": diagnosis_log.plant_name,
+        "disease": diagnosis_log.predicted_disease,
+        "confidence": diagnosis_log.confidence,
+        "source": diagnosis_log.source,
+        "treatment_guidance": diagnosis_log.treatment_guidance,
+        "treatment_lines": _format_treatment_lines(diagnosis_log.treatment_guidance),
+    }
+
+    return render(
+        request,
+        "detection/diagnosis_result.html",
+        {
+            "diagnosis_log": diagnosis_log,
+            "diagnosis_result": diagnosis_result,
         },
     )
 

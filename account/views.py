@@ -12,9 +12,9 @@ from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
-from .forms import AdminLoginForm, ContactForm, LoginForm, SignUpForm, UserProfileForm
-from .models import ContactMessage, MembershipProfile
-from .utils import get_leaf_quota_summary, get_or_create_membership
+from .forms import AdminLoginForm, ContactForm, LoginEmailForm, OTPVerifyForm, SignUpForm, UserProfileForm
+from .models import ContactMessage, EmailOTP, MembershipProfile
+from .utils import generate_otp, get_leaf_quota_summary, get_or_create_membership, verify_otp
 from detection.models import Crop, Disease, LeafDiagnosis
 
 
@@ -86,41 +86,122 @@ def contact_view(request):
 
 
 def signup_view(request):
+    """Step 1: Collect name + email, send OTP."""
     if request.user.is_authenticated:
         return redirect("dashboard:home")
-
-    next_url = request.POST.get("next") or request.GET.get("next", "")
 
     if request.method == "POST":
         form = SignUpForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            get_or_create_membership(user)
-            login(request, user)
-            messages.success(request, "Your account has been created.")
-            return redirect(_safe_redirect(request, "dashboard:home"))
+            email = form.cleaned_data["email"]
+            first_name = form.cleaned_data["first_name"]
+            last_name = form.cleaned_data["last_name"]
+
+            generate_otp(email, first_name=first_name, last_name=last_name, purpose="signup")
+
+            # Store in session for OTP verify step
+            request.session["otp_email"] = email
+            request.session["otp_first_name"] = first_name
+            request.session["otp_last_name"] = last_name
+            request.session["otp_purpose"] = "signup"
+
+            messages.info(request, f"OTP sent to {email}. Check your terminal.")
+            return redirect("account:verify_otp")
     else:
         form = SignUpForm()
 
-    return render(request, "account/signup.html", {"form": form, "next_url": next_url})
+    return render(request, "account/signup.html", {"form": form})
 
 
 def login_view(request):
+    """Step 1: Collect email, send OTP."""
     if request.user.is_authenticated:
         return redirect("dashboard:home")
 
     next_url = request.POST.get("next") or request.GET.get("next", "")
 
     if request.method == "POST":
-        form = LoginForm(request, data=request.POST)
+        form = LoginEmailForm(request.POST)
         if form.is_valid():
-            login(request, form.get_user())
-            messages.success(request, "Welcome back.")
-            return redirect(_safe_redirect(request, settings.LOGIN_REDIRECT_URL))
+            email = form.cleaned_data["email"]
+            generate_otp(email, purpose="login")
+
+            request.session["otp_email"] = email
+            request.session["otp_purpose"] = "login"
+            if next_url:
+                request.session["otp_next"] = next_url
+
+            messages.info(request, f"OTP sent to {email}. Check your terminal.")
+            return redirect("account:verify_otp")
     else:
-        form = LoginForm(request)
+        form = LoginEmailForm()
 
     return render(request, "account/login.html", {"form": form, "next_url": next_url})
+
+
+def verify_otp_view(request):
+    """Step 2: Verify OTP and create/login user."""
+    email = request.session.get("otp_email")
+    purpose = request.session.get("otp_purpose")
+
+    if not email or not purpose:
+        messages.error(request, "Session expired. Please start again.")
+        return redirect("account:login")
+
+    if request.method == "POST":
+        form = OTPVerifyForm(request.POST)
+        if form.is_valid():
+            otp_code = form.cleaned_data["otp"]
+            otp_obj = verify_otp(email, otp_code, purpose=purpose)
+
+            if otp_obj is None:
+                form.add_error("otp", "Invalid or expired OTP. Please try again.")
+            else:
+                if purpose == "signup":
+                    # Create user
+                    first_name = request.session.get("otp_first_name", "")
+                    last_name = request.session.get("otp_last_name", "")
+                    username = email.split("@")[0]
+
+                    # Ensure unique username
+                    base_username = username
+                    counter = 1
+                    while User.objects.filter(username=username).exists():
+                        username = f"{base_username}{counter}"
+                        counter += 1
+
+                    user = User.objects.create_user(
+                        username=username,
+                        email=email,
+                        first_name=first_name,
+                        last_name=last_name,
+                        password=None,  # No password needed
+                    )
+                    user.set_unusable_password()
+                    user.save()
+                    get_or_create_membership(user)
+                    login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+                    messages.success(request, "Account created successfully! Welcome.")
+
+                elif purpose == "login":
+                    user = User.objects.get(email__iexact=email)
+                    login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+                    messages.success(request, "Welcome back!")
+
+                # Clean session
+                for key in ["otp_email", "otp_purpose", "otp_first_name", "otp_last_name", "otp_next"]:
+                    request.session.pop(key, None)
+
+                next_url = request.session.pop("otp_next", None)
+                return redirect(next_url or "dashboard:home")
+    else:
+        form = OTPVerifyForm()
+
+    return render(request, "account/verify_otp.html", {
+        "form": form,
+        "email": email,
+        "purpose": purpose,
+    })
 
 
 def admin_login_view(request):

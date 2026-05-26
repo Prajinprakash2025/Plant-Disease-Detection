@@ -2,8 +2,84 @@
 {% load static %}
 
 {% block title %}Dashboard | PlantGuard{% endblock %}
+{% block main_class %}dashboard-page-shell min-h-[60vh]{% endblock %}
 {% block extra_head %}
 <style>
+    .dashboard-page-shell {
+        max-width: none;
+        margin: 0;
+        padding: 0;
+        background:
+            linear-gradient(180deg, rgba(15, 31, 20, 0.08), rgba(255, 255, 255, 0) 260px),
+            #f4f7f4;
+    }
+
+    .dashboard-page {
+        width: min(1760px, calc(100vw - 48px));
+        margin: 0 auto;
+        padding: 28px 0 48px;
+    }
+
+    .dashboard-hero {
+        display: grid;
+        gap: 1.5rem;
+        grid-template-columns: minmax(0, 1fr);
+        margin-bottom: 1.25rem;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 1.5rem;
+        background:
+            linear-gradient(135deg, rgba(12, 31, 18, 0.98), rgba(17, 58, 33, 0.96) 58%, rgba(49, 61, 36, 0.96)),
+            #102319;
+        color: #f8fff9;
+        box-shadow: 0 22px 70px rgba(13, 31, 15, 0.2);
+        padding: 1.35rem;
+    }
+
+    .dashboard-hero-copy {
+        min-width: 0;
+    }
+
+    .dashboard-hero-kicker,
+    .dashboard-panel-kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+    }
+
+    .dashboard-hero-kicker {
+        color: #bdf8d5;
+    }
+
+    .dashboard-hero-title {
+        margin-top: 0.65rem;
+        max-width: 760px;
+        font-size: clamp(1.9rem, 3vw, 3.4rem);
+        line-height: 1.04;
+        font-weight: 900;
+        letter-spacing: 0;
+    }
+
+    .dashboard-hero-text {
+        margin-top: 0.8rem;
+        max-width: 720px;
+        color: rgba(248, 255, 249, 0.72);
+        font-size: 0.98rem;
+        line-height: 1.65;
+    }
+
+    .dashboard-hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: end;
+        justify-content: flex-start;
+    }
+
     .dashboard-chart-shell {
         position: relative;
         min-height: 320px;
@@ -50,37 +126,68 @@
 
     .dashboard-workspace {
         display: grid;
-        gap: 1.5rem;
+        gap: 1.25rem;
         align-items: start;
     }
 
     .dashboard-main-stack {
         display: flex;
         flex-direction: column;
-        gap: 2rem;
+        gap: 1rem;
         min-width: 0;
     }
 
     .dashboard-sidebar {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
         min-width: 0;
     }
 
     .dashboard-side-card {
         overflow: hidden;
-        border: 1px solid #e5ece5;
-        border-radius: 1.75rem;
-        background: rgba(255, 255, 255, 0.9);
-        box-shadow: 0 18px 48px rgba(13, 31, 15, 0.07);
-        backdrop-filter: blur(10px);
-        padding: 1.2rem;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 1.35rem;
+        background: #12231a;
+        color: #f5fff9;
+        box-shadow: 0 20px 54px rgba(13, 31, 15, 0.14);
+        padding: 0.8rem;
+    }
+
+    .dashboard-side-head {
+        padding: 0.55rem 0.6rem 0.9rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .dashboard-user-chip {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        min-width: 0;
+    }
+
+    .dashboard-user-avatar {
+        display: grid;
+        width: 2.35rem;
+        height: 2.35rem;
+        place-items: center;
+        flex-shrink: 0;
+        border-radius: 0.85rem;
+        background: linear-gradient(135deg, #00e87e, #8fd14f);
+        color: #092115;
+        font-size: 0.88rem;
+        font-weight: 900;
+    }
+
+    .dashboard-sidebar-cta {
+        margin-top: 0.8rem;
+        padding: 0.8rem;
+        border-radius: 1rem;
+        background: rgba(255, 255, 255, 0.055);
+        border: 1px solid rgba(255, 255, 255, 0.08);
     }
 
     .dashboard-side-nav {
         display: grid;
-        gap: 0.65rem;
+        gap: 0.35rem;
+        margin-top: 0.75rem;
     }
 
     .dashboard-nav-link {
@@ -88,25 +195,25 @@
         align-items: center;
         justify-content: space-between;
         gap: 0.75rem;
-        border: 1px solid #e5ece5;
-        border-radius: 1rem;
-        background: #f7faf7;
-        color: #294230;
-        padding: 0.85rem 0.95rem;
+        border: 1px solid transparent;
+        border-radius: 0.95rem;
+        background: transparent;
+        color: rgba(245, 255, 249, 0.74);
+        padding: 0.78rem 0.82rem;
         transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
     }
 
     .dashboard-nav-link:hover {
-        transform: translateY(-1px);
-        border-color: #b8dec3;
-        box-shadow: 0 10px 24px rgba(0, 140, 75, 0.1);
+        border-color: rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.06);
+        color: #ffffff;
     }
 
     .dashboard-nav-link.is-active {
-        color: #f5fff9;
-        border-color: rgba(0, 150, 80, 0.65);
-        background: linear-gradient(135deg, #00c062, #009650);
-        box-shadow: 0 12px 30px rgba(0, 150, 80, 0.22);
+        color: #092115;
+        border-color: rgba(0, 232, 126, 0.55);
+        background: linear-gradient(135deg, #e8fff2, #9df0bf);
+        box-shadow: 0 14px 34px rgba(0, 192, 98, 0.2);
     }
 
     .dashboard-nav-link-label {
@@ -125,9 +232,68 @@
     .dashboard-nav-link-caption {
         font-size: 0.7rem;
         font-weight: 700;
-        letter-spacing: 0.12em;
+        letter-spacing: 0.08em;
         text-transform: uppercase;
         opacity: 0.66;
+    }
+
+    .dashboard-status-strip {
+        display: grid;
+        gap: 0.8rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .dashboard-status-card {
+        min-width: 0;
+        border: 1px solid #e2e9e2;
+        border-radius: 1.05rem;
+        background: rgba(255, 255, 255, 0.86);
+        box-shadow: 0 10px 32px rgba(13, 31, 15, 0.055);
+        padding: 0.95rem 1rem;
+    }
+
+    .dashboard-status-label {
+        display: block;
+        color: #697869;
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+    }
+
+    .dashboard-status-value {
+        display: block;
+        margin-top: 0.35rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: #152217;
+        font-size: 1rem;
+        font-weight: 900;
+    }
+
+    .dashboard-active-panel {
+        min-width: 0;
+        overflow: hidden;
+        border: 1px solid #e0e8e1;
+        border-radius: 1.45rem;
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow: 0 22px 70px rgba(13, 31, 15, 0.085);
+    }
+
+    .dashboard-active-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1.25rem 1.35rem 1rem;
+        border-bottom: 1px solid #e6eee7;
+        background: linear-gradient(180deg, rgba(248, 251, 248, 0.96), rgba(255, 255, 255, 0.94));
+    }
+
+    .dashboard-active-body {
+        min-height: 560px;
+        padding: 1.35rem;
     }
 
     .dashboard-side-table {
@@ -219,12 +385,55 @@
 
     @media (min-width: 1280px) {
         .dashboard-workspace {
-            grid-template-columns: minmax(280px, 300px) minmax(0, 1fr);
+            grid-template-columns: minmax(240px, 270px) minmax(0, 1fr);
         }
 
         .dashboard-sidebar {
             position: sticky;
-            top: 6.5rem;
+            top: 5.8rem;
+        }
+
+        .dashboard-hero {
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: end;
+            padding: 1.55rem 1.7rem;
+        }
+
+        .dashboard-status-strip {
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 1279px) {
+        .dashboard-side-card {
+            background: #12231a;
+        }
+
+        .dashboard-side-nav {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 760px) {
+        .dashboard-page {
+            width: min(100% - 24px, 1760px);
+            padding: 18px 0 36px;
+        }
+
+        .dashboard-hero,
+        .dashboard-active-panel,
+        .dashboard-side-card {
+            border-radius: 1.1rem;
+        }
+
+        .dashboard-side-nav,
+        .dashboard-status-strip {
+            grid-template-columns: 1fr;
+        }
+
+        .dashboard-active-head,
+        .dashboard-active-body {
+            padding: 1rem;
         }
     }
 
@@ -280,16 +489,46 @@
 {% endblock %}
 
 {% block content %}
-<div class="space-y-10">
+<div class="dashboard-page">
+    <section class="dashboard-hero">
+        <div class="dashboard-hero-copy">
+            <span class="dashboard-hero-kicker">
+                <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+                PlantGuard Command Center
+            </span>
+            <h1 class="dashboard-hero-title">Crop health, scans, alerts, and datasets in one workspace.</h1>
+            <p class="dashboard-hero-text">
+                Review the account status, move between dashboard sections, and keep diagnosis work close to the actions farmers need next.
+            </p>
+        </div>
+        <div class="dashboard-hero-actions">
+            <a href="{% url 'detection:leaf_diagnosis' %}" class="btn btn-primary">
+                <i data-lucide="scan-line" class="h-4 w-4"></i>
+                New scan
+            </a>
+            <a href="{% url 'account:membership' %}" class="btn btn-secondary glass-panel !text-white border-white/20">
+                <i data-lucide="crown" class="h-4 w-4"></i>
+                Membership
+            </a>
+        </div>
+    </section>
+
     <div class="dashboard-workspace">
         <aside class="dashboard-sidebar">
             <div class="dashboard-side-card">
-                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Workspace Map</p>
-                <h2 class="mt-2 text-2xl font-black text-gray-900">Move around the dashboard faster.</h2>
-                <p class="mt-2 text-sm leading-relaxed text-gray-600">
-                    Click a workspace item and load only that section into the main panel.
-                </p>
-                <div class="dashboard-side-nav mt-5">
+                <div class="dashboard-side-head">
+                    <div class="dashboard-user-chip">
+                        <span class="dashboard-user-avatar">
+                            {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                        </span>
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-black text-white">{{ request.user.first_name|default:request.user.username }}</p>
+                            <p class="truncate text-xs font-semibold text-white/45">Dashboard workspace</p>
+                        </div>
+                    </div>
+                </div>
+
+                <nav class="dashboard-side-nav" aria-label="Dashboard sections">
                     <a href="{% url 'dashboard:home' %}?section=overview" class="dashboard-nav-link {% if active_section == 'overview' %}is-active{% endif %}" data-dashboard-nav data-section-key="overview" data-section-label="Overview" data-section-url="{% url 'dashboard:section' 'overview' %}">
                         <span class="dashboard-nav-link-label">
                             <i data-lucide="layout-dashboard" class="h-4 w-4"></i>
@@ -370,84 +609,65 @@
                         </span>
                         <i data-lucide="chevron-right" class="h-4 w-4 opacity-70"></i>
                     </a>
-                </div>
-            </div>
+                </nav>
 
-            <div class="dashboard-side-card">
-                <div class="flex items-start justify-between gap-3">
-                    <div>
-                        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Quick Table</p>
-                        <h3 class="mt-2 text-xl font-black text-gray-900">Dashboard status at a glance</h3>
-                    </div>
-                    <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">{{ smart_alerts|length }} alerts</span>
-                </div>
-                <div class="dashboard-side-table mt-4">
-                    <div class="dashboard-side-row">
-                        <span class="dashboard-side-row-label">Plan</span>
-                        <span class="dashboard-side-row-value">{{ leaf_quota.plan_name }}</span>
-                    </div>
-                    <div class="dashboard-side-row">
-                        <span class="dashboard-side-row-label">Remaining</span>
-                        <span class="dashboard-side-row-value">{{ leaf_quota.remaining_label }}</span>
-                    </div>
-                    <div class="dashboard-side-row">
-                        <span class="dashboard-side-row-label">Verified</span>
-                        <span class="dashboard-side-row-value">{{ dashboard_metrics.verified_count }}</span>
-                    </div>
-                    <div class="dashboard-side-row">
-                        <span class="dashboard-side-row-label">View</span>
-                        <span class="dashboard-side-row-value" id="dashboardActiveViewLabel">{{ active_section_label }}</span>
-                    </div>
-                    <div class="dashboard-side-row">
-                        <span class="dashboard-side-row-label">Top risk</span>
-                        <span class="dashboard-side-row-value">
-                            {% if analytics.plant_issues.0.issues %}
-                                {{ analytics.plant_issues.0.label }}
-                            {% else %}
-                                Stable baseline
-                            {% endif %}
-                        </span>
-                    </div>
-                    <div class="dashboard-side-row">
-                        <span class="dashboard-side-row-label">Last scan</span>
-                        <span class="dashboard-side-row-value">
-                            {% if recent_diagnoses.0 %}
-                                {{ recent_diagnoses.0.created_at|date:"M d, h:i A" }}
-                            {% else %}
-                                No scans yet
-                            {% endif %}
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="dashboard-side-card bg-gradient-to-br from-[#0f2614] via-[#16341d] to-[#1f4629] text-white">
-                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-300">Quick Actions</p>
-                <h3 class="mt-2 text-2xl font-black text-white">Need to move fast?</h3>
-                <p class="mt-2 text-sm leading-relaxed text-white/75">
-                    Run a new diagnosis, adjust membership, or review profile details without leaving the workspace.
-                </p>
-                <div class="mt-5 space-y-3">
-                    <a href="{% url 'detection:leaf_diagnosis' %}" class="btn btn-primary w-full justify-center">Start new scan</a>
-                    <a href="{% url 'account:membership' %}" class="btn btn-secondary glass-panel !text-white w-full justify-center border-white/20">Open membership</a>
+                <div class="dashboard-sidebar-cta">
+                    <p class="text-xs font-bold uppercase tracking-[0.16em] text-emerald-200">Fast path</p>
+                    <p class="mt-2 text-sm leading-relaxed text-white/60">Open diagnosis when you need a quick new result.</p>
+                    <a href="{% url 'detection:leaf_diagnosis' %}" class="btn btn-primary mt-4 w-full justify-center">
+                        <i data-lucide="leaf" class="h-4 w-4"></i>
+                        Start scan
+                    </a>
                 </div>
             </div>
         </aside>
 
         <div class="dashboard-main-stack">
-            <div class="rounded-[1.85rem] border border-gray-200 bg-white/90 p-5 shadow-[0_22px_60px_rgba(13,31,15,0.08)] backdrop-blur md:p-7">
-                <div class="flex flex-col gap-3 border-b border-gray-200 pb-4 lg:flex-row lg:items-center lg:justify-between">
+            <section class="dashboard-status-strip" aria-label="Dashboard status">
+                <article class="dashboard-status-card">
+                    <span class="dashboard-status-label">Plan</span>
+                    <span class="dashboard-status-value">{{ leaf_quota.plan_name }}</span>
+                </article>
+                <article class="dashboard-status-card">
+                    <span class="dashboard-status-label">Remaining</span>
+                    <span class="dashboard-status-value">{{ leaf_quota.remaining_label }}</span>
+                </article>
+                <article class="dashboard-status-card">
+                    <span class="dashboard-status-label">Verified</span>
+                    <span class="dashboard-status-value">{{ dashboard_metrics.verified_count }}</span>
+                </article>
+                <article class="dashboard-status-card">
+                    <span class="dashboard-status-label">Active view</span>
+                    <span class="dashboard-status-value" id="dashboardActiveViewLabel">{{ active_section_label }}</span>
+                </article>
+                <article class="dashboard-status-card">
+                    <span class="dashboard-status-label">Top risk</span>
+                    <span class="dashboard-status-value">
+                        {% if analytics.plant_issues.0.issues %}
+                            {{ analytics.plant_issues.0.label }}
+                        {% else %}
+                            Stable baseline
+                        {% endif %}
+                    </span>
+                </article>
+            </section>
+
+            <div class="dashboard-active-panel">
+                <div class="dashboard-active-head">
                     <div>
-                        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Active Workspace</p>
+                        <p class="dashboard-panel-kicker text-emerald-700">
+                            <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                            Active workspace
+                        </p>
                         <h2 id="dashboardViewportTitle" class="mt-1 text-2xl font-black text-gray-900">{{ active_section_label }}</h2>
                     </div>
-                    <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
+                    <div class="inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-emerald-700">
                         <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
-                        Sidebar loads one section at a time
+                        {{ smart_alerts|length }} alerts
                     </div>
                 </div>
 
-                <div id="dashboardSectionViewport" data-dashboard-viewport data-active-section="{{ active_section }}" class="mt-5 min-h-[420px]">
+                <div id="dashboardSectionViewport" data-dashboard-viewport data-active-section="{{ active_section }}" class="dashboard-active-body">
                     {% include section_template %}
                 </div>
             </div>
