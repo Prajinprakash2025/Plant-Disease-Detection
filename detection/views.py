@@ -286,9 +286,10 @@ def _format_treatment_lines(text):
             symptoms_value = line.split(":", 1)[1].strip()
             if symptoms_value:
                 if re.match(r"^[\-\*\s]+", symptoms_value):
-                    formatted_lines.append(f"- {re.sub(r'^[\-\*\s]+', '', symptoms_value)}")
+                    cleaned = re.sub(r"^[\-\*\s]+", "", symptoms_value)
+                    formatted_lines.append("- " + cleaned)
                 else:
-                    formatted_lines.append(f"- {symptoms_value}")
+                    formatted_lines.append("- " + symptoms_value)
             continue
 
         if line.lower().startswith("possible causes:"):
@@ -296,9 +297,10 @@ def _format_treatment_lines(text):
             causes_value = line.split(":", 1)[1].strip()
             if causes_value:
                 if re.match(r"^[\-\*\s]+", causes_value):
-                    formatted_lines.append(f"- {re.sub(r'^[\-\*\s]+', '', causes_value)}")
+                    cleaned = re.sub(r"^[\-\*\s]+", "", causes_value)
+                    formatted_lines.append("- " + cleaned)
                 else:
-                    formatted_lines.append(f"- {causes_value}")
+                    formatted_lines.append("- " + causes_value)
             continue
 
         if line.lower().startswith("treatment:") or line.lower().startswith("suggested action:"):
@@ -306,19 +308,21 @@ def _format_treatment_lines(text):
             action_value = line.split(":", 1)[1].strip()
             if action_value:
                 if re.match(r"^[\-\*\s]+", action_value):
-                    formatted_lines.append(f"- {re.sub(r'^[\-\*\s]+', '', action_value)}")
+                    cleaned = re.sub(r"^[\-\*\s]+", "", action_value)
+                    formatted_lines.append("- " + cleaned)
                 else:
-                    formatted_lines.append(f"- {action_value}")
+                    formatted_lines.append("- " + action_value)
             continue
-            
+
         if line.lower().startswith("prevention:"):
             formatted_lines.append("Prevention:")
             prevention_value = line.split(":", 1)[1].strip()
             if prevention_value:
                 if re.match(r"^[\-\*\s]+", prevention_value):
-                    formatted_lines.append(f"- {re.sub(r'^[\-\*\s]+', '', prevention_value)}")
+                    cleaned = re.sub(r"^[\-\*\s]+", "", prevention_value)
+                    formatted_lines.append("- " + cleaned)
                 else:
-                    formatted_lines.append(f"- {prevention_value}")
+                    formatted_lines.append("- " + prevention_value)
             continue
 
         if re.match(r"^[\-\*]\s*", line):
@@ -508,10 +512,10 @@ def _load_prediction_assets():
             return MODEL, CLASS_NAMES
 
         try:
-            import tensorflow as tf
+            import keras
         except ImportError as exc:
             raise RuntimeError(
-                "TensorFlow is not installed in the Django environment."
+                "TensorFlow/Keras is not installed in the Django environment."
             ) from exc
 
         model_path = _get_model_path()
@@ -522,7 +526,10 @@ def _load_prediction_assets():
         if not class_names_path.exists():
             raise RuntimeError(f"Class names file not found: {class_names_path}")
 
-        MODEL = tf.keras.models.load_model(model_path)
+        resaved = model_path.parent / "plant_disease_resaved.keras"
+        load_path = resaved if resaved.exists() else model_path
+
+        MODEL = keras.models.load_model(str(load_path), compile=False)
         with class_names_path.open(encoding="utf-8") as class_file:
             CLASS_NAMES = json.load(class_file)
 
