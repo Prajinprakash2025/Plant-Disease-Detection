@@ -5,7 +5,6 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('django-admin/', admin.site.urls),  # kept for existing usage
     path('adminpanel/', include('adminpanel.urls')),  # custom admin panel UI
     path('', include('account.urls')), 
     path('', include('detection.urls')),

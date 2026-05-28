@@ -4,7 +4,12 @@ import os
 import sys
 from pathlib import Path
 
-os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
+os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "3")
+os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
+os.environ.setdefault("ABSL_MIN_LOG_LEVEL", "3")
+
+import logging
+logging.getLogger("tensorflow").setLevel(logging.ERROR)
 
 import numpy as np
 import tensorflow as tf

@@ -165,7 +165,7 @@
         <!-- Map Container -->
         <div id="leafletMap" class="h-56 w-full rounded-2xl border border-gray-200 mb-4 z-0 relative"></div>
         <div class="flex justify-end mb-4">
-            <button type="button" onclick="useCurrentLocation()" class="btn btn-secondary glass-panel flex items-center gap-2 text-xs py-1.5 shadow-sm">
+            <button type="button" onclick="useCurrentLocation(event)" class="btn btn-secondary glass-panel flex items-center gap-2 text-xs py-1.5 shadow-sm">
                 <i data-lucide="crosshair" class="h-3 w-3"></i> Use My Current Location
             </button>
         </div>
@@ -199,112 +199,9 @@
     </div>
 </div>
 
-<!-- Leaflet Dependencies -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-
 <style>
     .leaflet-container {
         font-family: inherit;
         z-index: 10;
     }
 </style>
-
-<script>
-    let locationMap = null;
-    let locationMarker = null;
-
-    function openLocationModal() {
-        document.getElementById('locationModal').classList.remove('hidden');
-        
-        // Timeout to allow modal display before map invalidateSize
-        setTimeout(() => {
-            if (!locationMap) {
-                // Initialize map
-                let initialLat = document.getElementById('mapLat').value || 39.8283;
-                let initialLon = document.getElementById('mapLon').value || -98.5795;
-                let zoomLevel = document.getElementById('mapLat').value ? 13 : 4;
-                
-                locationMap = L.map('leafletMap').setView([initialLat, initialLon], zoomLevel);
-                
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    maxZoom: 19,
-                    attribution: '© OpenStreetMap'
-                }).addTo(locationMap);
-                
-                if (document.getElementById('mapLat').value) {
-                    locationMarker = L.marker([initialLat, initialLon]).addTo(locationMap);
-                }
-
-                locationMap.on('click', function(e) {
-                    setCoordinates(e.latlng.lat, e.latlng.lng);
-                });
-            } else {
-                locationMap.invalidateSize();
-            }
-        }, 150);
-    }
-
-    function closeLocationModal() {
-        document.getElementById('locationModal').classList.add('hidden');
-    }
-
-    function setCoordinates(lat, lng) {
-        document.getElementById('mapLat').value = lat.toFixed(6);
-        document.getElementById('mapLon').value = lng.toFixed(6);
-        
-        if (locationMarker) {
-            locationMarker.setLatLng([lat, lng]);
-        } else {
-            locationMarker = L.marker([lat, lng]).addTo(locationMap);
-        }
-    }
-
-    function useCurrentLocation() {
-        const btn = event.currentTarget || event.target;
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i data-lucide="loader-2" class="h-3 w-3 animate-spin"></i> Detecting...';
-        btn.disabled = true;
-
-        if (!navigator.geolocation) {
-            alert("Geolocation is not supported by your browser.");
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-            return;
-        }
-
-        navigator.geolocation.getCurrentPosition(
-            function(position) {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
-                setCoordinates(lat, lng);
-                locationMap.setView([lat, lng], 14);
-                btn.innerHTML = '<i data-lucide="check" class="h-3 w-3"></i> Location Set!';
-                btn.disabled = false;
-                lucide.createIcons();
-
-                // Try reverse geocoding for city name
-                fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`)
-                    .then(r => r.json())
-                    .then(data => {
-                        const city = data.address?.city || data.address?.town || data.address?.village || data.address?.county || '';
-                        if (city) document.getElementById('cityNameInput').value = city;
-                    })
-                    .catch(() => {});
-
-                setTimeout(() => { btn.innerHTML = originalText; lucide.createIcons(); }, 2000);
-            },
-            function(error) {
-                let msg = "Could not get your location.";
-                if (error.code === 1) msg = "Location permission denied. Please allow location access in your browser settings.";
-                else if (error.code === 2) msg = "Location unavailable. Check your device GPS/network.";
-                else if (error.code === 3) msg = "Location request timed out. Try again.";
-                alert(msg);
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-                lucide.createIcons();
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
-    }
-</script>

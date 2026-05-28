@@ -1,3 +1,11 @@
+import os
+import logging
+
+os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "3")
+os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
+os.environ.setdefault("ABSL_MIN_LOG_LEVEL", "3")
+logging.getLogger("tensorflow").setLevel(logging.ERROR)
+
 import tensorflow as tf
 import numpy as np
 from PIL import Image
