@@ -964,7 +964,14 @@ def gemini_verify(request):
     try:
         gemini_result = call_gemini_api(diagnosis_log.image.path)
     except Exception as exc:
-        return JsonResponse({"error": str(exc)}, status=503)
+        error_str = str(exc)
+        if "429" in error_str or "RESOURCE_EXHAUSTED" in error_str:
+            user_message = "Gemini API quota exceeded. Please try again later or tomorrow."
+        elif "400" in error_str or "API_KEY_INVALID" in error_str:
+            user_message = "Gemini API key is invalid. Please check your configuration."
+        else:
+            user_message = "Gemini verification is temporarily unavailable. Please try again later."
+        return JsonResponse({"error": user_message}, status=503)
 
     plant_name = gemini_result["plant_name"]
     if plant_name.lower() == "unknown" and diagnosis_log.plant_name:
