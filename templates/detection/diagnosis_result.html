@@ -212,6 +212,61 @@
 
     </div>
 </div>
+
+<div id="geminiResultModal" class="fixed inset-0 z-50 hidden items-center justify-center overflow-y-auto bg-gray-950/55 px-4 py-6 backdrop-blur-sm">
+    <div class="flex max-h-[calc(100vh-3rem)] w-full max-w-2xl flex-col rounded-2xl bg-white shadow-2xl border border-emerald-100 overflow-hidden">
+        <div class="shrink-0 flex items-start justify-between gap-4 border-b border-gray-100 px-6 py-5">
+            <div>
+                <p class="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">Gemini verified</p>
+                <h3 class="mt-1 text-2xl font-black text-gray-950">Correct diagnosis stored</h3>
+            </div>
+            <button id="geminiModalClose" type="button" class="rounded-full border border-gray-200 p-2 text-gray-500 hover:border-emerald-300 hover:text-emerald-700" aria-label="Close Gemini result">
+                <i data-lucide="x" class="h-4 w-4"></i>
+            </button>
+        </div>
+        <div class="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
+            <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                <p class="text-xs font-bold uppercase tracking-wider text-gray-400">Before local model</p>
+                <div class="mt-3 grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                        <p class="text-gray-500">Plant</p>
+                        <p id="geminiModalOldPlant" class="font-extrabold text-gray-900">Unknown</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500">Disease</p>
+                        <p id="geminiModalOldDisease" class="font-extrabold text-gray-900">Unknown</p>
+                    </div>
+                </div>
+            </div>
+            <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                <p class="text-xs font-bold uppercase tracking-wider text-emerald-700">Gemini correct answer</p>
+                <div class="mt-3 grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                        <p class="text-emerald-700/75">Plant</p>
+                        <p id="geminiModalNewPlant" class="font-extrabold text-emerald-950">Unknown</p>
+                    </div>
+                    <div>
+                        <p class="text-emerald-700/75">Disease</p>
+                        <p id="geminiModalNewDisease" class="font-extrabold text-emerald-950">Unknown</p>
+                    </div>
+                </div>
+            </div>
+            <div class="rounded-xl border border-gray-200 bg-white p-4">
+                <p class="text-xs font-bold uppercase tracking-wider text-gray-500">Gemini guidance</p>
+                <div id="geminiModalGuidance" class="mt-3 space-y-3 text-sm">
+                    <p class="text-gray-500">Treatment guidance will appear after verification.</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 rounded-xl border border-emerald-100 bg-white px-4 py-3 text-sm font-bold text-emerald-800">
+                <i data-lucide="database" class="h-4 w-4"></i>
+                <span id="geminiModalStored">Saved to diagnosis history.</span>
+            </div>
+        </div>
+        <div class="shrink-0 border-t border-gray-100 px-6 py-4">
+            <button id="geminiModalDone" type="button" class="btn btn-primary w-full justify-center py-3">Done</button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_scripts %}
@@ -219,6 +274,15 @@
     const csrfToken = "{{ csrf_token }}";
     const geminiBtn = document.getElementById("geminiVerifyBtn");
     const geminiStatus = document.getElementById("geminiVerifyStatus");
+    const geminiResultModal = document.getElementById("geminiResultModal");
+    const geminiModalClose = document.getElementById("geminiModalClose");
+    const geminiModalDone = document.getElementById("geminiModalDone");
+    const geminiModalOldPlant = document.getElementById("geminiModalOldPlant");
+    const geminiModalOldDisease = document.getElementById("geminiModalOldDisease");
+    const geminiModalNewPlant = document.getElementById("geminiModalNewPlant");
+    const geminiModalNewDisease = document.getElementById("geminiModalNewDisease");
+    const geminiModalGuidance = document.getElementById("geminiModalGuidance");
+    const geminiModalStored = document.getElementById("geminiModalStored");
     const treatmentPlan = document.getElementById("treatmentPlan");
     const treatmentTitle = document.getElementById("treatmentTitle");
 
@@ -261,6 +325,27 @@
         ttsStatus.textContent = message;
         ttsStatus.classList.remove("text-emerald-700", "text-red-600");
         ttsStatus.classList.add(tone === "error" ? "text-red-600" : "text-emerald-700");
+    }
+
+    function closeGeminiModal() {
+        if (!geminiResultModal) return;
+        geminiResultModal.classList.add("hidden");
+        geminiResultModal.classList.remove("flex");
+    }
+
+    function showGeminiModal(data) {
+        if (!geminiResultModal) return;
+        if (geminiModalOldPlant) geminiModalOldPlant.textContent = data.previous_plant_name || "Unknown";
+        if (geminiModalOldDisease) geminiModalOldDisease.textContent = data.previous_disease || "Unknown";
+        if (geminiModalNewPlant) geminiModalNewPlant.textContent = data.plant_name || "Unknown";
+        if (geminiModalNewDisease) geminiModalNewDisease.textContent = data.disease || "Unknown";
+        renderGeminiModalGuidance(treatmentLinesToItems(data.treatment_lines || []));
+        if (geminiModalStored) {
+            geminiModalStored.textContent = data.stored ? "Saved to diagnosis history." : "Verified result is ready.";
+        }
+        geminiResultModal.classList.remove("hidden");
+        geminiResultModal.classList.add("flex");
+        refreshIcons();
     }
 
     function setLanguageButtonsDisabled(disabled) {
@@ -334,6 +419,27 @@
             return `<p data-kind="text" class="text-gray-600 leading-relaxed">${escapeHtml(text)}</p>`;
         }).join("");
         refreshIcons();
+    }
+
+    function renderGeminiModalGuidance(items) {
+        if (!geminiModalGuidance) return;
+        if (!items || !items.length) {
+            geminiModalGuidance.innerHTML = '<p class="text-gray-500">No treatment guidance returned.</p>';
+            return;
+        }
+
+        geminiModalGuidance.innerHTML = items.map((item) => {
+            const kind = item.kind || "text";
+            const text = String(item.text || "").trim();
+            if (!text) return "";
+            if (kind === "heading") {
+                return `<p class="border-t border-gray-100 pt-2 first:border-0 first:pt-0 text-xs font-black uppercase tracking-wider text-gray-900">${escapeHtml(text)}</p>`;
+            }
+            if (kind === "bullet") {
+                return `<p class="flex items-start gap-2 leading-relaxed text-gray-700"><span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500"></span><span>${escapeHtml(normalizeBulletText(text))}</span></p>`;
+            }
+            return `<p class="leading-relaxed text-gray-600">${escapeHtml(text)}</p>`;
+        }).join("");
     }
 
     function treatmentLinesToItems(lines) {
@@ -849,6 +955,7 @@
                 }
                 geminiBtn.textContent = "Verified by Gemini AI";
                 geminiBtn.classList.add("opacity-60", "cursor-not-allowed");
+                showGeminiModal(data);
             } catch (error) {
                 if (geminiStatus) {
                     geminiStatus.textContent = "Network error. Please try again.";
@@ -858,6 +965,26 @@
             }
         });
     }
+
+    [geminiModalClose, geminiModalDone].forEach((btn) => {
+        if (btn) {
+            btn.addEventListener("click", closeGeminiModal);
+        }
+    });
+
+    if (geminiResultModal) {
+        geminiResultModal.addEventListener("click", (event) => {
+            if (event.target === geminiResultModal) {
+                closeGeminiModal();
+            }
+        });
+    }
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+            closeGeminiModal();
+        }
+    });
 
     if (document.getElementById("resultHeadlineDisease")) {
         storeEnglishDiagnosisPayload();

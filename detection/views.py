@@ -259,6 +259,8 @@ def _format_treatment_lines(text):
         line = raw_line.strip()
         if not line:
             continue
+        if line.lower().startswith("rules:"):
+            break
 
         if line.lower().startswith("plant:"):
             plant_value = line.split(":", 1)[1].strip()
@@ -552,7 +554,10 @@ def _translate_diagnosis_payload(payload, target_lang):
             else:
                 translated_payload["treatment_items"].append(item)
 
-    # 3. Call Gemini if quota allows (or if we need more depth)
+    if not getattr(settings, "USE_GEMINI_FOR_TRANSLATION", False):
+        return _translate_payload_free(payload, target_lang, local_translated=translated_payload)
+
+    # 3. Optional Gemini translation. Disabled by default to preserve Gemini quota.
     try:
         client = _get_gemini_client()
         from google.genai import types
@@ -766,7 +771,7 @@ def _predict_with_local_model(image_path):
             ) from external_runtime_error
 
 
-def _call_gemini_once(image_path):
+def _call_gemini_once(image_path, expected_plant=None, expected_disease=None):
     client = _get_gemini_client()
 
     try:
@@ -777,22 +782,39 @@ def _call_gemini_once(image_path):
         ) from exc
 
     mime_type = mimetypes.guess_type(str(image_path))[0] or "image/jpeg"
-    prompt = (
-        "Analyze this plant leaf image carefully.\n\n"
-        "Step 1: Identify the plant or crop name.\n"
-        "Step 2: Identify the disease only if clearly visible.\n\n"
-        "If the leaf appears healthy return:\n"
-        'disease_name = "Healthy"\n\n'
-        "If the plant or disease cannot be confidently identified return:\n"
-        'status = "uncertain"\n\n'
-        "Return JSON ONLY in this format:\n"
-        "{\n"
-        ' "plant_name": "<plant name or unknown>",\n'
-        ' "disease_name": "<disease name or Healthy>",\n'
-        ' "status": "healthy | diseased | uncertain"\n'
-        "}\n\n"
-        "Do not include explanations or markdown."
-    )
+    if expected_plant or expected_disease:
+        prompt = (
+            "Analyze this plant leaf image as a second-opinion verifier for a CNN model.\n\n"
+            f"The CNN predicted plant/crop: {expected_plant or 'Unknown'}.\n"
+            f"The CNN predicted disease: {expected_disease or 'Unknown'}.\n\n"
+            "If the image is consistent with the CNN prediction, return that plant and disease.\n"
+            "If the CNN prediction is wrong and you can identify a better result, return the better result.\n"
+            "Use uncertain only if the image is unusable or clearly not a plant leaf.\n\n"
+            "Return JSON ONLY in this format:\n"
+            "{\n"
+            ' "plant_name": "<plant name or unknown>",\n'
+            ' "disease_name": "<disease name or Healthy>",\n'
+            ' "status": "healthy | diseased | uncertain"\n'
+            "}\n\n"
+            "Do not include explanations or markdown."
+        )
+    else:
+        prompt = (
+            "Analyze this plant leaf image carefully.\n\n"
+            "Step 1: Identify the plant or crop name.\n"
+            "Step 2: Identify the disease only if clearly visible.\n\n"
+            "If the leaf appears healthy return:\n"
+            'disease_name = "Healthy"\n\n'
+            "If the plant or disease cannot be confidently identified return:\n"
+            'status = "uncertain"\n\n'
+            "Return JSON ONLY in this format:\n"
+            "{\n"
+            ' "plant_name": "<plant name or unknown>",\n'
+            ' "disease_name": "<disease name or Healthy>",\n'
+            ' "status": "healthy | diseased | uncertain"\n'
+            "}\n\n"
+            "Do not include explanations or markdown."
+        )
 
     with open(image_path, "rb") as image_file:
         image_bytes = image_file.read()
@@ -810,9 +832,36 @@ def _call_gemini_once(image_path):
     return _normalize_gemini_prediction(gemini_text)
 
 
-def call_gemini_api(image_path):
+def call_gemini_api(image_path, expected_plant=None, expected_disease=None):
     vote_count = max(1, int(getattr(settings, "GEMINI_VOTE_COUNT", 1)))
-    return _call_gemini_once(image_path)
+    votes = [
+        _call_gemini_once(
+            image_path,
+            expected_plant=expected_plant,
+            expected_disease=expected_disease,
+        )
+        for _ in range(vote_count)
+    ]
+    if vote_count == 1:
+        return votes[0]
+
+    def vote_key(result):
+        return (
+            _clean_prediction_text(result.get("plant_name"), fallback="Unknown").lower(),
+            _clean_prediction_text(result.get("disease"), fallback="Uncertain").lower(),
+        )
+
+    vote_counts = Counter(vote_key(result) for result in votes)
+    winning_key, winning_count = vote_counts.most_common(1)[0]
+
+    if winning_count <= vote_count // 2:
+        raise RuntimeError("Gemini returned inconsistent verification results.")
+
+    for result in votes:
+        if vote_key(result) == winning_key:
+            return result
+
+    raise RuntimeError("Gemini returned inconsistent verification results.")
 
 
 def generate_treatment_guidance(disease_name, disease_record=None, plant_name="Unknown"):
@@ -896,13 +945,53 @@ def generate_treatment_guidance(disease_name, disease_record=None, plant_name="U
 
 
 def predict_leaf_disease(image_path):
-    """Always returns local model result immediately. Gemini is on-demand only."""
+    """Return a local model result, with Gemini verification for low confidence."""
     try:
         local_result = _predict_with_local_model(image_path)
     except ValueError:
         raise
     except RuntimeError as exc:
         raise RuntimeError(_build_prediction_error(local_error=exc)) from exc
+
+    confidence = local_result.get("confidence")
+    confidence_percent = None
+    if confidence is not None:
+        try:
+            confidence_percent = float(confidence)
+            if confidence_percent <= 1:
+                confidence_percent *= 100
+        except (TypeError, ValueError):
+            confidence_percent = None
+
+    threshold = float(getattr(settings, "LOCAL_MODEL_CONFIDENCE_THRESHOLD", 0.60)) * 100
+    needs_verification = confidence_percent is not None and confidence_percent < threshold
+
+    if needs_verification:
+        try:
+            gemini_result = call_gemini_api(image_path)
+        except Exception as exc:
+            if _require_gemini_for_low_confidence():
+                raise RuntimeError(
+                    f"Low-confidence local prediction ({confidence_percent:.1f}%) requires Gemini verification. "
+                    f"Gemini fallback is unavailable: {exc}"
+                ) from exc
+            local_result["warning"] = (
+                f"Local prediction confidence is low ({confidence_percent:.1f}%). "
+                f"Gemini verification was unavailable: {exc}"
+            )
+            return local_result
+
+        plant_name = gemini_result["plant_name"]
+        if plant_name.lower() == "unknown" and local_result.get("plant_name"):
+            plant_name = local_result["plant_name"]
+
+        return {
+            "plant_name": plant_name,
+            "disease": gemini_result["disease"],
+            "confidence": confidence,
+            "source": "gemini_api",
+            "local_prediction": local_result,
+        }
 
     return local_result
 
@@ -926,15 +1015,22 @@ def diagnose_leaf_image(image_path):
 def _gemini_treatment_plan(disease_name, plant_name):
     """Ask Gemini for a rich treatment plan. Called only on user request."""
     disease_record = _lookup_disease_record(disease_name, plant_name=plant_name)
-    if disease_record:
+    if not getattr(settings, "USE_GEMINI_FOR_TREATMENT_PLAN", False):
         return generate_treatment_guidance(disease_name, disease_record=disease_record, plant_name=plant_name)
     try:
         client = _get_gemini_client()
         from google.genai import types
         prompt = (
-            f"Create a short structured agricultural treatment plan for '{plant_name}' with disease '{disease_name}'.\n"
+            f"Create a practical agricultural treatment plan for a verified diagnosis.\n"
+            f"Plant/crop: {plant_name}\n"
+            f"Disease: {disease_name}\n\n"
             "Use EXACTLY these headings:\nPlant:\nDisease:\nSeverity:\nSymptoms:\nPossible Causes:\nTreatment:\nPrevention:\n"
-            "Put bullet points under each heading. No markdown, no extra text."
+            "Follow these constraints without adding a constraints or rules section:\n"
+            "- Give disease-specific advice, not generic advice.\n"
+            "- Do not say unknown pathogen or nutrient deficiency unless the disease is actually unknown.\n"
+            "- Put 2 to 4 short bullet points under Symptoms, Possible Causes, Treatment, and Prevention.\n"
+            "- Keep advice safe for farmers and mention expert confirmation only as the final treatment bullet.\n"
+            "- Do not output any headings except the exact seven headings listed above."
         )
         response = client.models.generate_content(
             model=getattr(settings, "GEMINI_MODEL_NAME", "gemini-2.0-flash"),
@@ -943,7 +1039,7 @@ def _gemini_treatment_plan(disease_name, plant_name):
         )
         return (getattr(response, "text", "") or "").strip()
     except Exception:
-        return generate_treatment_guidance(disease_name, plant_name=plant_name)
+        return generate_treatment_guidance(disease_name, disease_record=disease_record, plant_name=plant_name)
 
 
 @login_required
@@ -962,7 +1058,11 @@ def gemini_verify(request):
         return JsonResponse({"error": "Diagnosis not found."}, status=404)
 
     try:
-        gemini_result = call_gemini_api(diagnosis_log.image.path)
+        gemini_result = call_gemini_api(
+            diagnosis_log.image.path,
+            expected_plant=diagnosis_log.plant_name,
+            expected_disease=diagnosis_log.predicted_disease,
+        )
     except Exception as exc:
         error_str = str(exc)
         if "429" in error_str or "RESOURCE_EXHAUSTED" in error_str:
@@ -972,6 +1072,9 @@ def gemini_verify(request):
         else:
             user_message = "Gemini verification is temporarily unavailable. Please try again later."
         return JsonResponse({"error": user_message}, status=503)
+
+    previous_plant_name = diagnosis_log.plant_name or "Unknown"
+    previous_disease_name = diagnosis_log.predicted_disease or "Unknown"
 
     plant_name = gemini_result["plant_name"]
     if plant_name.lower() == "unknown" and diagnosis_log.plant_name:
@@ -991,7 +1094,10 @@ def gemini_verify(request):
     return JsonResponse({
         "plant_name": plant_name,
         "disease": disease_name,
+        "previous_plant_name": previous_plant_name,
+        "previous_disease": previous_disease_name,
         "source": "gemini_api",
+        "stored": True,
         "treatment_lines": treatment_lines,
     })
 
@@ -1071,16 +1177,6 @@ def upload_scan(request):
     leaf_quota = get_leaf_quota_summary(request.user)
 
     if request.method == "POST":
-        if not leaf_quota["can_submit"]:
-            limit_message = (
-                f"You have reached your free plan limit of {leaf_quota['limit']} leaf checks. "
-                "Upgrade to premium to continue."
-            )
-            messages.error(request, limit_message)
-            if "application/json" in request.headers.get("Accept", ""):
-                return JsonResponse({"error": limit_message}, status=403)
-            return redirect("account:membership")
-
         form = DiagnosisForm(request.POST, request.FILES)
         if form.is_valid():
             diagnosis = form.save(commit=False)
@@ -1143,57 +1239,51 @@ def leaf_diagnosis_view(request):
     leaf_quota = get_leaf_quota_summary(request.user)
 
     if request.method == "POST":
-        if not leaf_quota["can_submit"]:
-            messages.error(
-                request,
-                f"You have used all {leaf_quota['limit']} free leaf checks. Upgrade to premium to keep analyzing new images.",
-            )
-        else:
-            form = LeafDiagnosisForm(request.POST, request.FILES)
-            if form.is_valid():
-                diagnosis_log = form.save(commit=False)
-                diagnosis_log.user = request.user
-                diagnosis_log.original_filename = request.FILES["image"].name
-                diagnosis_log.save()
+        form = LeafDiagnosisForm(request.POST, request.FILES)
+        if form.is_valid():
+            diagnosis_log = form.save(commit=False)
+            diagnosis_log.user = request.user
+            diagnosis_log.original_filename = request.FILES["image"].name
+            diagnosis_log.save()
 
-                try:
-                    diagnosis_result = diagnose_leaf_image(diagnosis_log.image.path)
-                except ValueError as exc:
-                    diagnosis_log.image.delete(save=False)
-                    diagnosis_log.delete()
-                    form.add_error("image", str(exc))
-                    messages.error(request, str(exc))
-                except RuntimeError as exc:
-                    diagnosis_log.image.delete(save=False)
-                    diagnosis_log.delete()
-                    form.add_error("image", str(exc))
-                    messages.error(request, str(exc))
-                except Exception:
-                    diagnosis_log.image.delete(save=False)
-                    diagnosis_log.delete()
-                    messages.error(
-                        request,
-                        "We could not analyze this image because the prediction service failed unexpectedly.",
-                    )
-                else:
-                    diagnosis_log.plant_name = diagnosis_result.get("plant_name", "")
-                    diagnosis_log.predicted_disease = diagnosis_result["disease"]
-                    diagnosis_log.confidence = diagnosis_result["confidence"]
-                    diagnosis_log.source = diagnosis_result["source"]
-                    diagnosis_log.treatment_guidance = diagnosis_result["treatment_guidance"]
-                    diagnosis_log.save(
-                        update_fields=[
-                            "plant_name",
-                            "predicted_disease",
-                            "confidence",
-                            "source",
-                            "treatment_guidance",
-                        ]
-                    )
-                    messages.success(request, "Leaf analysis completed successfully.")
-                    if diagnosis_result.get("warning"):
-                        messages.warning(request, diagnosis_result["warning"])
-                    return redirect("detection:leaf_diagnosis_result", diagnosis_id=diagnosis_log.pk)
+            try:
+                diagnosis_result = diagnose_leaf_image(diagnosis_log.image.path)
+            except ValueError as exc:
+                diagnosis_log.image.delete(save=False)
+                diagnosis_log.delete()
+                form.add_error("image", str(exc))
+                messages.error(request, str(exc))
+            except RuntimeError as exc:
+                diagnosis_log.image.delete(save=False)
+                diagnosis_log.delete()
+                form.add_error("image", str(exc))
+                messages.error(request, str(exc))
+            except Exception:
+                diagnosis_log.image.delete(save=False)
+                diagnosis_log.delete()
+                messages.error(
+                    request,
+                    "We could not analyze this image because the prediction service failed unexpectedly.",
+                )
+            else:
+                diagnosis_log.plant_name = diagnosis_result.get("plant_name", "")
+                diagnosis_log.predicted_disease = diagnosis_result["disease"]
+                diagnosis_log.confidence = diagnosis_result["confidence"]
+                diagnosis_log.source = diagnosis_result["source"]
+                diagnosis_log.treatment_guidance = diagnosis_result["treatment_guidance"]
+                diagnosis_log.save(
+                    update_fields=[
+                        "plant_name",
+                        "predicted_disease",
+                        "confidence",
+                        "source",
+                        "treatment_guidance",
+                    ]
+                )
+                messages.success(request, "Leaf analysis completed successfully.")
+                if diagnosis_result.get("warning"):
+                    messages.warning(request, diagnosis_result["warning"])
+                return redirect("detection:leaf_diagnosis_result", diagnosis_id=diagnosis_log.pk)
 
     recent_diagnoses = LeafDiagnosis.objects.filter(user=request.user)[:5]
 

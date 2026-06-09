@@ -67,16 +67,6 @@
         </div>
     </section>
 
-    {% if leaf_quota.limit_reached %}
-    <div class="flex items-center justify-between gap-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-        <div>
-            <p class="font-bold">Free scans plan quota exceeded</p>
-            <p>You have used all {{ leaf_quota.limit }} free leaf checks. Upgrade to continue.</p>
-        </div>
-        <a href="{% url 'account:membership' %}" class="btn btn-primary">Open membership</a>
-    </div>
-    {% endif %}
-
     <!-- Upload + Preview Layout -->
     <div class="grid items-start gap-8 lg:grid-cols-2">
         <!-- Left Panel: Form & Previews -->
@@ -93,7 +83,7 @@
             <div class="rounded-xl border border-gray-200 p-4 bg-gray-50/30">
                 <div class="flex items-center justify-between mb-2">
                     <div>
-                        <p class="text-xs uppercase tracking-wide text-gray-500">Free-tier usage</p>
+                        <p class="text-xs uppercase tracking-wide text-gray-500">Scan usage</p>
                         <p class="font-semibold text-gray-900">{{ leaf_quota.usage_label }}</p>
                     </div>
                     <p class="text-xs font-semibold text-emerald-600">{{ leaf_quota.remaining_label }}</p>

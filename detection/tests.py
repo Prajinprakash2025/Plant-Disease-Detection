@@ -204,6 +204,53 @@ class DetectionViewTests(TestCase):
             {"error": "Missing diagnosis payload."},
         )
 
+    def test_format_treatment_lines_removes_extra_rules_section(self):
+        lines = views._format_treatment_lines(
+            "Plant: Apple\n"
+            "Disease: Black rot\n"
+            "Treatment:\n"
+            "* Remove infected fruit.\n"
+            "Rules:\n"
+            "* Wear PPE.\n"
+        )
+
+        self.assertEqual(
+            lines,
+            [
+                "Plant:",
+                "Apple",
+                "Disease:",
+                "Black rot",
+                "Treatment:",
+                "- Remove infected fruit.",
+            ],
+        )
+
+    @override_settings(USE_GEMINI_FOR_TRANSLATION=False)
+    def test_translate_diagnosis_payload_skips_gemini_by_default(self):
+        payload = {
+            "result_labels": {"plant": "Plant"},
+            "result_values": {"plant": "Tomato"},
+            "treatment_title": "Treatment plan",
+            "treatment_items": [{"text": "Treatment:", "kind": "heading"}],
+        }
+        translated_payload = {
+            "result_labels": {"plant": "Plant"},
+            "result_values": {"plant": "Tomato"},
+            "treatment_title": "Treatment plan",
+            "treatment_items": [{"text": "Treatment:", "kind": "heading"}],
+        }
+
+        with mock.patch("detection.views._get_gemini_client") as gemini_client, mock.patch(
+            "detection.views._translate_payload_free",
+            return_value=translated_payload,
+        ) as free_translate:
+            result = views._translate_diagnosis_payload(payload, "ml")
+
+        self.assertEqual(result, translated_payload)
+        free_translate.assert_called_once()
+        gemini_client.assert_not_called()
+
     def test_leaf_diagnosis_page_logs_result(self):
         self.client.force_login(self.user)
         with override_settings(MEDIA_ROOT=self.media_root), mock.patch(
@@ -233,14 +280,15 @@ class DetectionViewTests(TestCase):
                 },
             )
 
-        self.assertEqual(response.status_code, 200)
         self.assertTrue(LeafDiagnosis.objects.exists())
         diagnosis = LeafDiagnosis.objects.get()
+        self.assertRedirects(
+            response,
+            reverse("detection:leaf_diagnosis_result", args=[diagnosis.pk]),
+        )
         self.assertEqual(diagnosis.original_filename, "leaf.png")
         self.assertEqual(diagnosis.plant_name, "Rose")
         self.assertEqual(diagnosis.source, "gemini_api")
-        self.assertContains(response, "Tomato Early blight")
-        self.assertContains(response, "Rose")
 
     def test_predict_leaf_disease_uses_external_runtime_when_tensorflow_is_unavailable(self):
         with mock.patch(
@@ -304,6 +352,25 @@ class DetectionViewTests(TestCase):
 
         self.assertEqual(result, {"plant_name": "Rose", "disease": "Powdery mildew"})
         self.assertEqual(gemini_call.call_count, 1)
+
+    @override_settings(GEMINI_VOTE_COUNT=1)
+    def test_call_gemini_api_passes_expected_prediction_context(self):
+        with mock.patch(
+            "detection.views._call_gemini_once",
+            return_value={"plant_name": "Tomato", "disease": "Late blight"},
+        ) as gemini_call:
+            result = views.call_gemini_api(
+                "leaf.png",
+                expected_plant="Tomato",
+                expected_disease="Late blight",
+            )
+
+        self.assertEqual(result, {"plant_name": "Tomato", "disease": "Late blight"})
+        gemini_call.assert_called_once_with(
+            "leaf.png",
+            expected_plant="Tomato",
+            expected_disease="Late blight",
+        )
 
     @override_settings(REQUIRE_GEMINI_FOR_LOW_CONFIDENCE=True)
     def test_predict_leaf_disease_requires_gemini_for_low_confidence_results(self):
@@ -379,8 +446,15 @@ class DetectionViewTests(TestCase):
         self.assertIn("Powdery mildew", guidance)
         gemini_client.assert_not_called()
 
-    @override_settings(FREE_TIER_LEAF_DIAGNOSIS_LIMIT=20)
-    def test_leaf_diagnosis_blocks_free_user_when_limit_is_reached(self):
+    @override_settings(USE_GEMINI_FOR_TREATMENT_PLAN=False)
+    def test_gemini_treatment_plan_uses_local_fallback_by_default(self):
+        with mock.patch("detection.views._get_gemini_client") as gemini_client:
+            guidance = views._gemini_treatment_plan("Late blight", "Tomato")
+
+        self.assertIn("Late blight", guidance)
+        gemini_client.assert_not_called()
+
+    def test_leaf_diagnosis_allows_user_after_former_free_limit(self):
         self.client.force_login(self.user)
         LeafDiagnosis.objects.bulk_create(
             [
@@ -394,20 +468,33 @@ class DetectionViewTests(TestCase):
             ]
         )
 
-        response = self.client.post(
-            reverse("detection:leaf_diagnosis"),
-            {
-                "image": SimpleUploadedFile(
-                    "blocked.png",
-                    GIF_BYTES,
-                    content_type="image/png",
-                )
+        with override_settings(MEDIA_ROOT=self.media_root), mock.patch(
+            "detection.views.diagnose_leaf_image",
+            return_value={
+                "plant_name": "Tomato",
+                "disease": "Healthy",
+                "confidence": 0.91,
+                "source": "local_model",
+                "treatment_guidance": "Continue monitoring",
             },
-        )
+        ):
+            response = self.client.post(
+                reverse("detection:leaf_diagnosis"),
+                {
+                    "image": SimpleUploadedFile(
+                        "allowed.png",
+                        GIF_BYTES,
+                        content_type="image/png",
+                    )
+                },
+            )
 
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "used all 20 free leaf checks")
-        self.assertEqual(LeafDiagnosis.objects.filter(user=self.user).count(), 20)
+        latest = LeafDiagnosis.objects.filter(user=self.user).latest("id")
+        self.assertRedirects(
+            response,
+            reverse("detection:leaf_diagnosis_result", args=[latest.pk]),
+        )
+        self.assertEqual(LeafDiagnosis.objects.filter(user=self.user).count(), 21)
 
     def test_predict_leaf_disease_uses_local_plant_name_when_gemini_returns_unknown(self):
         with mock.patch(
